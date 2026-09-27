@@ -18,10 +18,21 @@ class Places(osmium.SimpleHandler):
         self.elements = []
         self.streets = []
         self.roads = []
+        self.localities = []
+        self.addresses = []
         self.factory = osmium.geom.GeoJSONFactory()
 
     def node(self, n):
         tags = dict(n.tags)
+        if tags.get("addr:street") and tags.get("addr:housenumber") and n.location.valid():
+            self.addresses.append(
+                dict(
+                    id=f"osm/node/{n.id}",
+                    street=tags["addr:street"],
+                    number=tags["addr:housenumber"],
+                    coordinates=[n.location.lon, n.location.lat],
+                )
+            )
         if classify_poi(tags) and n.location.valid():
             self.elements.append(
                 {"type": "node", "id": n.id, "lon": n.location.lon, "lat": n.location.lat, "tags": tags}
@@ -29,7 +40,8 @@ class Places(osmium.SimpleHandler):
 
     def way(self, w):
         tags = dict(w.tags)
-        if not classify_poi(tags) and not tags.get("highway"):
+        address = tags.get("addr:street") and tags.get("addr:housenumber")
+        if not classify_poi(tags) and not tags.get("highway") and not address:
             return
         try:
             coords = [(n.lon, n.lat) for n in w.nodes]
@@ -37,10 +49,31 @@ class Places(osmium.SimpleHandler):
             return
         if len(coords) < 2:
             return
+        if address and coords[0] == coords[-1] and len(coords) >= 4:
+            from shapely.geometry import Polygon
+
+            polygon = Polygon(coords)
+            if polygon.is_valid:
+                point = polygon.representative_point()
+                self.addresses.append(
+                    dict(
+                        id=f"osm/way/{w.id}",
+                        street=tags["addr:street"],
+                        number=tags["addr:housenumber"],
+                        coordinates=[point.x, point.y],
+                    )
+                )
         if tags.get("highway"):
             line = LineString(coords)
             if tags.get("name"):
-                self.streets.append({"name": tags["name"], "geometry": mapping(line)})
+                self.streets.append(
+                    {
+                        "id": f"osm/way/{w.id}",
+                        "name": tags["name"],
+                        "highway": tags["highway"],
+                        "geometry": mapping(line),
+                    }
+                )
             if tags["highway"] in {
                 "motorway",
                 "trunk",
@@ -69,16 +102,26 @@ class Places(osmium.SimpleHandler):
             )
 
     def area(self, a):
-        if a.from_way():
-            return  # closed ways already handled
         tags = dict(a.tags)
-        if not classify_poi(tags):
+        locality = tags.get("boundary") == "administrative" and tags.get("admin_level") in {"9", "10"}
+        if not locality and (a.from_way() or not classify_poi(tags)):
             return
         try:
             g = json.loads(self.factory.create_multipolygon(a))
         except RuntimeError:
             return
-        if shape(g).is_valid:
+        if not shape(g).is_valid:
+            return
+        if locality and tags.get("name"):
+            self.localities.append(
+                dict(
+                    id=f"osm/{'way' if a.from_way() else 'relation'}/{a.orig_id()}",
+                    name=tags["name"],
+                    admin_level=tags["admin_level"],
+                    geometry=g,
+                )
+            )
+        elif not a.from_way():
             self.elements.append({"type": "relation", "id": a.orig_id(), "tags": tags, "geojson_geometry": g})
 
 
@@ -86,20 +129,29 @@ if __name__ == "__main__":
     src = ROOT / "berlin.osm.pbf"
     if not src.exists():
         raise SystemExit("Run scripts/safety/fetch_osm.py first")
-    places = Places()
-    places.apply_file(str(src), locations=True)
-    dest = ROOT / "berlin-pois.json"
-    dest.write_text(json.dumps({"elements": places.elements}))
-    (ROOT / "streets.json").write_text(json.dumps(places.streets))
-    (ROOT / "roads.json").write_text(
-        json.dumps({"type": "FeatureCollection", "features": places.roads}, separators=(",", ":"))
-    )
     provenance = ROOT / "berlin.osm.source.json"
     if not provenance.exists():
         raise SystemExit("Missing source manifest; fetch_osm.py records provenance")
     meta = json.loads(provenance.read_text())
     if hashlib.sha256(src.read_bytes()).hexdigest() != meta["sha256"]:
         raise SystemExit("OSM input hash differs from provenance")
-    meta.update(elements=len(places.elements), streets=len(places.streets), roads=len(places.roads))
+    places = Places()
+    places.apply_file(str(src), locations=True)
+    dest = ROOT / "berlin-pois.json"
+    dest.write_text(json.dumps({"elements": places.elements}))
+    (ROOT / "streets.json").write_text(json.dumps(places.streets))
+    (ROOT / "localities.json").write_text(json.dumps(places.localities))
+    (ROOT / "addresses.json").write_text(json.dumps(places.addresses))
+    (ROOT / "roads.json").write_text(
+        json.dumps({"type": "FeatureCollection", "features": places.roads}, separators=(",", ":"))
+    )
+    meta.update(
+        elements=len(places.elements),
+        streets=len(places.streets),
+        roads=len(places.roads),
+        localities=len(places.localities),
+        addresses=len(places.addresses),
+        extraction_version=2,
+    )
     dest.with_suffix(".source.json").write_text(json.dumps(meta, indent=2))
     print(json.dumps(meta, indent=2))

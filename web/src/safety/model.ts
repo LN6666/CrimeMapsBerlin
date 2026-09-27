@@ -11,6 +11,8 @@ export interface PoliceEvent {
   coordinates: [number, number] | null;
   location_precision: string;
   location_label: string;
+  location_extent_m?: number;
+  location_scope?: string;
   source_url: string;
   feed_url: string;
   poi_mentions: string[];
@@ -94,7 +96,11 @@ export function styledPois(
   const candidate = new Map<string, Set<string>>();
   for (const link of links) {
     if (!ids.has(link.event_id)) continue;
-    const target = link.status === "approximate_candidate" ? candidate : counts;
+    const target = ["approximate_candidate", "named_place_candidate"].includes(
+      link.status,
+    )
+      ? candidate
+      : counts;
     if (!target.has(link.poi_id)) target.set(link.poi_id, new Set());
     target.get(link.poi_id)!.add(link.event_id);
   }

@@ -19,6 +19,7 @@ TO_METRIC = Transformer.from_crs(4326, 25833, always_xy=True).transform
 TO_WGS = Transformer.from_crs(25833, 4326, always_xy=True).transform
 HEX_SIZES = {"overview": 1100, "detail": 275}
 POI_RADIUS_M = 50
+MAPPABLE_PRECISIONS = {"point", "street", "place", "address"}
 
 
 def feature(geometry, properties):
@@ -52,7 +53,7 @@ def hexagons(events: list[dict], size: float):
     groups = defaultdict(list)
     geometries = {}
     for e in events:
-        if e["location_precision"] not in {"point", "street"} or not e.get("coordinates"):
+        if e["location_precision"] not in MAPPABLE_PRECISIONS or not e.get("coordinates"):
             continue
         key, geometry = cell_for(*e["coordinates"], size)
         groups[key].append(e)
@@ -148,21 +149,27 @@ def pois_from_osm(payload: dict):
         else:
             display = transform(TO_WGS, transform(TO_METRIC, center).buffer(POI_RADIUS_M, quad_segs=8))
             mode = "50m_circle"
-        features.append(
-            feature(
-                display,
-                {
-                    "id": f"osm/{item['type']}/{item['id']}",
-                    "name": tags.get("name", kind),
-                    "kind": kind,
-                    "geometry_mode": mode,
-                    "center": [center.x, center.y],
-                    "source_url": f"https://www.openstreetmap.org/{item['type']}/{item['id']}",
-                    "opening_hours": tags.get("opening_hours"),
-                    "wikidata": tags.get("wikidata"),
-                },
-            )
+        place = feature(
+            display,
+            {
+                "id": f"osm/{item['type']}/{item['id']}",
+                "name": tags.get("name", kind),
+                "aliases": [
+                    v
+                    for key in ("alt_name", "official_name", "short_name", "loc_name")
+                    for v in tags.get(key, "").split(";")
+                    if v
+                ],
+                "kind": kind,
+                "geometry_mode": mode,
+                "center": [center.x, center.y],
+                "source_url": f"https://www.openstreetmap.org/{item['type']}/{item['id']}",
+                "opening_hours": tags.get("opening_hours"),
+                "wikidata": tags.get("wikidata"),
+            },
         )
+        place["location_geometry"] = mapping(geometry)
+        features.append(place)
     # Collapse a same-type, same-name node lying inside an area footprint/circle from a way.
     areas = [f for f in features if f["properties"]["geometry_mode"] == "osm_footprint"]
     area_geoms = [shape(f["geometry"]) for f in areas]
@@ -190,14 +197,33 @@ def associate(events: list[dict], pois: dict, matching_types_only: bool = True):
     District geocodes never cause 50m association or polygon containment.
     """
     places = pois["features"]
+    place_by_id = {f["properties"]["id"]: f for f in places}
     metric = [transform(TO_METRIC, shape(f["geometry"])) for f in places]
     tree = STRtree(metric)
     links = []
     seen = set()
     for event in events:
-        if not event.get("poi_mentions") or event["location_precision"] not in {"point", "street"}:
+        if not event.get("poi_mentions") or event["location_precision"] not in MAPPABLE_PRECISIONS:
             continue
         if not event.get("coordinates"):
+            continue
+        if event["location_precision"] == "place":
+            # A park/station representative must not accidentally darken unrelated neighbours.
+            for ident in event.get("location_object_ids", []):
+                f = place_by_id.get(ident)
+                if f is None:
+                    continue
+                p = f["properties"]
+                if not matching_types_only or p["kind"] in event["poi_mentions"]:
+                    links.append(
+                        dict(
+                            event_id=event["id"],
+                            poi_id=p["id"],
+                            status="named_place_candidate",
+                            source_url=event["source_url"],
+                            mention_basis=event["mention_basis"],
+                        )
+                    )
             continue
         point = transform(TO_METRIC, Point(event["coordinates"]))
         for idx in tree.query(point, predicate="intersects"):

@@ -28,6 +28,16 @@ def main():
             print("Another collector is running; skipped overlap")
             return
         result = sync(runtime / "police.sqlite", now.year, args.full or now.weekday() == 6, args.limit)
+        raw = ROOT / "data/raw/safety"
+        provenance = raw / "berlin-pois.source.json"
+        version = (
+            json.loads(provenance.read_text()).get("extraction_version") if provenance.exists() else None
+        )
+        if version != 2 or not all((raw / f"{name}.json").exists() for name in ("localities", "addresses")):
+            # One-time local index upgrade, reusing the existing verified PBF; no remote/LLM calls.
+            subprocess.run(
+                [sys.executable, str(ROOT / "scripts/safety/extract_pbf.py")], cwd=ROOT, check=True
+            )
         # Source failure is visible, but successfully ingested records may still be published.
         subprocess.run([sys.executable, str(ROOT / "scripts/safety/build.py")], cwd=ROOT, check=True)
         status = dict(updated_at=now.isoformat(), **result)

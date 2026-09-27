@@ -74,7 +74,7 @@ function listReports(parent: HTMLElement, ids: string[]) {
     parent.append(card);
     text(
       "small",
-      `${e.event_date ?? `${e.month}（公布月份）`} · ${e.category} · ${e.location_precision === "street" ? "街道近似位置" : e.location_precision === "point" ? "点位" : "区域位置"}`,
+      `${e.event_date ?? `${e.month}（公布月份）`} · ${e.category} · ${{ street: "街道近似位置", place: "场所近似位置", address: "地址近似位置", point: "点位", district: "仅区域信息", unknown: "位置待核验" }[e.location_precision] ?? "位置待核验"}`,
       card,
     );
     if (e.source_status && e.source_status !== "available")
@@ -87,6 +87,12 @@ function listReports(parent: HTMLElement, ids: string[]) {
       );
     text("h4", e.title, card);
     text("p", e.location_label, card);
+    if (e.location_extent_m !== undefined && e.location_extent_m > 75)
+      text(
+        "small",
+        `匹配对象跨度约 ${e.location_extent_m.toLocaleString()} 米；六边形采用近似位置`,
+        card,
+      );
     link(card, "警方原文 ↗", e.source_url);
     if (e.poi_mentions.length)
       text(
@@ -218,7 +224,8 @@ function refresh() {
   if (month) {
     const unmapped = rows.filter(
       (e) =>
-        !e.coordinates || !["street", "point"].includes(e.location_precision),
+        !e.coordinates ||
+        !["street", "point", "place", "address"].includes(e.location_precision),
     );
     const btn = text(
       "button",

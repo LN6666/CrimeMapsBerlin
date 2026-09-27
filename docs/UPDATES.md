@@ -43,11 +43,14 @@ uv run python scripts/safety/extract_pbf.py
 uv run python scripts/safety/build.py
 ```
 
+On upgrading from the initial street-only index, `update.py` rebuilds the local indexes once from the existing checksum-verified PBF (extraction version 2). This can take several minutes and also creates `localities.json` and `addresses.json`. Subsequent daily runs reuse them; they do not repeatedly extract/download OSM or call a model. A failed extraction/build leaves the previous published manifest available.
+
 ## Inspect and recover
 
 - `.runtime/safety/update-status.json`: latest completed scheduled update counts.
 - `.runtime/safety/build-audit.json`: discovered/fetched/pending/errors, mapped/unlocated and output generation.
 - `.runtime/safety/review-queue.json`: source URL, extracted name candidates and reason for abstaining.
+- `.runtime/safety/geocode-comparison.json`: local before/after comparison, if `audit_geocodes.py` was run; article hashes must be unchanged. Never equate a mapped count with a correctness rate.
 - `.runtime/safety/police.sqlite`: durable state; back it up locally with SQLite's backup API.
 - `.runtime/safety/scheduled*.log`: schedule stdout/stderr.
 - `runs` rows without `finished` indicate interruption or source-level failure. The last published manifest remains usable.

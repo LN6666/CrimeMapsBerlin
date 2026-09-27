@@ -27,7 +27,7 @@ def compact(value):
     if isinstance(value, (list, tuple)):
         return [compact(v) for v in value]
     if isinstance(value, dict):
-        return {k: compact(v) for k, v in value.items()}
+        return {k: compact(v) for k, v in value.items() if k != "location_geometry"}
     return value
 
 
@@ -41,14 +41,21 @@ def main():
     p.add_argument("--db", default=str(ROOT / ".runtime/safety/police.sqlite"))
     args = p.parse_args()
     db = connect(args.db)
-    print("Building local gazetteer…", flush=True)
-    gazetteer = Gazetteer(json.loads((RAW / "streets.json").read_text()))
+    print("Building POIs and local gazetteer…", flush=True)
+    pois, notes = pois_from_osm(json.loads((RAW / "berlin-pois.json").read_text()))
+    required = [RAW / "localities.json", RAW / "addresses.json"]
+    if not all(p.exists() for p in required):
+        raise SystemExit("Re-run scripts/safety/extract_pbf.py to build locality and address indexes")
+    gazetteer = Gazetteer(
+        json.loads((RAW / "streets.json").read_text()),
+        places=pois,
+        localities=json.loads(required[0].read_text()),
+        addresses=json.loads(required[1].read_text()),
+    )
     db.execute("BEGIN")  # consistent read snapshot while the collector keeps writing
     events = events_from_db(db, gazetteer)
     if not events:
         raise SystemExit("No successfully fetched official reports; previous publication retained")
-    print("Building POIs…", flush=True)
-    pois, notes = pois_from_osm(json.loads((RAW / "berlin-pois.json").read_text()))
     # Include unclassified reports explicitly; never silently call them all crimes.
     months = build_months(events, pois)
     now = datetime.now(timezone.utc).isoformat()
@@ -148,6 +155,7 @@ def main():
             source_url=e["source_url"],
             method=e["geocode_method"],
             candidates=e["geocode_candidates"],
+            evidence=e["geocode_evidence"],
         )
         for e in events
         if not e["coordinates"]
@@ -159,6 +167,7 @@ def main():
             **coverage,
             mapped=len(events) - len(review),
             unlocated=len(review),
+            geocode_methods=dict(Counter(e["geocode_method"] for e in events)),
             poi_count=len(pois["features"]),
             generation=generation,
             months=manifest["months"],

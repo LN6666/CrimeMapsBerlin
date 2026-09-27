@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { LRU, tileKeys } from "../src/safety/data";
+import { styledPois } from "../src/safety/model";
 
 test("tile enumeration is bounded and LRU evicts oldest", () => {
   const cache = new LRU<number>(2);
@@ -13,6 +14,46 @@ test("tile enumeration is bounded and LRU evicts oldest", () => {
   expect(
     tileKeys([13.4, 52.5, 13.41, 52.51], [0.04, 0.025], new Set(["335_2100"])),
   ).toEqual(["335_2100"]);
+});
+
+test("named place links remain candidates and do not affect other POIs", () => {
+  const data = {
+    pois: {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [13.4, 52.5] },
+          properties: { id: "named", kind: "park" },
+        },
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [13.4, 52.5] },
+          properties: { id: "other", kind: "park" },
+        },
+      ],
+    },
+    catalog: { poi_types: { park: { color: "#059669" } } },
+  };
+  const links = [
+    {
+      event_id: "p",
+      poi_id: "named",
+      status: "named_place_candidate",
+      source_url: "https://example.org",
+      mention_basis: "keyword",
+    },
+  ];
+  const fc = styledPois(
+    data as any,
+    links,
+    new Set(["p"]),
+    new Set(["park"]),
+    true,
+  );
+  expect(fc.features[0].properties.candidate_count).toBe(1);
+  expect(fc.features[0].properties.count).toBe(0);
+  expect(fc.features[1].properties.association_count).toBe(0);
 });
 
 test("overview loads no POI geometry, month switching clears missing months", async ({
@@ -42,7 +83,12 @@ test("overview loads no POI geometry, month switching clears missing months", as
             ],
           ],
         },
-        properties: { id: "test", edge_m: 1100, count: 1, event_ids: ["1"] },
+        properties: {
+          id: "test",
+          edge_m: 1100,
+          count: 2,
+          event_ids: ["1", "2"],
+        },
       },
     ],
   };
@@ -56,8 +102,8 @@ test("overview loads no POI geometry, month switching clears missing months", as
           city: "Berlin",
           generation: "0123456789abcdef-20260927T120000",
           retrieved_at: "2026-09-27T12:00:00Z",
-          coverage: { discovered: 1, fetched: 1, pending: 0, failed: 0 },
-          months: { "2026-09": { count: 1 } },
+          coverage: { discovered: 2, fetched: 2, pending: 0, failed: 0 },
+          months: { "2026-09": { count: 2 } },
           categories: ["Raub"],
           tile_index: { pois: [], roads: [] },
           tile_size: [0.04, 0.025],
@@ -74,7 +120,7 @@ test("overview loads no POI geometry, month switching clears missing months", as
     if (url.includes("/months/"))
       return route.fulfill({
         json: {
-          event_ids: ["1"],
+          event_ids: ["1", "2"],
           events: [
             {
               id: "1",
@@ -86,6 +132,18 @@ test("overview loads no POI geometry, month switching clears missing months", as
               poi_mentions: [],
               source_url: "https://www.berlin.de/",
             },
+            {
+              id: "2",
+              title: "Named park",
+              category: "Raub",
+              month: "2026-09",
+              coordinates: [13.41, 52.51],
+              location_precision: "place",
+              location_label: "Testpark",
+              location_extent_m: 110,
+              poi_mentions: ["park"],
+              source_url: "https://www.berlin.de/",
+            },
           ],
           hex: { overview: hex, detail: hex },
           links: [],
@@ -94,19 +152,24 @@ test("overview loads no POI geometry, month switching clears missing months", as
     return route.fulfill({ json: empty });
   });
   await page.goto("/");
-  await expect(page.locator("#stats .big")).toHaveText("1");
+  await expect(page.locator("#stats .big")).toHaveText("2");
+  await expect(page.locator("#stats button")).toContainText("1 条位置不足");
   expect(requests.filter((url) => url.includes("/pois/"))).toHaveLength(0);
   await expect
     .poll(async () => {
       await page.locator(".maplibregl-canvas").click();
       return page.locator("#selection").innerText();
     })
-    .toContain("1 条已收录警情");
+    .toContain("2 条已收录警情");
+  await expect(page.locator("#selection")).toContainText("场所近似位置");
+  await expect(page.locator("#selection")).toContainText(
+    "匹配对象跨度约 110 米",
+  );
   expect(errors).toEqual([]);
   expect(requests.filter((url) => url.includes("/months/"))).toHaveLength(1);
   await page.locator("#month").selectOption("08");
   await expect(page.locator("#stats .big")).toHaveText("—");
   await page.locator("#month").selectOption("09");
-  await expect(page.locator("#stats .big")).toHaveText("1");
+  await expect(page.locator("#stats .big")).toHaveText("2");
   expect(requests.filter((url) => url.includes("/months/"))).toHaveLength(1);
 });
