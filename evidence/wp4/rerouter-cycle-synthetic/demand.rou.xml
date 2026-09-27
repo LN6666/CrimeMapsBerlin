@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<routes>
-  <vType id="type-passenger" vClass="passenger" carFollowModel="Krauss" sigma="0" speedFactor="1" speedDev="0">
-    <param key="device.rerouting.mode" value="8" />
-  </vType>
-  <vehicle id="vehicle" type="type-passenger" depart="0.0" departLane="best" departSpeed="0">
-    <route edges="e12 e0 e3 e4" />
-  </vehicle>
-</routes>

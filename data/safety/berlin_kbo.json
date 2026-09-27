@@ -1,0 +1,79 @@
+{
+  "source_url": "https://www.berlin.de/polizei/polizeimeldungen/fakten-hintergruende/artikel.1078268.php",
+  "designation_valid_from": "2026-07-01",
+  "verified_on": "2026-09-27",
+  "geometry_status": "official_maps_available_vector_boundaries_pending",
+  "features": [],
+  "places": [
+    {
+      "name": "Alexanderplatz",
+      "source_url": "https://www.berlin.de/polizei/polizeimeldungen/fakten-hintergruende/artikel.1078268.php",
+      "official_map_url": "https://www.berlin.de/polizei/_assets/dienststellen/anlagen-landespolizeidirektion/kbo-alexanderplatz.jpg",
+      "navigation_center": [
+        13.413,
+        52.521
+      ],
+      "center_status": "approximate_navigation_only_not_legal_boundary"
+    },
+    {
+      "name": "Görlitzer Park / Wrangelkiez",
+      "source_url": "https://www.berlin.de/polizei/polizeimeldungen/fakten-hintergruende/artikel.1078268.php",
+      "official_map_url": "https://www.berlin.de/polizei/_assets/dienststellen/anlagen-landespolizeidirektion/kbo-goerlitzer-park-wrangelkiez.jpg",
+      "navigation_center": [
+        13.437,
+        52.497
+      ],
+      "center_status": "approximate_navigation_only_not_legal_boundary"
+    },
+    {
+      "name": "Hermannplatz / Donaukiez",
+      "source_url": "https://www.berlin.de/polizei/polizeimeldungen/fakten-hintergruende/artikel.1078268.php",
+      "official_map_url": "https://www.berlin.de/polizei/_assets/dienststellen/anlagen-landespolizeidirektion/kbo-hermannplatz-donaukiez.jpg",
+      "navigation_center": [
+        13.425,
+        52.487
+      ],
+      "center_status": "approximate_navigation_only_not_legal_boundary"
+    },
+    {
+      "name": "Hermannstraße / Bahnhof Neukölln",
+      "source_url": "https://www.berlin.de/polizei/polizeimeldungen/fakten-hintergruende/artikel.1078268.php",
+      "official_map_url": "https://www.berlin.de/polizei/_assets/dienststellen/anlagen-landespolizeidirektion/kbo-hermannstrasse-bahnhof-neukoelln.jpg",
+      "navigation_center": [
+        13.442,
+        52.469
+      ],
+      "center_status": "approximate_navigation_only_not_legal_boundary"
+    },
+    {
+      "name": "Kottbusser Tor",
+      "source_url": "https://www.berlin.de/polizei/polizeimeldungen/fakten-hintergruende/artikel.1078268.php",
+      "official_map_url": "https://www.berlin.de/polizei/_assets/dienststellen/anlagen-landespolizeidirektion/kbo-kottbusser-tor.jpg",
+      "navigation_center": [
+        13.418,
+        52.499
+      ],
+      "center_status": "approximate_navigation_only_not_legal_boundary"
+    },
+    {
+      "name": "Rigaer Straße",
+      "source_url": "https://www.berlin.de/polizei/polizeimeldungen/fakten-hintergruende/artikel.1078268.php",
+      "official_map_url": "https://www.berlin.de/polizei/_assets/dienststellen/anlagen-landespolizeidirektion/kbo-rigaer-strasse.jpg",
+      "navigation_center": [
+        13.462,
+        52.515
+      ],
+      "center_status": "approximate_navigation_only_not_legal_boundary"
+    },
+    {
+      "name": "Warschauer Brücke",
+      "source_url": "https://www.berlin.de/polizei/polizeimeldungen/fakten-hintergruende/artikel.1078268.php",
+      "official_map_url": "https://www.berlin.de/polizei/_assets/dienststellen/anlagen-landespolizeidirektion/kbo-warschauer-bruecke.jpg",
+      "navigation_center": [
+        13.449,
+        52.505
+      ],
+      "center_status": "approximate_navigation_only_not_legal_boundary"
+    }
+  ]
+}

@@ -1,0 +1,457 @@
+{
+  "as_of": "2026-09-27",
+  "exhaustive": false,
+  "coverage": [
+    {
+      "country": "AL",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "AD",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "AT",
+      "status": "sources_verified_partial"
+    },
+    {
+      "country": "BY",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "BE",
+      "status": "sources_verified_partial"
+    },
+    {
+      "country": "BA",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "BG",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "HR",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "CY",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "CZ",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "DK",
+      "status": "sources_verified_partial"
+    },
+    {
+      "country": "EE",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "FI",
+      "status": "sources_verified_partial"
+    },
+    {
+      "country": "FR",
+      "status": "sources_verified_partial"
+    },
+    {
+      "country": "DE",
+      "status": "sources_verified_partial"
+    },
+    {
+      "country": "GR",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "HU",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "IS",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "IE",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "IT",
+      "status": "sources_verified_partial"
+    },
+    {
+      "country": "XK",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "LV",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "LI",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "LT",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "LU",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "MT",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "MD",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "MC",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "ME",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "NL",
+      "status": "sources_verified_partial"
+    },
+    {
+      "country": "MK",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "NO",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "PL",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "PT",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "RO",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "RU",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "SM",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "RS",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "SK",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "SI",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "ES",
+      "status": "sources_verified_partial"
+    },
+    {
+      "country": "SE",
+      "status": "sources_verified_partial"
+    },
+    {
+      "country": "CH",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "UA",
+      "status": "not_yet_verified"
+    },
+    {
+      "country": "GB",
+      "status": "sources_verified_partial"
+    },
+    {
+      "country": "VA",
+      "status": "not_yet_verified"
+    }
+  ],
+  "sources": [
+    {
+      "id": "source-01",
+      "country": "DE",
+      "place": "Berlin",
+      "evidence_type": "designated_zone",
+      "poi_types": [
+        "park",
+        "station"
+      ],
+      "publisher": "Berlin kbO",
+      "url": "https://www.berlin.de/polizei/polizeimeldungen/fakten-hintergruende/artikel.1078268.php",
+      "summary": "七个官方划定区域；不得将其视作商业场所名单。",
+      "verified_on": "2026-09-27",
+      "scope": "source_example_not_country_exhaustive"
+    },
+    {
+      "id": "source-02",
+      "country": "DE",
+      "place": "Germany",
+      "evidence_type": "prevention_advice",
+      "poi_types": [
+        "station",
+        "shop",
+        "marketplace",
+        "restaurant"
+      ],
+      "publisher": "Polizeiliche Kriminalprävention",
+      "url": "https://www.polizei-beratung.de/themen-und-tipps/diebstahl/taschendiebstahl/",
+      "summary": "拥挤交通、商业和活动场所的扒窃防范；非逐个场所认定。",
+      "verified_on": "2026-09-27",
+      "scope": "source_example_not_country_exhaustive"
+    },
+    {
+      "id": "source-03",
+      "country": "GB",
+      "place": "Leicester",
+      "evidence_type": "documented_hotspot",
+      "poi_types": [
+        "fast_food",
+        "bar",
+        "nightclub"
+      ],
+      "publisher": "College of Policing / Leicestershire Police",
+      "url": "https://www.college.police.uk/support-forces/practices/problem-solving-prevent-night-time-economy-related-serious-violence-mcdonalds-restaurants",
+      "summary": "研究针对两家市中心快餐店的夜间暴力，不能推广为整个品牌。",
+      "verified_on": "2026-09-27",
+      "scope": "source_example_not_country_exhaustive"
+    },
+    {
+      "id": "source-04",
+      "country": "GB",
+      "place": "Manchester",
+      "evidence_type": "policing_priority",
+      "poi_types": [
+        "bar",
+        "nightclub"
+      ],
+      "publisher": "Greater Manchester Police",
+      "url": "https://www.gmp.police.uk/news/greater-manchester/news/news/2025/july/operation-which-reduced-rape-by-50-and-robbery-by-39-on-peter-street-to-expand-citywide-this-summer/",
+      "summary": "市中心夜生活热点治理。",
+      "verified_on": "2026-09-27",
+      "scope": "source_example_not_country_exhaustive"
+    },
+    {
+      "id": "source-05",
+      "country": "FR",
+      "place": "Lyon",
+      "evidence_type": "policing_priority",
+      "poi_types": [
+        "station"
+      ],
+      "publisher": "Police nationale",
+      "url": "https://www.police-nationale.interieur.gouv.fr/actualite/transports-en-commun-a-lyon-des-patrouilles-de-policiers-pour-renforcer-securite",
+      "summary": "交通网络的扒窃与抢夺治理。",
+      "verified_on": "2026-09-27",
+      "scope": "source_example_not_country_exhaustive"
+    },
+    {
+      "id": "source-06",
+      "country": "ES",
+      "place": "Catalonia",
+      "evidence_type": "prevention_advice",
+      "poi_types": [
+        "station"
+      ],
+      "publisher": "Mossos d’Esquadra",
+      "url": "https://mossos.gencat.cat/es/consells_de_seguretat/persones/mobilitatsegura/transports-publics/",
+      "summary": "车站、站台、扶梯和上下车位置防扒窃。",
+      "verified_on": "2026-09-27",
+      "scope": "source_example_not_country_exhaustive"
+    },
+    {
+      "id": "source-07",
+      "country": "NL",
+      "place": "Netherlands",
+      "evidence_type": "prevention_advice",
+      "poi_types": [
+        "station",
+        "marketplace",
+        "shop",
+        "airport",
+        "attraction",
+        "hotel"
+      ],
+      "publisher": "Politie",
+      "url": "https://www.politie.nl/informatie/waar-moet-ik-op-mijn-hoede-zijn-voor-zakkenrollers.html",
+      "summary": "包含集市、交通、机场、景点、酒店大堂。",
+      "verified_on": "2026-09-27",
+      "scope": "source_example_not_country_exhaustive"
+    },
+    {
+      "id": "source-08",
+      "country": "DK",
+      "place": "Copenhagen",
+      "evidence_type": "nightlife_zone",
+      "poi_types": [
+        "bar",
+        "nightclub"
+      ],
+      "publisher": "Københavns Politi",
+      "url": "https://politi.dk/politikredse/koebenhavns-politi/nattelivszoner",
+      "summary": "四个夜生活区；页面注明延续至2027-05-31，制度不等同柏林kbO。",
+      "verified_on": "2026-09-27",
+      "scope": "source_example_not_country_exhaustive"
+    },
+    {
+      "id": "source-09",
+      "country": "SE",
+      "place": "Sweden",
+      "evidence_type": "criminal_influence_area",
+      "poi_types": [],
+      "publisher": "Polisen",
+      "url": "https://polisen.se/om-polisen/polisens-arbete/utsatta-omraden/",
+      "summary": "2025区域清单提供GeoJSON；指标是犯罪对社区的影响，不是游客受害概率。",
+      "verified_on": "2026-09-27",
+      "scope": "source_example_not_country_exhaustive"
+    },
+    {
+      "id": "source-10",
+      "country": "BE",
+      "place": "Brussels",
+      "evidence_type": "documented_hotspot",
+      "poi_types": [
+        "station"
+      ],
+      "publisher": "Police fédérale",
+      "url": "https://www.police.be/5998/fr/actualites/stop-pickpockets-suivre-son-intuition",
+      "summary": "以警方统计识别的五个主要车站为宣传与执法重点；2021历史材料。",
+      "verified_on": "2026-09-27",
+      "scope": "source_example_not_country_exhaustive"
+    },
+    {
+      "id": "source-11",
+      "country": "BE",
+      "place": "Brunau",
+      "evidence_type": "prevention_advice",
+      "poi_types": [
+        "parking"
+      ],
+      "publisher": "Police locale",
+      "url": "https://www.police.be/5337/actualites/ameliorer-la-securite-dans-les-parkings",
+      "summary": "公共停车场盗窃、毁损等防范；不构成具体停车场热点认定。",
+      "verified_on": "2026-09-27",
+      "scope": "source_example_not_country_exhaustive"
+    },
+    {
+      "id": "source-12",
+      "country": "AT",
+      "place": "Salzburg",
+      "evidence_type": "prevention_advice",
+      "poi_types": [
+        "station"
+      ],
+      "publisher": "Landespolizeidirektion Salzburg",
+      "url": "https://www.polizei.gv.at/sbg/start19c0.html?ctrl=3734335266674d385951343d&nwid=4e4b43634338376b622b343d&nwo=48",
+      "summary": "2022车站、站台及车厢防扒窃提示。",
+      "verified_on": "2026-09-27",
+      "scope": "source_example_not_country_exhaustive"
+    },
+    {
+      "id": "source-13",
+      "country": "IT",
+      "place": "Napoli",
+      "evidence_type": "policing_priority",
+      "poi_types": [
+        "station"
+      ],
+      "publisher": "Polizia di Stato",
+      "url": "https://questure.poliziadistato.it/it/Napoli/articolo/2571643d421e13fb8663533496",
+      "summary": "2023复活节车站及铁路治理，特别提及Napoli Centrale。",
+      "verified_on": "2026-09-27",
+      "scope": "source_example_not_country_exhaustive"
+    },
+    {
+      "id": "source-14",
+      "country": "FI",
+      "place": "Lapland",
+      "evidence_type": "prevention_advice",
+      "poi_types": [
+        "bar",
+        "restaurant",
+        "station",
+        "airport"
+      ],
+      "publisher": "Poliisi",
+      "url": "https://poliisi.fi/-/suojaudu-taskuvarkailta",
+      "summary": "活动、餐厅酒吧和交通换乘场景的扒窃提示。",
+      "verified_on": "2026-09-27",
+      "scope": "source_example_not_country_exhaustive"
+    }
+  ],
+  "poi_types": {
+    "bar": {
+      "color": "#d97706",
+      "label": "酒吧 / Pub"
+    },
+    "nightclub": {
+      "color": "#9333ea",
+      "label": "夜店"
+    },
+    "station": {
+      "color": "#2563eb",
+      "label": "车站"
+    },
+    "restaurant": {
+      "color": "#ea580c",
+      "label": "餐厅"
+    },
+    "cafe": {
+      "color": "#a16207",
+      "label": "咖啡馆"
+    },
+    "fast_food": {
+      "color": "#db2777",
+      "label": "快餐店"
+    },
+    "shop": {
+      "color": "#0891b2",
+      "label": "商店 / 商场"
+    },
+    "marketplace": {
+      "color": "#4f46e5",
+      "label": "集市"
+    },
+    "airport": {
+      "color": "#475569",
+      "label": "机场航站楼"
+    },
+    "attraction": {
+      "color": "#be123c",
+      "label": "景点 / 博物馆"
+    },
+    "hotel": {
+      "color": "#0d9488",
+      "label": "酒店"
+    },
+    "park": {
+      "color": "#15803d",
+      "label": "公园"
+    },
+    "parking": {
+      "color": "#64748b",
+      "label": "停车场"
+    }
+  },
+  "note": "欧洲范围不等于欧盟；依用户决定不包含土耳其/伊斯坦布尔。一般预防建议不证明某一家POI高发。"
+}

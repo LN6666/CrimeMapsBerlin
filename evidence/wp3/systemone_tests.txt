@@ -1,6 +1,0 @@
-Command: .venv/bin/ruff check adapters/system_one scripts/systemone_preflight.py test_suite/unit/test_system_one.py
-All checks passed!
-Command: .venv/bin/python -m pytest -q test_suite/unit/test_system_one.py
-62 passed in 2.83s
-Exit code: 0
-Scope: unit fixtures; separate real SimpleJev evidence is simplejev_graph_integration.json.

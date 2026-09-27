@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<nodes>
-  <node id="n5" x="-199.98933922704578" y="-33.331858582884486" type="priority" />
-  <node id="n0" x="-99.99466961342412" y="-33.331858582884486" type="priority" />
-  <node id="n1" x="1.9752035138203772e-10" y="-33.331858582884486" type="priority" />
-  <node id="n2" x="99.99466961362165" y="-33.331858582884486" type="priority" />
-  <node id="n3" x="1.9752035138203772e-10" y="166.65929291600258" type="priority" />
-  <node id="n4" x="199.9893392272433" y="-33.331858582884486" type="priority" />
-</nodes>

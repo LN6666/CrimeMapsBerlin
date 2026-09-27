@@ -1,6 +1,0 @@
-{
-  "status": "PASS",
-  "files_checked": 414,
-  "issues": [],
-  "scope": "tracked and publishable untracked files; heuristic secrets, symlinks and size"
-}

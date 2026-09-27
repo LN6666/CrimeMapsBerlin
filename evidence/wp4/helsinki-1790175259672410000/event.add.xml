@@ -1,8 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<additional>
-  <rerouter id="all-closures" edges="e0 e1 e10 e11 e12 e13 e14 e15 e16 e17 e18 e2 e3 e4 e5 e6 e7 e8 e9" probability="1">
-    <interval begin="0.0" end="600">
-      <closingReroute id="e7" allow="bicycle bus delivery emergency motorcycle pedestrian taxi truck" />
-    </interval>
-  </rerouter>
-</additional>

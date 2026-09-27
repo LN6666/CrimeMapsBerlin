@@ -1,8 +1,0 @@
-...............                                                          [100%]
-=============================== warnings summary ===============================
-test_suite/data/test_ingest.py::test_archive_traversal_and_duplicate_rejected
-  /opt/homebrew/Cellar/python@3.12/3.12.13_4/Frameworks/Python.framework/Versions/3.12/lib/python3.12/zipfile/__init__.py:1624: UserWarning: Duplicate name: 'stops.txt'
-    return self._open_to_write(zinfo, force_zip64=force_zip64)
-
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-15 passed, 1 warning in 0.92s

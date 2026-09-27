@@ -1,2 +1,10 @@
-import {defineConfig} from 'vite';
-export default defineConfig({worker:{format:'es'},server:{host:'127.0.0.1',port:5173,proxy:{'/api':'http://127.0.0.1:8765'}},build:{rollupOptions:{input:{main:new URL('./index.html',import.meta.url).pathname,headless:new URL('./headless.html',import.meta.url).pathname,plugin:new URL('./src/plugin.ts',import.meta.url).pathname},output:{entryFileNames:'[name].js',chunkFileNames:'assets/[name]-[hash].js',assetFileNames:'assets/[name]-[hash][extname]'}}}});
+import { defineConfig } from "vite";
+export default defineConfig({
+  server: { host: "127.0.0.1", port: 5173 },
+  build: {
+    rollupOptions: {
+      input: { main: new URL("./index.html", import.meta.url).pathname },
+      output: { manualChunks: { maplibre: ["maplibre-gl"] } },
+    },
+  },
+});

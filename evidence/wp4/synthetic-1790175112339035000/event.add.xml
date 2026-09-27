@@ -1,8 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<additional>
-  <rerouter id="all-closures" edges="e0 e1 e2 e3 e4 e5" probability="1">
-    <interval begin="0.0" end="300.0">
-      <closingReroute id="e2" allow="emergency" />
-    </interval>
-  </rerouter>
-</additional>

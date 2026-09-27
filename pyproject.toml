@@ -1,38 +1,20 @@
 [project]
-name = "civiflux"
+name = "crimemapsberlin"
 version = "0.1.0"
-description = "Data-local Road and Fire scenario analysis with operational ontology"
+description = "Berlin police reports, hexagon maps and evidence-linked urban places"
 requires-python = ">=3.12,<3.13"
 license = "Apache-2.0"
-dependencies = [
-  "fastapi>=0.115,<1",
-  "uvicorn>=0.34,<1",
-  "pydantic>=2.10,<3",
-  "numpy>=2.2,<3",
-  "scipy>=1.15,<2",
-  "networkx>=3.4,<4",
-  "shapely>=2.0,<3",
-  "pyproj>=3.7,<4",
-  "pyarrow>=19,<24",
-  "PyYAML>=6,<7",
-  "jsonschema>=4.23,<5",
-  "httpx>=0.28,<1",
-  "defusedxml>=0.7,<1",
-  "sumolib>=1.24,<2",
-  "eclipse-sumo>=1.24,<2",
-  "osmium>=4,<5",
-]
+dependencies = ["shapely>=2.0,<3", "pyproj>=3.7,<4", "httpx>=0.28,<1", "defusedxml>=0.7,<1", "osmium>=4,<5"]
 [dependency-groups]
-dev = ["pytest>=9,<10", "hypothesis>=6,<7", "ruff>=0.14,<1", "pytest-cov>=7,<8"]
+dev = ["pytest>=9,<10", "ruff>=0.14,<1"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
-packages = ["core/urbanimpact", "api", "adapters", "ontology"]
+packages = ["src/crimemapsberlin"]
 [tool.pytest.ini_options]
-pythonpath = ["core", "."]
-testpaths = ["test_suite"]
-markers = ["live: requires explicitly enabled hosted API inference", "sumo: invokes real SUMO binaries"]
+pythonpath = ["src"]
+testpaths = ["test_suite/safety"]
 [tool.ruff]
 line-length = 110
 target-version = "py312"
