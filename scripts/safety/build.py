@@ -8,6 +8,8 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
+from shapely.geometry import MultiLineString, mapping
+
 from crimemapsberlin.collector import connect
 from crimemapsberlin.geocode import Gazetteer, events_from_db
 from crimemapsberlin.spatial import build_months, pois_from_osm
@@ -18,9 +20,20 @@ OUT = ROOT / "web/public/safety"
 RAW = ROOT / "data/raw/safety"
 
 
+def compact(value):
+    # Public display coordinates need sub-metre precision, not 16 decimal places.
+    if isinstance(value, float):
+        return round(value, 6)
+    if isinstance(value, (list, tuple)):
+        return [compact(v) for v in value]
+    if isinstance(value, dict):
+        return {k: compact(v) for k, v in value.items()}
+    return value
+
+
 def write(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, ensure_ascii=False, separators=(",", ":")))
+    path.write_text(json.dumps(compact(value), ensure_ascii=False, separators=(",", ":")))
 
 
 def main():
@@ -66,11 +79,22 @@ def main():
         for key, part in partitions.items():
             tile_index["pois"].append(f"{kind}/{key}")
             write(staging / f"pois/{kind}/{key}.json", part)
-    major = [
-        f
-        for f in roads["features"]
-        if f["properties"].get("class") in {"motorway", "trunk", "primary", "secondary"}
-    ]
+    major = []
+    for road_class in ("motorway", "trunk", "primary", "secondary"):
+        lines = [
+            f["geometry"]["coordinates"]
+            for f in roads["features"]
+            if f["properties"].get("class") == road_class
+        ]
+        if lines:
+            geometry = MultiLineString(lines).simplify(0.0001)
+            major.append(
+                dict(
+                    type="Feature",
+                    geometry=mapping(geometry),
+                    properties={"id": road_class, "class": road_class},
+                )
+            )
     write(staging / "roads-overview.json", dict(type="FeatureCollection", features=major))
     write(
         staging / "search.json",

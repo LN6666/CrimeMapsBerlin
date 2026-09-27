@@ -10,6 +10,7 @@
 
 ```sh
 uv sync --locked
+export PYTHONPATH="$PWD/src"
 npm --prefix web ci
 # 第一次下载约 100 MB 的柏林 OSM 提取包，校验官方 MD5
 uv run python scripts/safety/fetch_osm.py

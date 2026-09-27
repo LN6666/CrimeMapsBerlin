@@ -26,7 +26,7 @@ Publication v2: `manifest.json` references a unique generation directory. Its mo
 - MapLibre batched GeoJSON/WebGL layers, no individual DOM marker for each POI.
 - Search index is fetched only on first search, not first load. Inputs are debounced.
 - Small circles use 32 segments; maximum chord error is about 0.24 m at radius 50 m.
-- Overview roads are restricted to major classes. Detailed road geometry is simplified for display only.
+- Overview roads are restricted to major classes and batched into four multiline features, simplified at approximately 10 m. Detailed road geometry is simplified for display only. Published coordinates are rounded to six decimal places (approximately 0.1 m); calculation inputs retain full precision.
 
 These are implemented resource bounds, not a blanket frame-rate guarantee on all devices. Browser tests check request behavior and stale/month state; actual devices and expanded datasets still need measurement.
 

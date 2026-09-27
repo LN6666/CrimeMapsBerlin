@@ -3,6 +3,7 @@
 ## Routine commands
 
 ```sh
+export PYTHONPATH="$PWD/src"
 uv run python scripts/safety/update.py
 # Full archive discovery plus bounded body fetching
 uv run python scripts/safety/update.py --full --limit 1500
