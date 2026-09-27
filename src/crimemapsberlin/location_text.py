@@ -27,6 +27,7 @@ GENERIC_NAMES = {
     "radweg",
     "an der strasse",
 }
+CONTEXTUAL_GENERIC_NAMES = {"innenhof", "marktplatz", "uferweg", "sporthalle", "auf der höhe"}
 DISTRICT_NAMES = {
     "mitte",
     "friedrichshain-kreuzberg",
@@ -48,6 +49,8 @@ DISTRICT_NAMES = {
 
 def normalize(text):
     text = unicodedata.normalize("NFKC", text).casefold().replace("ß", "ss").translate(DASHES)
+    text = re.sub(r"\bs-\s*(?:und\s+|/\s*)u-bahnhof(?:s)?\b", "s+u-bahnhof", text)
+    text = re.sub(r"\b([us](?:\+u)?-bahnhof|bahnhof)s\b", r"\1", text)
     text = re.sub(r"\s*-\s*", "-", text)
     text = re.sub(r"(?<=\w)str\.(?=\s|$|[,;/])", "strasse", text)
     text = re.sub(r"\bstr\.(?=\s|$|[,;/])", "strasse", text)
@@ -114,7 +117,8 @@ def narrative_sentences(body):
             text[max(0, match.start() - 2) : match.start()].endswith(".")
             and re.search(r"\d\.$", text[: match.start()])
             and re.match(
-                r"(?:januar|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember)\b",
+                r"(?:januar|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember|"
+                r"einsatzhundertschaft|hundertschaft|mordkommission)\b",
                 text[match.end() :],
             )
         ):
@@ -166,8 +170,20 @@ def mention_role(sentence, start, end):
         r"krankenhaus|gewahrsam|polizeidienststelle", sentence
     ):
         return "destination"
-    if re.search(r"\b(?:richtung|fahrtrichtung)\s+(?:der\s+|des\s+)?$", before):
+    if re.search(
+        r"\b(?:richtung|fahrtrichtung)\s+(?:der\s+|des\s+)?"
+        r"(?:(?:[us](?:\+u)?-)?bahnhof\s+)?$",
+        before,
+    ):
         return "direction"
+    # An explicit 'from NAME, coming ...' is an origin even when a collision occurs elsewhere.
+    origin = re.search(
+        r"\b(?:aus|von|vom)\s+(?:der\s+|dem\s+)?"
+        r"(?:(?:[us](?:\+u)?-)?bahnhof\s+)?$",
+        before,
+    )
+    if origin and re.match(r"\s+kommend\b", clause[offset + end - start :]):
+        return "travel_origin"
     if re.search(r"gesperrt|vollsperrung|umleitung|unfallaufnahme", clause) and not (
         INCIDENT_ACTIONS.search(clause)
     ):
@@ -179,13 +195,19 @@ def mention_role(sentence, start, end):
         return "escape"
     if re.search(
         r"festgenommen|nahmen.*?fest|nahm.*?fest|festnahme|stellten.*?fest|"
-        r"aufgefunden|entdeckten|angetroffen",
+        r"aufgefunden|entdeckten|angetroffen|\bfand\b|\bfanden\b",
         clause,
     ) and not INCIDENT_ACTIONS.search(clause):
         return "response"
+    if re.search(r"(?:bemerkte|hörte|hörten).*?\bknall\b", clause) and not INCIDENT_ACTIONS.search(clause):
+        return "witness"
     if (
         not INCIDENT_ACTIONS.search(clause)
-        and re.search(r"\b(?:aus|von)\s+(?:der\s+|dem\s+)?$", before)
+        and re.search(
+            r"\b(?:aus|von)\s+(?:der\s+|dem\s+)?$|"
+            r"\b(?:vom|von dem|von der)\s+(?:gehweg|fahrbahn|seite)\s+(?:der|des)\s*$",
+            before,
+        )
         and re.search(r"kommend|gekommen|befuhr|befuhren|fuhr|fuhren|bog|überquer|unterwegs", clause)
     ):
         return "travel_origin"
@@ -205,14 +227,22 @@ def mention_role(sentence, start, end):
 
 
 def locative(sentence, start):
+    before = sentence[max(0, start - 180) : start]
     return bool(
+        re.search(
+            r"\b(?:befuhr|befuhren|überquerte|überquerten|lief|ging)\b.{0,160}?\b(?:die|den)\s+$",
+            before,
+        )
+    ) or bool(
         re.search(
             r"(?:\b(?:in|im|am|an|auf|beim|vor|nahe|gegenüber|hinter|unter|über|zur|zum|zu|entlang|"
             r"befuhr|befuhren|überquerte|überquerten|passierte|erreichte)|"
             r"\b(?:bereich|höhe|kreuzung|kreuzungsbereich|ecke|einmündung|hinterhof|hausflur|gebäude|wohnung|"
-            r"wohnanschrift|anschrift|adresse|strasse))\s+(?:der\s+|dem\s+|des\s+|die\s+|den\s+|einem\s+|einer\s+)?(?:"
+            r"wohnanschrift|anschrift|adresse|strasse|fahrbahn|gehweg))\s+(?:der\s+|dem\s+|des\s+|die\s+|den\s+|einem\s+|einer\s+)?(?:"
             r"bahnhof\s+|[us]-bahnhof\s+|s\+u-bahnhof\s+|haltestelle\s+|bushaltestelle\s+|"
-            r"einkaufscenter\s+|einkaufszentrum\s+|restaurant\s+|cafe\s+|bar\s+|hotel\s+)?[„“\"‚'»]*$",
+            r"(?:gehweg|fahrbahn|mittelstreifen|eingang|zufahrt)\s+(?:der|des|zur|zum)\s+|"
+            r"einkaufscenter\s+|einkaufszentrum\s+|restaurant\s+|cafe\s+|bar\s+|hotel\s+|"
+            r"park\s+|grünanlage\s+|strasse\s+namens\s+)?[„“\"‚'»]*$",
             sentence[max(0, start - 65) : start],
         )
     )
@@ -256,9 +286,11 @@ INCIDENT_WORDS = re.compile(
 INCIDENT_ACTIONS = re.compile(
     r"beraub|ausgeraub|überfall|angegriff|angriff|geschlagen|schlug|besprüht|reizstoff|"
     r"schoss|schüsse|schussabgab|geschossen|gestohlen|entwend|eingebrochen|einbruch|einbrüch|"
-    r"verdächtige geräusche|in brand|brannte|zusammenstoss|kollid|kollision|angefahren|fuhr.*?an,|"
+    r"verdächtige geräusche|\bbrand\b|\bfeuer\b|feuerschein|entflamm|\bflammen\b|brannte|brennend|anzünd|"
+    r"zusammenstoss|kollid|kollision|stiess.{0,150}?zusammen|angefahren|fuhr.*?an,|"
     r"einschuss|einschüsse|schusslöch|beschmier|farbschmier|bemal|graffiti|hakenkreuz|"
     r"verkauf.{0,60}?(?:drogen|betäubungsmittel)|drogenhandel|"
+    r"aufzubrechen|aufgebrochen|einzubrechen|einbruchsspuren|attackier|entreissen|"
     r"prall|erfass|beschädig|stach|beleidig|bedroht|bedrohung|übergriff|stürz|sturz|"
     r"fuhr.{0,150}?\ban\b(?=\s*[,.;]|$)|"
     r"fuhr.{0,150}?\bgegen\b(?!\s+\d{1,2}(?::\d{2})?\s*uhr)|"
@@ -276,7 +308,7 @@ def incident_at_location(sentence, match):
 def preparatory_location(sentence):
     return bool(
         re.search(
-            r"befuhr|befuhren|stiegen|eingestiegen|einsteigen|anhalten|überprüfung|verkehrskontrolle",
+            r"befuhr|befuhren|stiegen|eingestiegen|einsteigen|anhalten|überprüfung|verkehrskontrolle|posier",
             sentence,
         )
     ) and not INCIDENT_WORDS.search(sentence)

@@ -27,6 +27,10 @@ Geocoding v2 addresses the owner's observed omissions: full narrative scanning, 
 
 Rule version 3 adds incident-scene priority, action-linked temporal clauses, compact 2–4-road junctions, and explicitly bounded street sections. Public scene-selection/additional-candidate fields and selected section lines are implemented; missing or moving scenes still need review. The frozen v2→v3 comparison lives locally in `.runtime/safety/scene-priority/`; regression fixtures remain synthetic. DATA records actual counts and tolerances. Continue to distinguish crime traces on fixed objects from merely finding an injured person.
 
+Rule version 4 adds station/genitive context, ordinary-word disambiguation, adjacent junction anchors, explicit origin/destination roles, fixed-fire evidence and scene-consistent locality context. The frozen v3→v4 comparison in `.runtime/safety/context-v4/` maps 746/1,098 announcements (66 gained, 14 withdrawn; 352 unresolved), using unchanged bodies/indexes. This is mapping coverage, not accuracy. All runtime evidence stays local and is unavailable on a fresh computer; synthetic regression fixtures remain in Git.
+
+The owner also requested a familiar street/imagery map. `web/src/safety/basemaps.ts` owns standard OSM tiles, Berlin government 2026 aerial WMS and local simplified roads. Basemap switching preserves analytical state and cancels inactive sources; failed external tiles stop and fall back visibly. No API key/subscription is required. The aerial layer is not satellite/live imagery. See DATA for sources, licence, flight date and display-only use.
+
 ## Git workflow
 
 Use `codex/` feature branches and pull requests. Check Python tests, TypeScript/build and browser tests. Do not disable failing checks or erase Git history. Main's reviewer requirements remain in force; completing code and passing CI is distinct from an approved merge.

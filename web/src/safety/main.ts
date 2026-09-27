@@ -8,11 +8,13 @@ import { empty, filteredHex, monthEvents, safeURL, styledPois } from "./model";
 import type { Bundle, FC } from "./model";
 import { DataClient } from "./data";
 import type { Manifest } from "./data";
+import { Basemaps, basemapLabels } from "./basemaps";
+import type { BasemapId } from "./basemaps";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `<header><div><span class="brand">CRIMEMAPSBERLIN</span><h1>柏林 · 警情与城市场所</h1></div><div class="toolbar"><label>年份<select id="year" aria-label="年份"></select></label><label>月份<select id="month" aria-label="月份"></select></label><button id="overview">全市概览</button><button id="sources">警方来源</button></div></header>
 <main><aside class="controls"><p class="eyebrow">BERLIN / PUBLIC REPORTS</p><h2>看事件，也看周边</h2><p id="coverage">读取本地数据…</p><label class="search-label">查找柏林场所<input id="search" placeholder="如 Kottbusser Tor、酒吧名称" autocomplete="off"></label><div id="search-results"></div><label>事件类别<select id="category"><option value="all">全部警方公告</option></select></label><div class="rule"></div><h3>六边形 · 公告数量</h3><div class="ramp"></div><div class="ends"><span>少</span><span>多</span></div><p id="resolution"></p><label class="toggle"><input id="hex-toggle" type="checkbox" checked> 显示六边形</label><h3>周边 POI</h3><div id="poi-filters"></div><label class="toggle"><input id="highlight" type="checkbox" checked> 报告提及类型 + 附近匹配时加深</label><p class="hint">小型场所：50 米圆。车站：已有面状范围；空心点表示范围缺失。加深表示关联记录数。</p><div class="rule"></div><button id="kbo">查看柏林 kbO 官方区域</button><p class="hint">警方划定区域与事件网格分别展示。</p><p id="freshness" class="hint"></p></aside>
-<section class="map-wrap"><div id="map" aria-label="柏林警情交互地图"></div><div class="map-label"><span class="dot"></span><span id="map-status">正在准备地图</span></div><div class="map-note">浅色 POI 是城市设施，不代表被警方认定为高发场所</div></section>
+<section class="map-wrap"><div id="map" aria-label="柏林警情交互地图"></div><div class="map-label"><span class="dot"></span><span id="map-status">正在准备地图</span></div><div class="basemap-picker"><label>底图<select id="basemap" aria-label="底图" disabled><option value="street">标准街道</option><option value="aerial">航空影像（2026）</option><option value="local">本地简图</option></select></label><div id="basemap-error" role="status" hidden><span></span><button id="basemap-fallback">使用本地简图</button></div></div><div class="map-note">浅色 POI 是城市设施，不代表被警方认定为高发场所</div></section>
 <aside class="details"><div id="stats"></div><div id="selection"><h2>选择一个六边形或 POI</h2><p>查看该区域的事件、类别，以及可以追溯的警方原文。</p></div></aside></main>
 <dialog id="drawer"><button id="close-dialog" class="close">关闭</button><div id="drawer-content"></div></dialog>`;
 const el = <T extends HTMLElement = HTMLElement>(id: string) =>
@@ -33,6 +35,7 @@ function link(parent: HTMLElement, label: string, url: string) {
 }
 let data: Bundle;
 let map: maplibregl.Map;
+let basemaps: Basemaps;
 let activeHex: FC = empty();
 let activePois: FC = empty();
 let loaded = false;
@@ -212,6 +215,34 @@ function showSelection() {
   }
   listReports(panel, p.event_ids ?? []);
 }
+function paintOverlays() {
+  const max = Math.max(1, ...activeHex.features.map((f) => f.properties.count));
+  const base = basemaps?.rendered ?? "local";
+  map.setPaintProperty("hex-fill", "fill-opacity", [
+    "interpolate",
+    ["linear"],
+    ["get", "count"],
+    0,
+    base === "street" ? 0.06 : 0.1,
+    max,
+    base === "local" ? 0.68 : base === "aerial" ? 0.52 : 0.46,
+  ]);
+  map.setPaintProperty(
+    "hex-line",
+    "line-color",
+    base === "aerial" ? "#ffb4aa" : "#ac3737",
+  );
+  map.setPaintProperty(
+    "hex-line",
+    "line-opacity",
+    base === "aerial" ? 0.75 : 0.45,
+  );
+  map.setPaintProperty("poi-fill", "fill-opacity", [
+    "*",
+    ["get", "opacity"],
+    base === "street" ? 0.8 : 1,
+  ]);
+}
 function refresh() {
   if (!loaded || expired) return;
   const month = data.months[monthKey()],
@@ -239,17 +270,8 @@ function refresh() {
     "visibility",
     el<HTMLInputElement>("hex-toggle").checked ? "visible" : "none",
   );
-  const max = Math.max(1, ...activeHex.features.map((f) => f.properties.count));
   currentMode = mode;
-  map.setPaintProperty("hex-fill", "fill-opacity", [
-    "interpolate",
-    ["linear"],
-    ["get", "count"],
-    0,
-    0.1,
-    max,
-    0.68,
-  ]);
+  paintOverlays();
   el("resolution").textContent =
     `边长 ${mode === "detail" ? "275" : "1,100"} 米 · 缩放自动切换`;
   el("map-status").textContent = month
@@ -454,6 +476,9 @@ async function start() {
       center: [13.411, 52.508],
       zoom: 12.1,
       attributionControl: false,
+      maxTileCacheSize: 64,
+      cancelPendingTileRequestsWhileZooming: true,
+      refreshExpiredTiles: false,
       style: {
         version: 8,
         sources: {},
@@ -468,10 +493,14 @@ async function start() {
     });
     map.addControl(new maplibregl.NavigationControl(), "bottom-right");
     map.addControl(
+      new maplibregl.ScaleControl({ maxWidth: 100, unit: "metric" }),
+      "bottom-left",
+    );
+    map.addControl(
       new maplibregl.AttributionControl({
-        compact: true,
+        compact: false,
         customAttribution:
-          "© OpenStreetMap contributors / Geofabrik · Polizei Berlin",
+          '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">场所/道路：© OpenStreetMap contributors</a> / <a href="https://www.geofabrik.de/" target="_blank" rel="noopener noreferrer">Geofabrik</a> · <a href="https://www.berlin.de/polizei/polizeimeldungen/" target="_blank" rel="noopener noreferrer">警情：Polizei Berlin</a>',
       }),
     );
     map.once("load", async () => {
@@ -555,6 +584,22 @@ async function start() {
         type: "FeatureCollection",
         features: data.zones.features,
       });
+      basemaps = new Basemaps(map, paintOverlays, (id) => {
+        const error = el("basemap-error");
+        error.querySelector("span")!.textContent =
+          `${basemapLabels[id]}加载失败，当前显示简化道路。`;
+        error.hidden = false;
+      });
+      const changeBasemap = (id: BasemapId) => {
+        el("basemap-error").hidden = true;
+        el<HTMLSelectElement>("basemap").value = id;
+        basemaps.select(id);
+      };
+      el<HTMLSelectElement>("basemap").disabled = false;
+      el("basemap").onchange = () =>
+        changeBasemap(el<HTMLSelectElement>("basemap").value as BasemapId);
+      el("basemap-fallback").onclick = () => changeBasemap("local");
+      changeBasemap("street");
       loaded = true;
       await Promise.all([loadMonth(), loadViewport()]);
       map.on("click", (e) => {
@@ -662,6 +707,7 @@ window.addEventListener("pagehide", () => {
   viewportRequest.abort();
   clearTimeout(viewportTimer);
   clearInterval(freshnessTimer);
+  basemaps?.dispose();
   map?.remove();
 });
 void start();

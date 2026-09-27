@@ -10,6 +10,7 @@ from shapely.ops import nearest_points, substring, transform, unary_union
 
 from .feed import mentions
 from .location_text import (
+    CONTEXTUAL_GENERIC_NAMES,
     DISTRICT_NAMES,
     GENERIC_NAMES,
     INCIDENT_ACTIONS,
@@ -28,7 +29,7 @@ from .location_text import (
 )
 from .spatial import TO_METRIC, TO_WGS
 
-GEOCODE_VERSION = "3"
+GEOCODE_VERSION = "4"
 NON_INCIDENT = re.compile(
     r"bilanz|allgemeinverfügung|aktionstag|videoschutz|präventions|speedweek|"
     r"gemeinsam für mehr sicherheit|stadtweite durchsuchungs|koordinierte internationale kontroll"
@@ -90,21 +91,99 @@ class Gazetteer:
             if self.localities[i].get("admin_level") == "9"
         ]
         district_area = unary_union([r["metric"] for r in districts])
+        if re.search(r"durchsuchungsbeschl", intro):
+            return min(districts, key=lambda r: r["metric"].area) if districts else None
         neighbourhoods = []
         for match, ids in self.locality_matcher.matches(intro):
-            if not contextual_locality(intro, match.start()) and not locative(intro, match.start()):
+            dispatched = re.search(r"\bnach\s+$", intro[: match.start()]) and re.search(
+                r"alarmiert", intro[match.end() :]
+            )
+            if (
+                not dispatched
+                and not contextual_locality(intro, match.start())
+                and not locative(intro, match.start())
+            ):
+                continue
+            if station_context(intro, match.start(), match.end(), match[0]) or (
+                not dispatched
+                and mention_role(intro, match.start(), match.end())
+                in {"direction", "travel_origin", "destination"}
+            ):
                 continue
             for ident in sorted(ids):
                 row = self.localities[ident]
+                # "In Mitte/Spandau/Pankow" can mean the district, rather than its namesake Ortsteil.
+                explicit_neighbourhood = re.search(
+                    r"\b(?:ortsteil|stadtteil)\s+(?:berlin-)?$", intro[: match.start()]
+                )
+                if not explicit_neighbourhood and any(
+                    normalize(d["name"]) == normalize(row["name"]) for d in districts
+                ):
+                    continue
                 if row.get("admin_level") == "10" and (
                     district_area.is_empty or district_area.covers(row["metric"].representative_point())
                 ):
                     neighbourhoods.append(row)
         # A district heading with the same name as a neighbourhood must not select that neighbourhood.
-        # Narrative order matters: a smaller later destination must not replace the initial locality.
         if neighbourhoods:
             return neighbourhoods[0]
         return min(districts, key=lambda r: r["metric"].area) if districts else None
+
+    def _scene_scope(self, district, sentences, selected_index, selected):
+        # A journey may cross neighbourhoods: retain explicit context consistent with the scene.
+        # The official district boundary still applies, even if the source contradicts it.
+        default = self._scope(district, "")
+        nearest = None
+        for sentence in reversed(sentences[: selected_index + 1]):
+            scope = self._scope(district, sentence)
+            if scope and scope.get("admin_level") == "10":
+                nearest = nearest or scope
+                if all(self._intersects_scope(m, scope) for m in selected):
+                    return scope
+        if (
+            nearest
+            and district in {"bezirksübergreifend", "bundeslandübergreifend"}
+            and re.search(r"kreuzung|einmündung", sentences[selected_index])
+            and not self._scope(district, sentences[selected_index])
+        ):
+            # An explicit later junction in a cross-district pursuit is not clipped to its origin.
+            return default
+        return nearest or default
+
+    def _intersects_scope(self, match, scope):
+        if match["kind"] == "street":
+            return not self._road(match["key"], scope).is_empty
+        feature = self.places[match["key"]]
+        geometry = transform(TO_METRIC, shape(feature.get("location_geometry", feature["geometry"])))
+        return scope["metric"].buffer(30).intersects(geometry)
+
+    def _junction_anchors(self, linked, matches, sentence, previous, previous_index):
+        """Retain a named junction across adjacent travel/collision sentences."""
+        roads = {m["key"] for m in linked if m["kind"] == "street"}
+        if len(roads) != 1 or any(m["kind"] == "place" for m in linked):
+            return linked
+        previous_roads = [
+            m for m in self._matches(previous) if m["kind"] == "street" and m["role"] == "primary"
+        ]
+        if re.search(r"kreuzung|einmündung", previous):
+            origins = {m["key"] for m in matches if m["role"] == "travel_origin"}
+            anchors = [m for m in previous_roads if m["key"] in origins]
+        elif (
+            re.search(r"kreuzung|einmündung|\bhöhe\b", sentence)
+            and re.search(r"abbog|abgebogen|fuhr|stiess", sentence)
+            and (
+                preparatory_location(previous)
+                or (re.search(r"unterwegs", previous) and not INCIDENT_WORDS.search(previous))
+            )
+        ):
+            anchors = previous_roads if len(previous_roads) == 1 else []
+        else:
+            anchors = []
+        return linked + [
+            dict(m, role="junction_anchor", sentence_index=previous_index)
+            for m in anchors
+            if m["key"] not in roads
+        ]
 
     def _road(self, name, scope):
         key = name, scope["id"] if scope else None
@@ -120,6 +199,16 @@ class Gazetteer:
         rows = []
         for match, names in self.street_matcher.matches(sentence):
             for name in sorted(names):
+                if re.search(r"bushaltestelle\s+$", sentence[: match.start()]) and re.match(
+                    r"\s+(?:nord|süd|ost|west)\b", sentence[match.end() :]
+                ):
+                    continue  # A qualified stop name is not its same-named road.
+                if name in CONTEXTUAL_GENERIC_NAMES and not (
+                    re.search(r"\b(?:strasse|namens)\s+[„“\"]?$", sentence[: match.start()])
+                    or sentence[max(0, match.start() - 1) : match.start()] in {"/", '"', "„"}
+                    or sentence[match.end() : match.end() + 1] == "/"
+                ):
+                    continue
                 if name in self.locality_names and contextual_locality(sentence, match.start()):
                     continue
                 rows.append(
@@ -128,6 +217,19 @@ class Gazetteer:
         for match, ids in self.place_matcher.matches(sentence):
             for ident in sorted(ids):
                 p = self.places[ident]["properties"]
+                if normalize(p["name"]) in CONTEXTUAL_GENERIC_NAMES and not venue_context(
+                    sentence, match.start()
+                ):
+                    continue
+                if (
+                    p["kind"] in {"park", "attraction"}
+                    and any(
+                        m["kind"] == "street" and m["start"] == match.start() and m["end"] == match.end()
+                        for m in rows
+                    )
+                    and not venue_context(sentence, match.start())
+                ):
+                    continue
                 if p["kind"] not in {"station", "park", "attraction"} and not venue_context(
                     sentence, match.start()
                 ):
@@ -148,6 +250,16 @@ class Gazetteer:
                 )
         for row in rows:
             row["role"] = mention_role(sentence, row["start"], row["end"])
+        place_spans = {
+            (m["start"], m["end"])
+            for m in rows
+            if m["kind"] == "place"
+            and (
+                self.places[m["key"]]["properties"]["kind"] == "station"
+                or venue_context(sentence, m["start"])
+            )
+        }
+        rows = [m for m in rows if m["kind"] != "street" or (m["start"], m["end"]) not in place_spans]
         return rows
 
     def _suggestions(self, text):
@@ -178,6 +290,8 @@ class Gazetteer:
         ignored = []
         scene_options = []
         fallback = []
+        moving_response = False
+        mobile_context = re.search(r"\b(?:im zug|im bus|während der fahrt)\b", " ".join(sentences))
         for i, sentence in enumerate(sentences):
             matches = self._matches(sentence)
             primary = [m for m in matches if m["role"] == "primary"]
@@ -190,7 +304,9 @@ class Gazetteer:
                 unscoped.extend(primary)
                 if any(locative(sentence, m["start"]) or m["kind"] == "place" for m in primary):
                     linked = [m for m in primary if incident_at_location(sentence, m)]
-                    if linked and re.search(r",\s*als\b", sentence):
+                    if (linked and re.search(r",\s*als\b", sentence)) or (
+                        re.search(r"kreuzung|einmündung", sentence) and re.search(r"\bund\s+kollid", sentence)
+                    ):
                         # The collision clause can refer back to the road in the preceding travel clause.
                         linked = primary
                     # A following action may refer back to this driveway, control point or junction.
@@ -203,20 +319,42 @@ class Gazetteer:
                             break
                         if (
                             not linked
-                            and re.match(
-                                r"daraufhin|dabei|dort|anschliessend|beim\b|als\b|in der folge|"
-                                r"auf der kreuzung|zum selben zeitpunkt|"
-                                r"(?:die|der)\s+(?:insassen|fahrer|mann|frau|tatverdächtigen|täter)\b",
-                                following,
+                            and (
+                                next_primary
+                                or re.match(
+                                    r"daraufhin|dabei|dort|anschliessend|beim\b|als\b|in der folge|"
+                                    r"auf der kreuzung|zum selben zeitpunkt|"
+                                    r"kurz (?:hinter|vor) der bushaltestelle\b|"
+                                    r"(?:die|der)\s+(?:insassen|fahrer|mann|frau|tatverdächtigen|täter)\b|"
+                                    r"(?:die|der|ein|eine)\s+\d{1,3}-jährig\w*\b|"
+                                    r"dieses\b|dieser\b|das fahrzeug\b",
+                                    following,
+                                )
                             )
                             and (INCIDENT_ACTIONS.search(following) or INCIDENT_WORDS.search(following))
                         ):
                             linked = primary
                             break
                     if linked:
+                        if i:
+                            linked = self._junction_anchors(
+                                linked, matches, sentence, sentences[i - 1], i - 1
+                            )
                         scene_options.append((i, linked))
                     elif not preparatory_location(sentence):
-                        fallback.append((i, primary))
+                        if (
+                            mobile_context
+                            and re.search(r"alarmiert", sentence)
+                            and all(
+                                m["kind"] == "place"
+                                and self.places[m["key"]]["properties"]["kind"] == "station"
+                                for m in primary
+                            )
+                        ):
+                            # A response station cannot establish the location of an attack in transit.
+                            moving_response = True
+                        else:
+                            fallback.append((i, primary))
         result["excluded_location_context"] = ignored
         if scene_options:
             selected_index, selected = scene_options[0]
@@ -235,7 +373,9 @@ class Gazetteer:
             # Name-only lists are candidates, not an incident coordinate.
             result["geocode_candidates"] = sorted({m["alias"] for m in unscoped})
             result["geocode_method"] = (
-                "travel_origin_review"
+                "moving_scene_review"
+                if moving_response
+                else "travel_origin_review"
                 if all(preparatory_location(s) for s in sentences if self._matches(s))
                 else "unscoped_locations_review"
             )
@@ -261,11 +401,14 @@ class Gazetteer:
                 result["geocode_method"] = "district_only"
             return result
         sentence = sentences[selected_index]
-        scope = self._scope(district, sentence)
-        if not scope or scope.get("admin_level") != "10":
-            scope = self._scope(district, " ".join(sentences[: selected_index + 1]))
+        scope = self._scene_scope(district, sentences, selected_index, selected)
         result["geocode_evidence"] = [
-            dict(name=m["alias"], kind=m["kind"], role=m["role"], sentence_index=selected_index)
+            dict(
+                name=m["alias"],
+                kind=m["kind"],
+                role=m["role"],
+                sentence_index=m.get("sentence_index", selected_index),
+            )
             for m in selected
         ]
         result["geocode_candidates"] = sorted({m["alias"] for m in selected})
@@ -299,10 +442,13 @@ class Gazetteer:
                     )
         if self._section_reference(sentence, selected):
             return self._street_section(selected, sentence, scope, result)
-        if 2 <= len(roads) <= 4 and re.search(
-            r"kreuzung|kreuzungsbereich|einmündung|ecke|höhe|/|\bbog\b|\beinbog\b|abbiegen|"
-            r"\b(?:fuhr|fuhren)\b.*?\bin\b.*?\bein\b",
-            sentence,
+        if 2 <= len(roads) <= 4 and (
+            any(m["role"] == "junction_anchor" for m in selected)
+            or re.search(
+                r"kreuzung|kreuzungsbereich|einmündung|ecke|höhe|/|\bbog\b|\beinbog\b|abbiegen|überquer|"
+                r"\b(?:fuhr|fuhren)\b.*?\bin\b.*?\bein\b",
+                sentence,
+            )
         ):
             junction = self._junction(roads)
             if junction is not None:

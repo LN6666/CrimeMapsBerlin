@@ -29,6 +29,7 @@ Publication v2: `manifest.json` references a unique generation directory. Its mo
 - Search index is fetched only on first search, not first load. Inputs are debounced.
 - Small circles use 32 segments; maximum chord error is about 0.24 m at radius 50 m.
 - Overview roads are restricted to major classes and batched into four multiline features, simplified at approximately 10 m. Detailed road geometry is simplified for display only. Published coordinates are rounded to six decimal places (approximately 0.1 m); calculation inputs retain full precision.
+- `basemaps.ts` owns display-only street/aerial/local sources. One active raster source, viewport tile requests and browser HTTP caching; switching does not recreate the map, refetch monthly events or reset selections. Errors stop the failed source and show local roads. Basemap imagery is never used as a geocode or event-time oracle.
 
 These are implemented resource bounds, not a blanket frame-rate guarantee on all devices. Browser tests check request behavior and stale/month state; actual devices and expanded datasets still need measurement.
 

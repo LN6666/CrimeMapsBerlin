@@ -86,6 +86,9 @@ a:focus-visible,
 input:focus-visible {
   outline: 3px solid #45a98c;
 }
+select:focus-visible {
+  outline: 3px solid #45a98c;
+}
 main {
   height: calc(100vh - 90px);
   display: grid;
@@ -184,6 +187,47 @@ i {
   align-items: center;
   gap: 8px;
   font-size: 12px;
+  max-width: calc(100% - 36px);
+}
+.basemap-picker {
+  position: absolute;
+  top: 70px;
+  left: 18px;
+  max-width: min(280px, calc(100% - 36px));
+  padding: 8px 10px;
+  background: #fffffff2;
+  border-radius: 7px;
+  box-shadow: 0 2px 12px #19372b12;
+}
+.basemap-picker select {
+  margin-top: 3px;
+  padding: 6px 8px;
+}
+#basemap-error {
+  font-size: 11px;
+  color: #793b20;
+  margin-top: 8px;
+}
+#basemap-error button {
+  display: block;
+  font-size: 11px;
+  margin-top: 5px;
+  padding: 5px 8px;
+}
+.maplibregl-ctrl-attrib a {
+  color: #18382e;
+  margin-right: 0;
+}
+.maplibregl-ctrl-attrib {
+  max-width: 100%;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.maplibregl-ctrl-bottom-right {
+  max-width: calc(100% - 12px);
+}
+.maplibregl-ctrl-bottom-left {
+  bottom: 44px;
 }
 .dot {
   width: 7px;
@@ -193,7 +237,7 @@ i {
 }
 .map-note {
   position: absolute;
-  bottom: 34px;
+  bottom: 84px;
   left: 15px;
   max-width: 80%;
   font-size: 10px;
@@ -273,7 +317,7 @@ summary {
   .details {
     position: absolute;
     right: 12px;
-    bottom: 45px;
+    bottom: 110px;
     width: 260px;
     max-height: 40vh;
     border: 1px solid #d8e1da;
@@ -304,6 +348,7 @@ summary {
   }
   .toolbar {
     margin-top: 8px;
+    flex-wrap: wrap;
   }
   main {
     display: flex;
@@ -317,6 +362,16 @@ summary {
   .map-wrap {
     height: 65vh;
     flex-shrink: 0;
+  }
+  .map-label {
+    left: 12px;
+    top: 12px;
+    max-width: calc(100% - 24px);
+  }
+  .basemap-picker {
+    left: 12px;
+    top: 72px;
+    max-width: calc(100% - 24px);
   }
   .details {
     position: static;

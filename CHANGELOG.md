@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add standard OSM street, Berlin 2026 aerial imagery and local basemap choices; preserve selections/camera and stop failed raster sources.
+- Improve station/genitive and scene context, district/Ortsteil ambiguity, generic place names and adjacent collision junctions; retain origin and evidence sentence indexes.
+- Add regressions for moving-train dispatch, named venue/road collisions, fixed fire evidence, witness-only locations and scene-consistent locality scope.
 - Prioritize incident scenes over escape/arrest/response places using deterministic clause roles; preserve additional scene candidates in the map.
 - Resolve compact 2–4-road junctions and explicitly bounded incident sections, with selected section geometry shown in the browser.
 - Add scene-priority regressions for fixed crime traces, injured-person discovery, time/person ranges, travel context and multi-scene announcements.

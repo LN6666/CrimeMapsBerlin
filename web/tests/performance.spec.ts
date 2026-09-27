@@ -59,6 +59,16 @@ test("named place links remain candidates and do not affect other POIs", () => {
 test("overview loads no POI geometry, month switching clears missing months", async ({
   page,
 }) => {
+  await page.route("https://tile.openstreetmap.org/**", (route) =>
+    route.fulfill({
+      contentType: "image/png",
+      headers: { "access-control-allow-origin": "*" },
+      body: Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGN4+fYlAAWCAsAGiqfBAAAAAElFTkSuQmCC",
+        "base64",
+      ),
+    }),
+  );
   const empty = { type: "FeatureCollection", features: [] };
   const requests: string[] = [];
   const errors: string[] = [];
