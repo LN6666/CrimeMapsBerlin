@@ -4,16 +4,19 @@ import re
 from collections import defaultdict
 from difflib import get_close_matches
 
-from shapely.geometry import Point, shape
-from shapely.ops import nearest_points, transform, unary_union
+from shapely import line_merge
+from shapely.geometry import Point, mapping, shape
+from shapely.ops import nearest_points, substring, transform, unary_union
 
 from .feed import mentions
 from .location_text import (
     DISTRICT_NAMES,
     GENERIC_NAMES,
+    INCIDENT_ACTIONS,
     INCIDENT_WORDS,
     NameMatcher,
     contextual_locality,
+    incident_at_location,
     locative,
     mention_role,
     name_aliases,
@@ -25,7 +28,7 @@ from .location_text import (
 )
 from .spatial import TO_METRIC, TO_WGS
 
-GEOCODE_VERSION = "2"
+GEOCODE_VERSION = "3"
 NON_INCIDENT = re.compile(
     r"bilanz|allgemeinverfügung|aktionstag|videoschutz|präventions|speedweek|"
     r"gemeinsam für mehr sicherheit|stadtweite durchsuchungs|koordinierte internationale kontroll"
@@ -171,55 +174,74 @@ class Gazetteer:
             return result
         selected = []
         selected_index = 0
-        refined_travel = False
         unscoped = []
         ignored = []
+        scene_options = []
+        fallback = []
         for i, sentence in enumerate(sentences):
             matches = self._matches(sentence)
             primary = [m for m in matches if m["role"] == "primary"]
-            ignored.extend(dict(name=m["alias"], reason=m["role"]) for m in matches if m["role"] != "primary")
+            ignored.extend(
+                dict(name=m["alias"], role=m["role"], sentence_index=i)
+                for m in matches
+                if m["role"] != "primary"
+            )
             if primary:
                 unscoped.extend(primary)
                 if any(locative(sentence, m["start"]) or m["kind"] == "place" for m in primary):
-                    selected, selected_index = primary, i
-                    if preparatory_location(sentence):
-                        for j in range(i + 1, len(sentences)):
-                            next_sentence = sentences[j + 1] if j + 1 < len(sentences) else ""
-                            if not INCIDENT_WORDS.search(sentences[j]) and not (
-                                re.match(r"daraufhin|dabei|dort|anschliessend", next_sentence)
-                                and INCIDENT_WORDS.search(next_sentence)
-                            ):
-                                continue
-                            scene = [m for m in self._matches(sentences[j]) if m["role"] == "primary"]
-                            if scene and any(
-                                locative(sentences[j], m["start"]) or m["kind"] == "place" for m in scene
-                            ):
-                                selected, selected_index, refined_travel = scene, j, True
-                                break
-                        if not refined_travel and any(m["kind"] == "place" for m in primary):
-                            result.update(
-                                geocode_method="travel_origin_review",
-                                geocode_candidates=sorted({m["alias"] for m in primary}),
-                            )
-                            return result
-                    # A following explicit junction can refine a road already mentioned as travel context.
-                    keys = {m["key"] for m in primary if m["kind"] == "street"}
+                    linked = [m for m in primary if incident_at_location(sentence, m)]
+                    if linked and re.search(r",\s*als\b", sentence):
+                        # The collision clause can refer back to the road in the preceding travel clause.
+                        linked = primary
+                    # A following action may refer back to this driveway, control point or junction.
+                    # Do not jump over an intervening different place (e.g. boarding -> later bus stop).
+                    keys = {(m["kind"], m["key"]) for m in primary}
                     for j in range(i + 1, min(i + 3, len(sentences))):
+                        following = sentences[j]
+                        next_primary = [m for m in self._matches(following) if m["role"] == "primary"]
+                        if any((m["kind"], m["key"]) not in keys for m in next_primary):
+                            break
                         if (
-                            not refined_travel
-                            and not re.search(r"kreuzung|einmündung|ecke|/", sentence)
-                            and re.search(r"kreuzung|einmündung|ecke", sentences[j])
+                            not linked
+                            and re.match(
+                                r"daraufhin|dabei|dort|anschliessend|beim\b|als\b|in der folge|"
+                                r"auf der kreuzung|zum selben zeitpunkt|"
+                                r"(?:die|der)\s+(?:insassen|fahrer|mann|frau|tatverdächtigen|täter)\b",
+                                following,
+                            )
+                            and (INCIDENT_ACTIONS.search(following) or INCIDENT_WORDS.search(following))
                         ):
-                            junction = [m for m in self._matches(sentences[j]) if m["role"] == "primary"]
-                            if keys & {m["key"] for m in junction}:
-                                selected, selected_index = junction, j
-                                break
-                    break
+                            linked = primary
+                            break
+                    if linked:
+                        scene_options.append((i, linked))
+                    elif not preparatory_location(sentence):
+                        fallback.append((i, primary))
+        result["excluded_location_context"] = ignored
+        if scene_options:
+            selected_index, selected = scene_options[0]
+            result["location_selection"] = "first_explicit_incident_scene"
+            keys = {(m["kind"], m["key"]) for m in selected}
+            result["other_scene_candidates"] = [
+                dict(name=m["alias"], sentence_index=i)
+                for i, matches in scene_options[1:]
+                for m in matches
+                if (m["kind"], m["key"]) not in keys
+            ]
+        elif fallback:
+            selected_index, selected = fallback[0]
+            result["location_selection"] = "narrative_location"
         if not selected and unscoped:
             # Name-only lists are candidates, not an incident coordinate.
             result["geocode_candidates"] = sorted({m["alias"] for m in unscoped})
-            result["geocode_method"] = "unscoped_locations_review"
+            result["geocode_method"] = (
+                "travel_origin_review"
+                if all(preparatory_location(s) for s in sentences if self._matches(s))
+                else "unscoped_locations_review"
+            )
             result["location_label"] = " / ".join(result["geocode_candidates"])
+            if any(self._section_reference(s, self._matches(s)) for s in sentences):
+                result["geocode_method"] = "street_section_review"
             return result
         if not selected:
             suggestions = self._suggestions(" ".join(sentences))
@@ -239,9 +261,9 @@ class Gazetteer:
                 result["geocode_method"] = "district_only"
             return result
         sentence = sentences[selected_index]
-        scope = self._scope(
-            district, sentence if refined_travel else " ".join(sentences[: selected_index + 1])
-        )
+        scope = self._scope(district, sentence)
+        if not scope or scope.get("admin_level") != "10":
+            scope = self._scope(district, " ".join(sentences[: selected_index + 1]))
         result["geocode_evidence"] = [
             dict(name=m["alias"], kind=m["kind"], role=m["role"], sentence_index=selected_index)
             for m in selected
@@ -275,17 +297,19 @@ class Gazetteer:
                     return self._located(
                         result, point, "osm_address", "address", self._span(unary_union(points))
                     )
-        if len(roads) == 2 and re.search(r"kreuzung|kreuzungsbereich|einmündung|ecke|höhe|/", sentence):
-            intersection = roads[0].intersection(roads[1])
-            if intersection.geom_type in {"Point", "MultiPoint"} and not intersection.is_empty:
-                if self._span(intersection) <= 75:
-                    return self._located(
-                        result,
-                        intersection.representative_point(),
-                        "named_street_intersection",
-                        "street",
-                        self._span(intersection),
-                    )
+        if self._section_reference(sentence, selected):
+            return self._street_section(selected, sentence, scope, result)
+        if 2 <= len(roads) <= 4 and re.search(
+            r"kreuzung|kreuzungsbereich|einmündung|ecke|höhe|/|\bbog\b|\beinbog\b|abbiegen|"
+            r"\b(?:fuhr|fuhren)\b.*?\bin\b.*?\bein\b",
+            sentence,
+        ):
+            junction = self._junction(roads)
+            if junction is not None:
+                point, extent = junction
+                return self._located(result, point, "named_street_intersection", "street", extent)
+            result["geocode_method"] = "junction_geometry_review"
+            return result
         if len(roads) != 1:
             result["geocode_method"] = "multiple_locations_review"
             return result
@@ -304,6 +328,81 @@ class Gazetteer:
     @staticmethod
     def _span(geometry):
         return max(geometry.bounds[2] - geometry.bounds[0], geometry.bounds[3] - geometry.bounds[1])
+
+    @classmethod
+    def _junction(cls, roads):
+        """One compact common junction, allowing up to 20 m between mapped carriageways.
+
+        Every named road must meet the cluster. Distant/multiple crossings cannot be averaged.
+        """
+        exact = roads[0]
+        for road in roads[1:]:
+            exact = exact.intersection(road)
+        if not exact.is_empty and exact.geom_type in {"Point", "MultiPoint"} and cls._span(exact) <= 75:
+            return exact.representative_point(), cls._span(exact)
+        area = roads[0].buffer(10)
+        for road in roads[1:]:
+            area = area.intersection(road.buffer(10))
+        if area.is_empty or cls._span(area) > 75:
+            return None
+        point = nearest_points(area.representative_point(), roads[0])[1]
+        if any(point.distance(road) > 20 for road in roads):
+            return None
+        return point, cls._span(area)
+
+    @staticmethod
+    def _section_reference(sentence, matches):
+        for between in re.finditer(r"\bzwischen\b", sentence):
+            roads = sorted(
+                (m for m in matches if m["kind"] == "street" and m["start"] >= between.end()),
+                key=lambda m: m["start"],
+            )
+            if (
+                len(roads) >= 2
+                and re.fullmatch(r"\s*(?:(?:der|dem|den)\s+)?", sentence[between.end() : roads[0]["start"]])
+                and re.fullmatch(
+                    r"\s+(?:und|bis)\s+(?:(?:der|dem|den|zur|zum)\s+)?",
+                    sentence[roads[0]["end"] : roads[1]["start"]],
+                )
+            ):
+                return True
+        return False
+
+    def _street_section(self, selected, sentence, scope, result):
+        """A reported section is represented on its main road, not at a boundary road."""
+        split = re.search(r"\bzwischen\b", sentence).start()
+        names = sorted((m for m in selected if m["kind"] == "street"), key=lambda m: m["start"])
+        anchors = [m for m in names if m["end"] <= split]
+        boundaries = list(dict.fromkeys(m["key"] for m in names if m["start"] > split))
+        if not anchors or len(boundaries) != 2:
+            result["geocode_method"] = "street_section_review"
+            return result
+        main = anchors[-1]["key"]
+        road = self._road(main, scope)
+        ends = [self._junction([road, self._road(name, scope)]) for name in boundaries]
+        if any(end is None for end in ends):
+            result["geocode_method"] = "street_section_review"
+            return result
+        merged = line_merge(road)
+        lines = list(merged.geoms) if merged.geom_type == "MultiLineString" else [merged]
+        sections = []
+        for line in lines:
+            if line.geom_type != "LineString" or any(line.distance(end[0]) > 20 for end in ends):
+                continue
+            segment = substring(line, line.project(ends[0][0]), line.project(ends[1][0]))
+            if segment.geom_type == "LineString" and segment.length > 1:
+                sections.append(segment)
+        if not sections:
+            result["geocode_method"] = "street_section_review"
+            return result
+        geometry = unary_union(sections)
+        if self._span(geometry) > 3000 or geometry.buffer(15).geom_type != "Polygon":
+            result["geocode_method"] = "street_section_review"
+            return result
+        point = max(sections, key=lambda line: line.length).interpolate(0.5, normalized=True)
+        result["reported_location_geometry"] = mapping(transform(TO_WGS, geometry))
+        result["location_label"] = f"{main} (zwischen {' / '.join(boundaries)})"
+        return self._located(result, point, "reported_street_section", "street", self._span(geometry))
 
     @staticmethod
     def _located(result, point, method, precision, extent):

@@ -130,8 +130,28 @@ def narrative_sentences(body):
     return rows
 
 
+def location_clause(sentence, start, end):
+    """Keep a location with its own action rather than another temporal clause's action."""
+    boundaries = list(
+        re.finditer(
+            r"\b(?:dann|anschliessend|danach|kurz darauf|später|zuvor)\b|;|"
+            r",\s*(?:als|wobei|woraufhin)\b|"
+            r"\bund\s+(?=(?:(?:der|die|er|sie)\s+)?(?:täter\s+|tatverdächtige\s+|mann\s+)?"
+            r"(?:floh|flücht|lief|rannte|kollid|prall|schlug))",
+            sentence,
+        )
+    )
+    left = max((m.end() for m in boundaries if m.end() <= start), default=0)
+    right = min((m.start() for m in boundaries if m.start() >= end), default=len(sentence))
+    clause = sentence[left:right]
+    if re.match(r",\s*wobei\b", sentence[right:]) and INCIDENT_ACTIONS.search(sentence[right:]):
+        clause += sentence[right:]
+    return clause, start - left, end - left
+
+
 def mention_role(sentence, start, end):
-    before = sentence[max(0, start - 100) : start]
+    clause, offset, _ = location_clause(sentence, start, end)
+    before = clause[max(0, offset - 100) : offset]
     if re.search(
         r"hinweise\s+(?:nimmt|nehmen|erbitt|bitte)|(?:rufnummer|telefonnummer)|"
         r"(?:telefonisch|telefon)\s+unter|(?:kontakt|erreichbar)\s+unter",
@@ -148,7 +168,34 @@ def mention_role(sentence, start, end):
         return "destination"
     if re.search(r"\b(?:richtung|fahrtrichtung)\s+(?:der\s+|des\s+)?$", before):
         return "direction"
-    if re.search(r"(?:anschliessend|danach|daraufhin).*?(?:flücht|floh|fuhr|fuhren)", before):
+    if re.search(r"gesperrt|vollsperrung|umleitung|unfallaufnahme", clause) and not (
+        INCIDENT_ACTIONS.search(clause)
+    ):
+        return "restriction"
+    # An escape/arrest clause can share a sentence with the actual offence.
+    if re.search(r"weglauf|wegrann|davonlief|\bflücht(?:et|en|ete|eten)\b|\bfloh\b", clause) and not (
+        INCIDENT_ACTIONS.search(clause)
+    ):
+        return "escape"
+    if re.search(
+        r"festgenommen|nahmen.*?fest|nahm.*?fest|festnahme|stellten.*?fest|"
+        r"aufgefunden|entdeckten|angetroffen",
+        clause,
+    ) and not INCIDENT_ACTIONS.search(clause):
+        return "response"
+    if (
+        not INCIDENT_ACTIONS.search(clause)
+        and re.search(r"\b(?:aus|von)\s+(?:der\s+|dem\s+)?$", before)
+        and re.search(r"kommend|gekommen|befuhr|befuhren|fuhr|fuhren|bog|überquer|unterwegs", clause)
+    ):
+        return "travel_origin"
+    if (
+        re.match(r"trotz.*?schussabgabe", clause)
+        and re.search(r"fahrt.*?fort", clause)
+        and not re.search(r"kollid|prall|angefahren|schoss|beschädig", clause)
+    ):
+        return "followup"
+    if re.search(r"(?:anschliessend|danach|daraufhin).*?(?:flücht|floh|fuhr|fuhren)", sentence[:start]):
         return "followup"
     if re.search(r"(?:zwischen|bis\s+zur|bis\s+zum)\s*$", before) and re.search(
         r"sperr|verkehr|umleit", sentence
@@ -204,6 +251,26 @@ INCIDENT_WORDS = re.compile(
     r"schuss|schüsse|schoss|gestohlen|entwend|brand|brannte|zusammenstoss|kollid|"
     r"angefahren|fuhr.*?an,|prall|beschädig|stach|verletz|beleidig|bedroht|bedrohung|unfall"
 )
+
+# Explicit event actions take priority over response verbs and general mentions of an accident.
+INCIDENT_ACTIONS = re.compile(
+    r"beraub|ausgeraub|überfall|angegriff|angriff|geschlagen|schlug|besprüht|reizstoff|"
+    r"schoss|schüsse|schussabgab|geschossen|gestohlen|entwend|eingebrochen|einbruch|einbrüch|"
+    r"verdächtige geräusche|in brand|brannte|zusammenstoss|kollid|kollision|angefahren|fuhr.*?an,|"
+    r"einschuss|einschüsse|schusslöch|beschmier|farbschmier|bemal|graffiti|hakenkreuz|"
+    r"verkauf.{0,60}?(?:drogen|betäubungsmittel)|drogenhandel|"
+    r"prall|erfass|beschädig|stach|beleidig|bedroht|bedrohung|übergriff|stürz|sturz|"
+    r"fuhr.{0,150}?\ban\b(?=\s*[,.;]|$)|"
+    r"fuhr.{0,150}?\bgegen\b(?!\s+\d{1,2}(?::\d{2})?\s*uhr)|"
+    r"fuhr.{0,100}?\bauf\b.{0,70}?\bzu\b|"
+    r"widerstand leist|leistete.{0,40}?widerstand|"
+    r"kam es.*?(?:unfall|raub|körperverletzung)|ereignete.*?(?:unfall|raub)"
+)
+
+
+def incident_at_location(sentence, match):
+    clause, _, _ = location_clause(sentence, match["start"], match["end"])
+    return bool(INCIDENT_ACTIONS.search(clause))
 
 
 def preparatory_location(sentence):

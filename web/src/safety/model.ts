@@ -13,6 +13,10 @@ export interface PoliceEvent {
   location_label: string;
   location_extent_m?: number;
   location_scope?: string;
+  location_selection?: string;
+  geocode_method?: string;
+  other_scene_candidates?: { name: string; sentence_index: number }[];
+  reported_location_geometry?: Geometry;
   source_url: string;
   feed_url: string;
   poi_mentions: string[];

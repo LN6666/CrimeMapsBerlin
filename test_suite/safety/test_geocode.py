@@ -254,3 +254,86 @@ def test_place_hex_and_association_use_named_object_only():
     assert hexagons([event], 275)["features"][0]["properties"]["approximate_count"] == 1
     assert [link["poi_id"] for link in associate([event], fc)] == ["osm/way/1"]
     assert associate([event], fc)[0]["status"] == "named_place_candidate"
+
+
+def test_three_road_junction_with_split_carriageways():
+    gaz = Gazetteer(
+        [
+            road("Teststraße", [(-100, 0), (100, 0)]),
+            road("Anderstraße", [(0, -100), (0, -5)]),
+            road("Nebenstraße", [(0, 5), (0, 100)]),
+        ]
+    )
+    result = gaz.locate("An der Kreuzung Teststraße/Anderstraße/Nebenstraße kollidierten zwei Autos.")
+    assert result["geocode_method"] == "named_street_intersection"
+    point = transform(TO_METRIC, Point(result["coordinates"]))
+    assert point.distance(Point(X, Y)) < 20
+
+
+def test_multiple_distant_crossings_are_not_averaged():
+    gaz = Gazetteer(
+        [
+            road("Teststraße", [(-100, 0), (1100, 0)]),
+            road("Anderstraße", [(0, -100), (0, 100)]),
+            road("Anderstraße", [(1000, -100), (1000, 100)]),
+        ]
+    )
+    result = gaz.locate("An der Kreuzung Teststraße/Anderstraße kam es zum Unfall.")
+    assert result["coordinates"] is None
+    assert result["geocode_method"] == "junction_geometry_review"
+
+
+def test_reported_section_stays_between_end_roads():
+    gaz = Gazetteer(
+        [
+            road("Teststraße", [(-1000, 0), (2000, 0)]),
+            road("Anderstraße", [(0, -100), (0, 100)]),
+            road("Nebenstraße", [(500, -100), (500, 100)]),
+        ]
+    )
+    result = gaz.locate(
+        "In der Teststraße zwischen Anderstraße und Nebenstraße wurde eine Person angegriffen."
+    )
+    assert result["geocode_method"] == "reported_street_section"
+    assert result["location_extent_m"] == 500
+    point = transform(TO_METRIC, Point(result["coordinates"]))
+    assert X <= point.x <= X + 500 and abs(point.y - Y) < 0.1
+    assert result["reported_location_geometry"]["type"] == "LineString"
+
+
+def test_section_without_identified_main_road_is_not_end_point():
+    gaz = Gazetteer(
+        [
+            road("Anderstraße", [(0, -100), (0, 100)]),
+            road("Nebenstraße", [(500, -100), (500, 100)]),
+        ]
+    )
+    result = gaz.locate("Zwischen Anderstraße und Nebenstraße kam es zu einem Raub.")
+    assert result["coordinates"] is None
+    assert result["geocode_method"] == "street_section_review"
+
+
+@pytest.mark.parametrize("description", ["zwischen zwei Personen", "zwischen 2:30 Uhr und 2:45 Uhr"])
+def test_people_or_time_range_does_not_replace_explicit_junction(description):
+    gaz = Gazetteer(
+        [
+            road("Teststraße", [(-100, 0), (100, 0)]),
+            road("Anderstraße", [(0, -100), (0, 100)]),
+        ]
+    )
+    result = gaz.locate(f"An der Ecke Teststraße/Anderstraße kam es {description} zu einem Raub.")
+    assert result["geocode_method"] == "named_street_intersection"
+
+
+def test_time_after_travel_verb_is_not_collision():
+    gaz = Gazetteer(
+        [
+            road("Teststraße", [(1000, 0), (1100, 0)]),
+            road("Anderstraße", [(0, 0), (100, 0)]),
+        ]
+    )
+    result = gaz.locate(
+        "Der Mann fuhr gegen 22 Uhr von der Teststraße kommend weiter. "
+        "In der Anderstraße kollidierte er mit einem Wagen."
+    )
+    assert result["geocode_candidates"] == ["anderstrasse"]

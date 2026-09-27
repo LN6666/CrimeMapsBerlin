@@ -156,6 +156,9 @@ def main():
             method=e["geocode_method"],
             candidates=e["geocode_candidates"],
             evidence=e["geocode_evidence"],
+            selection=e.get("location_selection"),
+            excluded_context=e.get("excluded_location_context", []),
+            other_scene_candidates=e.get("other_scene_candidates", []),
         )
         for e in events
         if not e["coordinates"]

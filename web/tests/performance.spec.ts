@@ -141,6 +141,17 @@ test("overview loads no POI geometry, month switching clears missing months", as
               location_precision: "place",
               location_label: "Testpark",
               location_extent_m: 110,
+              location_selection: "first_explicit_incident_scene",
+              other_scene_candidates: [
+                { name: "Anderstraße", sentence_index: 4 },
+              ],
+              reported_location_geometry: {
+                type: "LineString",
+                coordinates: [
+                  [13.41, 52.51],
+                  [13.412, 52.51],
+                ],
+              },
               poi_mentions: ["park"],
               source_url: "https://www.berlin.de/",
             },
@@ -164,6 +175,13 @@ test("overview loads no POI geometry, month switching clears missing months", as
   await expect(page.locator("#selection")).toContainText("场所近似位置");
   await expect(page.locator("#selection")).toContainText(
     "匹配对象跨度约 110 米",
+  );
+  await expect(page.locator("#selection")).toContainText("案发地优先");
+  await expect(page.locator("#selection")).toContainText(
+    "其他案发地点候选：Anderstraße",
+  );
+  await expect(page.locator("#selection")).toContainText(
+    "本公告在网格中只计一条",
   );
   expect(errors).toEqual([]);
   expect(requests.filter((url) => url.includes("/months/"))).toHaveLength(1);

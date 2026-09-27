@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Prioritize incident scenes over escape/arrest/response places using deterministic clause roles; preserve additional scene candidates in the map.
+- Resolve compact 2–4-road junctions and explicitly bounded incident sections, with selected section geometry shown in the browser.
+- Add scene-priority regressions for fixed crime traces, injured-person discovery, time/person ranges, travel context and multi-scene announcements.
 - Replace 900-character exact-name matching with full narrative roles, German name variants and a prefix-factored matcher.
 - Add local OSM neighbourhood/address indexes, named-place resolution and one-time scheduled index upgrades.
 - Resolve near-connected street fragments by geographic extent; retain review for separated/wide/ambiguous locations.

@@ -87,6 +87,23 @@ function listReports(parent: HTMLElement, ids: string[]) {
       );
     text("h4", e.title, card);
     text("p", e.location_label, card);
+    if (e.location_selection === "first_explicit_incident_scene")
+      text(
+        "small",
+        e.coordinates
+          ? "案发地优先：采用原文首个明确案发场景"
+          : "已识别案发场景，空间位置待核验",
+        card,
+      );
+    const otherScenes = [
+      ...new Set(e.other_scene_candidates?.map((s) => s.name) ?? []),
+    ];
+    if (otherScenes.length)
+      text(
+        "small",
+        `原文还描述其他案发地点候选：${otherScenes.join("、")}；本公告在网格中只计一条`,
+        card,
+      );
     if (e.location_extent_m !== undefined && e.location_extent_m > 75)
       text(
         "small",
@@ -105,6 +122,7 @@ function listReports(parent: HTMLElement, ids: string[]) {
 function showSelection() {
   const panel = el("selection");
   panel.replaceChildren();
+  setSource("reported-sections", empty());
   if (!selected) {
     text("h2", "选择一个六边形或 POI", panel);
     text("p", "点击地图查看事件与来源。", panel);
@@ -119,6 +137,25 @@ function showSelection() {
     return;
   }
   const p = f.properties;
+  setSource("reported-sections", {
+    type: "FeatureCollection",
+    features: data.events
+      .filter(
+        (e) =>
+          (p.event_ids ?? []).includes(e.id) && e.reported_location_geometry,
+      )
+      .map((e) => ({
+        type: "Feature",
+        geometry: e.reported_location_geometry!,
+        properties: { id: e.id },
+      })),
+  });
+  if (
+    data.events.some(
+      (e) => (p.event_ids ?? []).includes(e.id) && e.reported_location_geometry,
+    )
+  )
+    text("p", "紫色线：警方描述的案发路段；网格按近似位置统计。", panel);
   if (selected.type === "hex") {
     text("p", "HEXAGON / 事件统计", panel).className = "eyebrow";
     text("h2", `${p.count} 条已收录警情`, panel);
@@ -438,7 +475,7 @@ async function start() {
       }),
     );
     map.once("load", async () => {
-      for (const id of ["roads", "hex", "pois", "kbo"])
+      for (const id of ["roads", "hex", "pois", "kbo", "reported-sections"])
         map.addSource(id, { type: "geojson", data: empty() });
       map.addLayer({
         id: "roads-line",
@@ -507,6 +544,12 @@ async function start() {
           "line-width": 2,
           "line-dasharray": [4, 2],
         },
+      });
+      map.addLayer({
+        id: "reported-sections-line",
+        type: "line",
+        source: "reported-sections",
+        paint: { "line-color": "#7c3aed", "line-width": 5 },
       });
       setSource("kbo", {
         type: "FeatureCollection",
