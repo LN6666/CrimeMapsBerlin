@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Retire six legacy PRs/branches and 205 old build artifacts; document the owner's one-time administrator approval for the default-branch migration.
 - Add outbound POLIZEIKARTE Berlin and major German city links, without embedded scripts or automatic data imports.
 - Display unresolved long/disconnected scene roads as orange dashed ranges, preserving locality scope and gaps; click or focus from a report card without changing hex counts or POI associations.
 - Add standard OSM street, Berlin 2026 aerial imagery and local basemap choices; preserve selections/camera and stop failed raster sources.

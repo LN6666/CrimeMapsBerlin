@@ -2,7 +2,7 @@
 
 柏林警方公开公告地图：按公布月份筛选、两级六边形统计、分类 POI、50 米小型场所圆，以及可以追溯到原文的附近类型匹配。
 
-当前开发分支已按维护者要求替换原 CiviFlux 插件工程；不需要 Qwen、Jev、LLM、SUMO 或 QGIS。GitHub 默认 `main` 的替换由[迁移 PR #8](https://github.com/LN6666/CrimeMapsBerlin/pull/8)完成，目前仍等待审核批准，不能把开发分支完成等同于默认分支已迁移。合并后旧代码保留在 Git 历史，不属于当前产品。
+CrimeMapsBerlin 是当前产品，替代原 CiviFlux 插件工程；不需要 Qwen、Jev、LLM、SUMO 或 QGIS。代码迁移见[PR #8](https://github.com/LN6666/CrimeMapsBerlin/pull/8)，默认分支状态以该 PR 的合并记录和 `main` 文件树为准。旧实现保留在 Git 历史，不属于当前产品。
 
 ## 运行
 
