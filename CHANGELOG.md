@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add outbound POLIZEIKARTE Berlin and major German city links, without embedded scripts or automatic data imports.
 - Display unresolved long/disconnected scene roads as orange dashed ranges, preserving locality scope and gaps; click or focus from a report card without changing hex counts or POI associations.
 - Add standard OSM street, Berlin 2026 aerial imagery and local basemap choices; preserve selections/camera and stop failed raster sources.
 - Improve station/genitive and scene context, district/Ortsteil ambiguity, generic place names and adjacent collision junctions; retain origin and evidence sentence indexes.

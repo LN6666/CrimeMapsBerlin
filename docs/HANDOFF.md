@@ -33,6 +33,10 @@ The owner also requested a familiar street/imagery map. `web/src/safety/basemaps
 
 The owner requested visible road ranges for reports withheld because their matched road is long or disconnected. `candidate_road_geometry` is an additive display field, while geocoding remains v4. The orange dashed candidate-road layer and card focus action use the existing monthly loading/filtering path. Do not count these ranges as point-located reports, assign a midpoint to a hex, or darken every nearby POI along an uncertain road. Other review reasons (such as conflicting locality, travel origin or spelling suggestions) do not automatically receive road geometry. Automated review labels are diagnostic states: a `district_only` label can still hide an unrecognised named building/station in the source. Improving source context remains a separate task.
 
+## External maps and supplementation
+
+The owner requested links to POLIZEIKARTE and asked whether it could supplement missing records. The page now includes a direct Berlin link and a German-city directory. External maps remain references: no automatic coordinate import or copied third-party summaries. Missing source records, missed location extraction and genuinely vague scenes are different review tasks. Follow original police article IDs/URLs when supplementing; the external feed's 50-entry limit cannot cover the whole archive. See DATA for terms and the boundary between references and authoritative source ingestion.
+
 ## Git workflow
 
 Use `codex/` feature branches and pull requests. Check Python tests, TypeScript/build and browser tests. Do not disable failing checks or erase Git history. Main's reviewer requirements remain in force; completing code and passing CI is distinct from an approved merge.

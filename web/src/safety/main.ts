@@ -19,10 +19,11 @@ import { DataClient } from "./data";
 import type { Manifest } from "./data";
 import { Basemaps, basemapLabels } from "./basemaps";
 import type { BasemapId } from "./basemaps";
+import { externalMaps, externalMapsDirectory } from "./external-maps";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `<header><div><span class="brand">CRIMEMAPSBERLIN</span><h1>柏林 · 警情与城市场所</h1></div><div class="toolbar"><label>年份<select id="year" aria-label="年份"></select></label><label>月份<select id="month" aria-label="月份"></select></label><button id="overview">全市概览</button><button id="sources">警方来源</button></div></header>
-<main><aside class="controls"><p class="eyebrow">BERLIN / PUBLIC REPORTS</p><h2>看事件，也看周边</h2><p id="coverage">读取本地数据…</p><label class="search-label">查找柏林场所<input id="search" placeholder="如 Kottbusser Tor、酒吧名称" autocomplete="off"></label><div id="search-results"></div><label>事件类别<select id="category"><option value="all">全部警方公告</option></select></label><div class="rule"></div><h3>六边形 · 公告数量</h3><div class="ramp"></div><div class="ends"><span>少</span><span>多</span></div><p id="resolution"></p><label class="toggle"><input id="hex-toggle" type="checkbox" checked> 显示六边形</label><label class="toggle"><input id="candidate-roads-toggle" type="checkbox" checked> 显示待定位道路范围</label><p class="hint"><span class="road-swatch" aria-hidden="true"></span>橙色虚线仅表示原文提到的道路候选范围，具体案发位置未知；不计入六边形或 POI 关联。</p><h3>周边 POI</h3><div id="poi-filters"></div><label class="toggle"><input id="highlight" type="checkbox" checked> 报告提及类型 + 附近匹配时加深</label><p class="hint">小型场所：50 米圆。车站：已有面状范围；空心点表示范围缺失。加深表示关联记录数。</p><div class="rule"></div><button id="kbo">查看柏林 kbO 官方区域</button><p class="hint">警方划定区域与事件网格分别展示。</p><p id="freshness" class="hint"></p></aside>
+<main><aside class="controls"><p class="eyebrow">BERLIN / PUBLIC REPORTS</p><h2>看事件，也看周边</h2><p id="coverage">读取本地数据…</p><nav id="external-maps" class="external-maps" aria-label="外部警情网站"></nav><label class="search-label">查找柏林场所<input id="search" placeholder="如 Kottbusser Tor、酒吧名称" autocomplete="off"></label><div id="search-results"></div><label>事件类别<select id="category"><option value="all">全部警方公告</option></select></label><div class="rule"></div><h3>六边形 · 公告数量</h3><div class="ramp"></div><div class="ends"><span>少</span><span>多</span></div><p id="resolution"></p><label class="toggle"><input id="hex-toggle" type="checkbox" checked> 显示六边形</label><label class="toggle"><input id="candidate-roads-toggle" type="checkbox" checked> 显示待定位道路范围</label><p class="hint"><span class="road-swatch" aria-hidden="true"></span>橙色虚线仅表示原文提到的道路候选范围，具体案发位置未知；不计入六边形或 POI 关联。</p><h3>周边 POI</h3><div id="poi-filters"></div><label class="toggle"><input id="highlight" type="checkbox" checked> 报告提及类型 + 附近匹配时加深</label><p class="hint">小型场所：50 米圆。车站：已有面状范围；空心点表示范围缺失。加深表示关联记录数。</p><div class="rule"></div><button id="kbo">查看柏林 kbO 官方区域</button><p class="hint">警方划定区域与事件网格分别展示。</p><p id="freshness" class="hint"></p></aside>
 <section class="map-wrap"><div id="map" aria-label="柏林警情交互地图"></div><div class="map-label"><span class="dot"></span><span id="map-status">正在准备地图</span></div><div class="basemap-picker"><label>底图<select id="basemap" aria-label="底图" disabled><option value="street">标准街道</option><option value="aerial">航空影像（2026）</option><option value="local">本地简图</option></select></label><div id="basemap-error" role="status" hidden><span></span><button id="basemap-fallback">使用本地简图</button></div></div><div class="map-note">浅色 POI 是城市设施，不代表被警方认定为高发场所</div></section>
 <aside class="details"><div id="stats"></div><div id="selection"><h2>选择一个六边形或 POI</h2><p>查看该区域的事件、类别，以及可以追溯的警方原文。</p></div></aside></main>
 <dialog id="drawer"><button id="close-dialog" class="close">关闭</button><div id="drawer-content"></div></dialog>`;
@@ -42,6 +43,9 @@ function link(parent: HTMLElement, label: string, url: string) {
   a.target = "_blank";
   a.rel = "noopener noreferrer";
 }
+link(el("external-maps"), "POLIZEIKARTE 柏林 ↗", externalMaps[0].url);
+text("button", "德国其他城市", el("external-maps")).onclick =
+  externalMapsDialog;
 let data: Bundle;
 let map: maplibregl.Map;
 let basemaps: Basemaps;
@@ -388,6 +392,19 @@ function openDialog(title: string) {
   text("h2", title, p);
   el<HTMLDialogElement>("drawer").showModal();
   return p;
+}
+function externalMapsDialog() {
+  const p = openDialog("德国城市 · 外部警情网站");
+  text(
+    "p",
+    "POLIZEIKARTE 是独立数据项目。可查看公报列表、地图及原文链接；各城市的覆盖和定位精度不同。链接在新标签页打开。",
+    p,
+  );
+  const nav = text("nav", "", p);
+  nav.className = "city-map-links";
+  nav.setAttribute("aria-label", "POLIZEIKARTE 城市页面");
+  for (const item of externalMaps) link(nav, `${item.city} ↗`, item.url);
+  link(p, "查看全部城市 ↗", externalMapsDirectory);
 }
 function sourcesDialog() {
   const p = openDialog("欧洲警方场所来源目录");
