@@ -46,6 +46,14 @@ The frozen v3→v4 comparison reused all 1,098 IDs/body hashes and the same OSM 
 
 Reviewed examples include Brunsbütteler Damm/Haberlandweg versus the Spandau district/Ortsteil ambiguity; combined station naming at Alexanderplatz; Danziger Straße/Prenzlauer Allee collision versus Greifswalder Straße origin; the Nieberstraße assault versus Adlershof boarding; Gotlindestraße/Wotanstraße collision versus sidewalk approach; Giesestraße burning objects; and Lindauer Allee damage on a bounded median section. Newly recognized scenes can still be withheld when their indexed junction/road geometry is ambiguous. All announcements remain in the publication, including unlocated records.
 
+## Unresolved road range display
+
+The owner requested marking the roads themselves when an announcement names a road that is too long or has disconnected indexed parts. Such reports now retain `candidate_road_geometry`, limited to `long_or_ambiguous_street_review` and `disconnected_street_review`. The geometry is the already selected scene road within its existing locality scope, with five-metre metric simplification for display. Each existing disconnected part is preserved; no line is drawn across missing sections. It is the matched road range, not a claim that the whole road was an incident scene or is a high-risk corridor.
+
+The map shows orange dashed lines with month/category filters and a separate visibility toggle. Clicking a range lists the matching announcements; the unlocated list can focus a road range. Coordinates remain null and precision remains unknown, so these reports do not enter hex counts or produce nearby POI darkening. A synthetic regression verifies both exclusions even with a POI on the displayed road. Contact addresses, travel origins, conflicting localities and spelling suggestions do not automatically acquire road ranges.
+
+The frozen comparison on 2026-09-28 retains all 1,098 IDs/body hashes and all existing locations/methods unchanged: 746 point-located representatives and 352 unresolved reports. Candidate ranges now cover **109** of the unresolved reports (**42** long/ambiguous, **67** disconnected). The local comparison lives under `.runtime/safety/road-ranges/`. These ranges improve visibility, without claiming 109 newly resolved incident points. Review reasons describe the program's diagnostic state; for example, a named building/station may still be labelled district-only if its name was not recognized.
+
 ## Display basemaps
 
 The standard street layer uses [OpenStreetMap standard raster tiles](https://operations.osmfoundation.org/policies/tiles/) with visible attribution, normal browser HTTP caching and viewport-only requests. There is no bulk download, offline tile prefetch or application retry loop. The provider is best-effort; a public deployment with substantial traffic needs an appropriate tile provider.

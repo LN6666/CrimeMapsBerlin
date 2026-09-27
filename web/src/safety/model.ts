@@ -1,4 +1,9 @@
-import type { FeatureCollection, Geometry } from "geojson";
+import type {
+  FeatureCollection,
+  Geometry,
+  LineString,
+  MultiLineString,
+} from "geojson";
 export type Properties = Record<string, any>;
 export type FC = FeatureCollection<Geometry, Properties>;
 export interface PoliceEvent {
@@ -17,6 +22,7 @@ export interface PoliceEvent {
   geocode_method?: string;
   other_scene_candidates?: { name: string; sentence_index: number }[];
   reported_location_geometry?: Geometry;
+  candidate_road_geometry?: LineString | MultiLineString;
   source_url: string;
   feed_url: string;
   poi_mentions: string[];
@@ -58,6 +64,73 @@ export interface Bundle {
   };
 }
 export const empty = (): FC => ({ type: "FeatureCollection", features: [] });
+/** A review range identifies a road, never an incident point. */
+export function candidateRoadGeometry(
+  event: PoliceEvent,
+): LineString | MultiLineString | null {
+  if (
+    event.coordinates !== null ||
+    !["long_or_ambiguous_street_review", "disconnected_street_review"].includes(
+      event.geocode_method ?? "",
+    )
+  )
+    return null;
+  const geometry = event.candidate_road_geometry;
+  if (!geometry || !["LineString", "MultiLineString"].includes(geometry.type))
+    return null;
+  const lines =
+    geometry.type === "LineString"
+      ? [geometry.coordinates]
+      : geometry.coordinates;
+  if (
+    !lines.length ||
+    !lines.every(
+      (line) =>
+        line.length >= 2 &&
+        line.every(
+          (point) =>
+            point.length >= 2 &&
+            Number.isFinite(point[0]) &&
+            Number.isFinite(point[1]) &&
+            Math.abs(point[0]) <= 180 &&
+            Math.abs(point[1]) <= 90,
+        ),
+    )
+  )
+    return null;
+  return geometry;
+}
+export function candidateRoads(rows: PoliceEvent[]): FC {
+  return {
+    type: "FeatureCollection",
+    features: rows.flatMap((event) => {
+      const geometry = candidateRoadGeometry(event);
+      return geometry
+        ? [{ type: "Feature" as const, geometry, properties: { id: event.id } }]
+        : [];
+    }),
+  };
+}
+export function roadBounds(
+  geometry: LineString | MultiLineString,
+): [number, number, number, number] {
+  const lines =
+    geometry.type === "LineString"
+      ? [geometry.coordinates]
+      : geometry.coordinates;
+  let west = Infinity,
+    south = Infinity,
+    east = -Infinity,
+    north = -Infinity;
+  for (const line of lines)
+    for (const [lon, lat] of line) {
+      west = Math.min(west, lon);
+      south = Math.min(south, lat);
+      east = Math.max(east, lon);
+      north = Math.max(north, lat);
+    }
+  return [west, south, east, north];
+}
 export function monthEvents(
   data: Bundle,
   month: string,

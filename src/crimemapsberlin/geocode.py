@@ -464,12 +464,31 @@ class Gazetteer:
         connected = road.buffer(15)
         if self._span(road) > 3000:
             result["geocode_method"] = "long_or_ambiguous_street_review"
-            return result
+            return self._candidate_road(result, road)
         if connected.geom_type != "Polygon":
             result["geocode_method"] = "disconnected_street_review"
-            return result
+            return self._candidate_road(result, road)
         point = nearest_points(connected.representative_point(), road)[1]
         return self._located(result, point, "street_representative", "street", self._span(road))
+
+    @staticmethod
+    def _candidate_road(result, road):
+        """Display matched road parts without inventing an incident point or filling gaps.
+
+        The input has already passed scene selection and locality clipping. Display-only
+        simplification is in metres; original geometry still controls all geocode checks.
+        A clipped geometry can contain boundary-touch points, which are not road ranges.
+        """
+        def lines(geometry):
+            if geometry.geom_type == "LineString":
+                return [geometry]
+            return [line for part in getattr(geometry, "geoms", []) for line in lines(part)]
+
+        parts = lines(road)
+        if parts:
+            geometry = line_merge(unary_union(parts)).simplify(5, preserve_topology=True)
+            result["candidate_road_geometry"] = mapping(transform(TO_WGS, geometry))
+        return result
 
     @staticmethod
     def _span(geometry):

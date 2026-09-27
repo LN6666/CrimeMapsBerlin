@@ -31,6 +31,8 @@ Rule version 4 adds station/genitive context, ordinary-word disambiguation, adja
 
 The owner also requested a familiar street/imagery map. `web/src/safety/basemaps.ts` owns standard OSM tiles, Berlin government 2026 aerial WMS and local simplified roads. Basemap switching preserves analytical state and cancels inactive sources; failed external tiles stop and fall back visibly. No API key/subscription is required. The aerial layer is not satellite/live imagery. See DATA for sources, licence, flight date and display-only use.
 
+The owner requested visible road ranges for reports withheld because their matched road is long or disconnected. `candidate_road_geometry` is an additive display field, while geocoding remains v4. The orange dashed candidate-road layer and card focus action use the existing monthly loading/filtering path. Do not count these ranges as point-located reports, assign a midpoint to a hex, or darken every nearby POI along an uncertain road. Other review reasons (such as conflicting locality, travel origin or spelling suggestions) do not automatically receive road geometry. Automated review labels are diagnostic states: a `district_only` label can still hide an unrecognised named building/station in the source. Improving source context remains a separate task.
+
 ## Git workflow
 
 Use `codex/` feature branches and pull requests. Check Python tests, TypeScript/build and browser tests. Do not disable failing checks or erase Git history. Main's reviewer requirements remain in force; completing code and passing CI is distinct from an approved merge.

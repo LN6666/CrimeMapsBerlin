@@ -170,6 +170,7 @@ def main():
             **coverage,
             mapped=len(events) - len(review),
             unlocated=len(review),
+            road_ranges=sum(bool(e.get("candidate_road_geometry")) for e in events),
             geocode_methods=dict(Counter(e["geocode_method"] for e in events)),
             poi_count=len(pois["features"]),
             generation=generation,

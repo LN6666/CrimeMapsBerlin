@@ -4,8 +4,17 @@ maplibregl.setWorkerUrl(workerUrl);
 maplibregl.setWorkerCount(2);
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
-import { empty, filteredHex, monthEvents, safeURL, styledPois } from "./model";
-import type { Bundle, FC } from "./model";
+import {
+  candidateRoadGeometry,
+  candidateRoads,
+  empty,
+  filteredHex,
+  monthEvents,
+  roadBounds,
+  safeURL,
+  styledPois,
+} from "./model";
+import type { Bundle, FC, PoliceEvent } from "./model";
 import { DataClient } from "./data";
 import type { Manifest } from "./data";
 import { Basemaps, basemapLabels } from "./basemaps";
@@ -13,7 +22,7 @@ import type { BasemapId } from "./basemaps";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `<header><div><span class="brand">CRIMEMAPSBERLIN</span><h1>柏林 · 警情与城市场所</h1></div><div class="toolbar"><label>年份<select id="year" aria-label="年份"></select></label><label>月份<select id="month" aria-label="月份"></select></label><button id="overview">全市概览</button><button id="sources">警方来源</button></div></header>
-<main><aside class="controls"><p class="eyebrow">BERLIN / PUBLIC REPORTS</p><h2>看事件，也看周边</h2><p id="coverage">读取本地数据…</p><label class="search-label">查找柏林场所<input id="search" placeholder="如 Kottbusser Tor、酒吧名称" autocomplete="off"></label><div id="search-results"></div><label>事件类别<select id="category"><option value="all">全部警方公告</option></select></label><div class="rule"></div><h3>六边形 · 公告数量</h3><div class="ramp"></div><div class="ends"><span>少</span><span>多</span></div><p id="resolution"></p><label class="toggle"><input id="hex-toggle" type="checkbox" checked> 显示六边形</label><h3>周边 POI</h3><div id="poi-filters"></div><label class="toggle"><input id="highlight" type="checkbox" checked> 报告提及类型 + 附近匹配时加深</label><p class="hint">小型场所：50 米圆。车站：已有面状范围；空心点表示范围缺失。加深表示关联记录数。</p><div class="rule"></div><button id="kbo">查看柏林 kbO 官方区域</button><p class="hint">警方划定区域与事件网格分别展示。</p><p id="freshness" class="hint"></p></aside>
+<main><aside class="controls"><p class="eyebrow">BERLIN / PUBLIC REPORTS</p><h2>看事件，也看周边</h2><p id="coverage">读取本地数据…</p><label class="search-label">查找柏林场所<input id="search" placeholder="如 Kottbusser Tor、酒吧名称" autocomplete="off"></label><div id="search-results"></div><label>事件类别<select id="category"><option value="all">全部警方公告</option></select></label><div class="rule"></div><h3>六边形 · 公告数量</h3><div class="ramp"></div><div class="ends"><span>少</span><span>多</span></div><p id="resolution"></p><label class="toggle"><input id="hex-toggle" type="checkbox" checked> 显示六边形</label><label class="toggle"><input id="candidate-roads-toggle" type="checkbox" checked> 显示待定位道路范围</label><p class="hint"><span class="road-swatch" aria-hidden="true"></span>橙色虚线仅表示原文提到的道路候选范围，具体案发位置未知；不计入六边形或 POI 关联。</p><h3>周边 POI</h3><div id="poi-filters"></div><label class="toggle"><input id="highlight" type="checkbox" checked> 报告提及类型 + 附近匹配时加深</label><p class="hint">小型场所：50 米圆。车站：已有面状范围；空心点表示范围缺失。加深表示关联记录数。</p><div class="rule"></div><button id="kbo">查看柏林 kbO 官方区域</button><p class="hint">警方划定区域与事件网格分别展示。</p><p id="freshness" class="hint"></p></aside>
 <section class="map-wrap"><div id="map" aria-label="柏林警情交互地图"></div><div class="map-label"><span class="dot"></span><span id="map-status">正在准备地图</span></div><div class="basemap-picker"><label>底图<select id="basemap" aria-label="底图" disabled><option value="street">标准街道</option><option value="aerial">航空影像（2026）</option><option value="local">本地简图</option></select></label><div id="basemap-error" role="status" hidden><span></span><button id="basemap-fallback">使用本地简图</button></div></div><div class="map-note">浅色 POI 是城市设施，不代表被警方认定为高发场所</div></section>
 <aside class="details"><div id="stats"></div><div id="selection"><h2>选择一个六边形或 POI</h2><p>查看该区域的事件、类别，以及可以追溯的警方原文。</p></div></aside></main>
 <dialog id="drawer"><button id="close-dialog" class="close">关闭</button><div id="drawer-content"></div></dialog>`;
@@ -38,10 +47,14 @@ let map: maplibregl.Map;
 let basemaps: Basemaps;
 let activeHex: FC = empty();
 let activePois: FC = empty();
+let activeRoads: FC = empty();
 let loaded = false;
 let expired = false;
 let freshnessTimer: ReturnType<typeof setInterval>;
-let selected: { type: "hex" | "poi"; id: string } | null = null;
+let selected:
+  | { type: "hex" | "poi"; id: string }
+  | { type: "road"; ids: string[] }
+  | null = null;
 let client: DataClient;
 let manifest: Manifest;
 let monthRequest = new AbortController();
@@ -70,8 +83,26 @@ function kinds() {
 function setSource(id: string, fc: FC) {
   (map.getSource(id) as maplibregl.GeoJSONSource).setData(fc);
 }
+function focusRoad(event: PoliceEvent) {
+  const geometry = candidateRoadGeometry(event);
+  if (!geometry) return;
+  selected = { type: "road", ids: [event.id] };
+  el<HTMLInputElement>("candidate-roads-toggle").checked = true;
+  setRoadVisibility();
+  const [west, south, east, north] = roadBounds(geometry);
+  map.fitBounds(
+    [
+      [west, south],
+      [east, north],
+    ],
+    { padding: 55, maxZoom: 14 },
+  );
+  el<HTMLDialogElement>("drawer").close();
+  showSelection();
+}
 function listReports(parent: HTMLElement, ids: string[]) {
-  for (const e of data.events.filter((e) => ids.includes(e.id))) {
+  const wanted = new Set(ids);
+  for (const e of data.events.filter((e) => wanted.has(e.id))) {
     const card = document.createElement("article");
     card.className = "report";
     parent.append(card);
@@ -104,13 +135,26 @@ function listReports(parent: HTMLElement, ids: string[]) {
     if (otherScenes.length)
       text(
         "small",
-        `原文还描述其他案发地点候选：${otherScenes.join("、")}；本公告在网格中只计一条`,
+        `原文还描述其他案发地点候选：${otherScenes.join("、")}；${e.coordinates ? "本公告在网格中只计一条" : "本公告未计入网格"}`,
         card,
       );
+    const road = candidateRoadGeometry(e);
+    if (road) {
+      text(
+        "small",
+        `待定位道路：${e.geocode_method === "disconnected_street_review" ? "本地道路数据包含不连续片段" : "道路范围较长或存在歧义"}；具体案发位置未知，未计入六边形或 POI 关联。`,
+        card,
+      ).className = "road-caution";
+      if (e.location_scope)
+        text("small", `匹配街区范围：${e.location_scope}`, card);
+      const button = text("button", "在地图查看道路范围", card);
+      button.className = "road-focus";
+      button.onclick = () => focusRoad(e);
+    }
     if (e.location_extent_m !== undefined && e.location_extent_m > 75)
       text(
         "small",
-        `匹配对象跨度约 ${e.location_extent_m.toLocaleString()} 米；六边形采用近似位置`,
+        `匹配对象跨度约 ${e.location_extent_m.toLocaleString()} 米；${e.coordinates ? "六边形采用近似位置" : "具体案发位置待核验"}`,
         card,
       );
     link(card, "警方原文 ↗", e.source_url);
@@ -127,12 +171,33 @@ function showSelection() {
   panel.replaceChildren();
   setSource("reported-sections", empty());
   if (!selected) {
-    text("h2", "选择一个六边形或 POI", panel);
+    text("h2", "选择六边形、POI 或道路范围", panel);
     text("p", "点击地图查看事件与来源。", panel);
     return;
   }
-  const f = (selected.type === "hex" ? activeHex : activePois).features.find(
-    (f) => f.properties.id === selected!.id,
+  if (selected.type === "road") {
+    const available = new Set(
+      activeRoads.features.map((f) => String(f.properties.id)),
+    );
+    selected.ids = selected.ids.filter((id) => available.has(id));
+    if (!selected.ids.length) {
+      selected = null;
+      text("p", "所选道路在当前筛选下没有记录。", panel);
+      return;
+    }
+    text("p", "ROAD RANGE / 待定位公告", panel).className = "eyebrow";
+    text("h2", `${selected.ids.length} 条待定位道路公告`, panel);
+    text(
+      "p",
+      "橙色虚线是原文提到的道路候选范围；具体案发位置未知，不代表整条道路发生案件。这些公告仍未定位，未计入六边形或 POI 关联。",
+      panel,
+    ).className = "road-caution";
+    listReports(panel, selected.ids);
+    return;
+  }
+  const selection = selected;
+  const f = (selection.type === "hex" ? activeHex : activePois).features.find(
+    (f) => f.properties.id === selection.id,
   );
   if (!f) {
     selected = null;
@@ -243,6 +308,13 @@ function paintOverlays() {
     base === "street" ? 0.8 : 1,
   ]);
 }
+function setRoadVisibility() {
+  const visibility = el<HTMLInputElement>("candidate-roads-toggle").checked
+    ? "visible"
+    : "none";
+  for (const layer of ["candidate-roads-line", "candidate-roads-hit"])
+    map.setLayoutProperty(layer, "visibility", visibility);
+}
 function refresh() {
   if (!loaded || expired) return;
   const month = data.months[monthKey()],
@@ -258,8 +330,11 @@ function refresh() {
     kinds(),
     el<HTMLInputElement>("highlight").checked,
   );
+  activeRoads = candidateRoads(rows);
   setSource("hex", activeHex);
   setSource("pois", activePois);
+  setSource("candidate-roads", activeRoads);
+  setRoadVisibility();
   map.setLayoutProperty(
     "hex-fill",
     "visibility",
@@ -286,16 +361,19 @@ function refresh() {
         !e.coordinates ||
         !["street", "point", "place", "address"].includes(e.location_precision),
     );
+    text(
+      "p",
+      `已定位 ${rows.length - unmapped.length} 条 · 未定位 ${unmapped.length} 条（其中 ${activeRoads.features.length} 条可查看道路范围）`,
+      el("stats"),
+    );
     const btn = text(
       "button",
       `${unmapped.length} 条位置不足，查看列表`,
       el("stats"),
     );
     btn.onclick = () => {
-      selected = null;
-      const p = el("selection");
-      p.replaceChildren();
-      text("h2", "位置不足的警情", p);
+      const p = openDialog("位置不足的警情");
+      text("p", "道路候选范围不确定具体案发位置，公告保留在未定位列表。", p);
       listReports(
         p,
         unmapped.map((e) => e.id),
@@ -504,7 +582,14 @@ async function start() {
       }),
     );
     map.once("load", async () => {
-      for (const id of ["roads", "hex", "pois", "kbo", "reported-sections"])
+      for (const id of [
+        "roads",
+        "hex",
+        "pois",
+        "kbo",
+        "reported-sections",
+        "candidate-roads",
+      ])
         map.addSource(id, { type: "geojson", data: empty() });
       map.addLayer({
         id: "roads-line",
@@ -580,6 +665,22 @@ async function start() {
         source: "reported-sections",
         paint: { "line-color": "#7c3aed", "line-width": 5 },
       });
+      map.addLayer({
+        id: "candidate-roads-line",
+        type: "line",
+        source: "candidate-roads",
+        paint: {
+          "line-color": "#e87917",
+          "line-width": 4,
+          "line-dasharray": [2, 1.5],
+        },
+      });
+      map.addLayer({
+        id: "candidate-roads-hit",
+        type: "line",
+        source: "candidate-roads",
+        paint: { "line-width": 14, "line-opacity": 0 },
+      });
       setSource("kbo", {
         type: "FeatureCollection",
         features: data.zones.features,
@@ -605,9 +706,21 @@ async function start() {
       map.on("click", (e) => {
         if (expired) return;
         const fs = map.queryRenderedFeatures(e.point, {
-          layers: ["poi-fill", "poi-point", "hex-fill"],
+          layers: ["candidate-roads-hit", "poi-fill", "poi-point", "hex-fill"],
         });
         if (!fs.length) return;
+        const roadIds = [
+          ...new Set(
+            fs
+              .filter((f) => f.layer.id === "candidate-roads-hit")
+              .map((f) => String(f.properties.id)),
+          ),
+        ];
+        if (roadIds.length) {
+          selected = { type: "road", ids: roadIds };
+          showSelection();
+          return;
+        }
         const f = fs[0];
         selected = {
           type: f.layer.id.startsWith("poi") ? "poi" : "hex",
@@ -628,6 +741,9 @@ async function start() {
         selected = null;
         refresh();
       };
+    el("candidate-roads-toggle").onchange = () => {
+      if (loaded) setRoadVisibility();
+    };
     for (const id of ["year", "month"])
       el(id).onchange = () => void loadMonth();
     el("overview").onclick = () =>

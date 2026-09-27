@@ -161,6 +161,23 @@ p {
 .toggle input {
   accent-color: #207a5c;
 }
+.road-swatch {
+  display: inline-block;
+  width: 25px;
+  margin-right: 5px;
+  vertical-align: middle;
+  border-top: 3px dashed #e87917;
+}
+.road-caution {
+  color: #92501c;
+  font-size: 12px;
+}
+.report .road-focus {
+  display: block;
+  margin: 9px 0;
+  font-size: 12px;
+  border-color: #e6b784;
+}
 i {
   width: 10px;
   height: 10px;
