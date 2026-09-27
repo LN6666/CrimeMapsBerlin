@@ -1,65 +1,50 @@
-# CiviFlux — Road & Fire GIS
+# CrimeMapsBerlin
 
-CiviFlux 是部署者本地运行的道路限制与火灾**外部交通影响**分析工具。Python 分析内核提供有向路由、真实 SUMO 配对仿真、typed operational ontology 和确定性 PPR；Web Component 通过本地 HTTP API 嵌入地图或普通网页。
+柏林警方公开公告地图：按公布月份筛选、两级六边形统计、分类 POI、50 米小型场所圆，以及可以追溯到原文的附近类型匹配。
 
-当前仓库已经包含产品实现、真实 Helsinki 数据构建和 SUMO 运行证据。**是否达到完整 v1，以 `execution/STATE.md`、当次测试日志和 release evidence 为准。** 随工程包附带的参考测试通过，不等于产品或真实 Qwen 集成通过。
+本仓库已按维护者要求替换原 CiviFlux 插件工程。旧代码只保留在 Git 历史，不属于当前产品；不需要 Qwen、Jev、LLM、SUMO 或 QGIS。
 
-当前用户指定的模型方案是 **Featherless SimpleJev 的 Qwen classifier**，通过远程 typed API 使用；不在本地部署或下载模型。普通 DashScope/Model Studio 生成式 Qwen API 仅保留为可选比较，不能替代该 classifier。生产付费调用按用户决定为 `DEFERRED_USER`；公开 demo 的检查单独记录，不冒充生产验证。详见 [模型 adapter 状态](adapters/system_one/README.md) 与 [运行手册](docs/CURRENT_RUNBOOK.md)。
+## 运行
 
-## 从这里开始
+需要 Python 3.12、Node.js 22、[uv](https://docs.astral.sh/uv/)。
 
-- [文档导航与用户决定](docs/index.md)：当前实现、迁移覆盖关系与历史来源入口。
-- [Codex 轮替交接](docs/CODEX_HANDOFF.md)：其他人或其他账户接手时的读取顺序、未完成目标、账号与费用边界。
-- [用户要求对照](docs/USER_REQUIREMENTS_TRACE.md)：本次对话中的工程、模型、数据、版本和交接要求逐项对应实现与缺口。
-- [当前运行手册](docs/CURRENT_RUNBOOK.md)：环境、测试、真实 SUMO、数据、Qwen 和故障处理。
-- [当前实现架构](docs/CURRENT_ARCHITECTURE.md)：模块职责、数据流、扩展位置和结果语义。
-- [工程决策](docs/adr/0001-current-architecture.md)：不可变城市快照、Action overlay、成对计算与 API 边界。
-- [贡献约定](CONTRIBUTING.md)：文件归属、验证与可复现交付。
-- [变更记录](CHANGELOG.md)：当前实现与来源工程包的区别。
-
-## 本地验证
-
-需要 Python 3.12、`uv` 和 Node.js。`uv.lock` 与 `web/package-lock.json` 固定本地依赖。SUMO 由 Python 依赖提供，adapter 要求实际 binary 为 **1.27.1**。
-
-```bash
-uv sync --frozen
-export PYTHONPATH="$PWD/core:$PWD"
-uv run --frozen python -m pytest -q test_suite/unit/test_network.py
-uv run --frozen python -m pytest -q test_suite/sumo/test_sumo.py
-uv run --frozen python scripts/demo_sumo.py
+```sh
+uv sync --locked
+npm --prefix web ci
+# 第一次下载约 100 MB 的柏林 OSM 提取包，校验官方 MD5
+uv run python scripts/safety/fetch_osm.py
+uv run python scripts/safety/extract_pbf.py
+# 原文逐篇保存进度；首次补采可能需要数十分钟
+uv run python -m crimemapsberlin.collector --year 2026 --full
+uv run python scripts/safety/build.py
+npm --prefix web run dev
 ```
 
-最后一条实际启动本地 `netconvert` 和 `sumo`，将配对结果、命令、日志、输入和哈希写入 `evidence/wp4/`。它使用明确标注的合成双通道网络；无模型、无 API 费用，不触发城市数据下载。
+打开 http://127.0.0.1:5173 。先显示道路概览；放大后按视野请求 POI。日常执行 `uv run python scripts/safety/update.py`；定时配置见 [更新维护](docs/UPDATES.md)。
 
-本仓库的 Python 开发命令显式设置 `PYTHONPATH`。在当前 macOS 环境，隐藏属性的 editable `.pth` 文件可能被 Python 启动逻辑跳过；无需修改系统安全设置。发布安装应使用构建的 wheel，并独立验证干净环境。
+## 功能和当前状态
 
-## 目录
+- 六边形边长 1,100 / 275 米，年份、月份、类别筛选、点击查看公告；参考 [CrimeMapsUK 的公开方法](https://www.crimemapsuk.com/methodology/)。使用柏林 EPSG:25833 米制网格，缩放阈值 13 为本地配置，未宣称复刻未知的英国服务端参数。
+- 酒吧、夜店等分别配色；小型场所半径 50 米。车站有 OSM 面则用面，无面只显示空心定位点。
+- 原文确定性关键词 + 空间匹配，同类型附近 POI 加深；街道中点产生的是候选关联，不是店内案发证明。
+- 柏林 kbO 七个区域有官方说明和边界图链接；精确矢量边界仍待导入，页面不会伪造法定边界。
+- 欧洲警方来源目录已有部分国家材料；覆盖清单明确标记未完成的国家，不能视作全欧洲穷尽检索。
 
-| 路径 | 职责 |
-|---|---|
-| `core/urbanimpact/` | 契约、immutable snapshot、Actions、路由、graph projection、PPR、analysis use case |
-| `api/` | 本地服务、token、任务/取消、对象查看与导出 |
-| `web/` | Web Component、MapAdapter、MapLibre 参考宿主和普通 HTML 宿主 |
-| `adapters/` | OSM、GTFS、SUMO、SimpleJev/可选生成式 Qwen 的边界适配 |
-| `ontology/` | 对象、关系、接口、Action 的版本化注册表 |
-| `test_suite/` | 当前产品测试，真实 SUMO/browser/API gates 分开报告 |
-| `tests/`, `verification/` | 原工程包独立参考检查，保留且不冒充产品 |
-| `data/`, `evidence/` | 本地输入、来源日期/哈希、真实运行记录；大文件是否纳入分发由发布流程决定 |
-| `execution/` | 当前 checkpoint、工作包、目标和 release 状态 |
+警方公告是选择发布的事件，不是全量报案数据。月份是**公布月份**；没有办案结果时显示未知。没有可靠地点时保留在未定位列表，不填入“零案件”网格。自动类别识别有“未分类”出口，交通及其他公告也可以单独筛选。
 
-## 解释结果
+## 开发与交接
 
-- 路由输出是固定权重下的距离、网络行程时间和可达性；没有路径时为 `null` / `unreachable`，入口未知时为 `unavailable`。
-- SUMO 默认 `SYNTHETIC_DEMAND_WHATIF`。报告包含全部需求分母、到达、未完成、teleport 和 rejected departures；只对到达车辆求均值时明确说明分母。
-- PPR 是关联注意力，不是风险、因果、撤离安全或应急响应预测。Qwen 只能调整软语义相关性。
-- 当前 OSM/GTFS 不构成历史事故当天真值。公告事实、人工映射、假设封路和测量验证分别标记。
-- Helsinki 来源公告到有向道路的映射仍待独立人工复核（`evidence/wp1/case_review.json`）；机器候选不构成已验收案例。选定 origin 到全部设施的检查也不等于全市所有起点的可达性保证。
-- 火灾边界由用户确认或导入。系统不从“严重程度”生成消防半径，也不自动放宽应急车辆权限。
+```sh
+uv run pytest -q
+npm --prefix web run build
+cd web
+npx playwright install chromium
+npm test
+```
 
-## 当前文档与来源方案
+- [架构与数据契约](docs/ARCHITECTURE.md)
+- [自动更新、失败处理与恢复](docs/UPDATES.md)
+- [来源、许可和定位规则](docs/DATA.md)
+- [用户要求与交接清单](docs/HANDOFF.md)
 
-`docs/00_PRODUCT.md`–`docs/15_COMPETITIVE_BENCHMARK.md`、`prompts/`、`MASTER_PLAN.md` 保留工程包的验收来源。它们包含原始的“必须本地 Reflex + Qwen”文字；本地部署选择已由当前用户的 **远程 SimpleJev classifier、生产付费调用暂缓** 决定替代。当前 typed contract 以 SimpleJev adapter 和已核对文档为准；普通生成式 Qwen API 不能顶替。模型真实性、预算、证据和物理结果隔离等要求继续适用。
-
-阅读顺序为：本 README → 当前运行手册/架构 → `execution/STATE.md` → 当前工作包需要的来源文档。原始 README 保存在 [HANDOFF_README.md](docs/HANDOFF_README.md)。不要从旧计划中的 `NOT_IMPLEMENTED` 或旧模型 gate 推断当前运行状态，也不要把当前工程完成误写成历史交通预测已验证。
-
-项目不提供作者代运营 SaaS，也不承担市政账号、SSO、HA、备份或应急指挥。用户已授权将本仓库公开发布到 `LN6666/CiviFlux`；这不包含付费 API、对外发消息或完整 v1 release 授权。
+应用代码为 Apache-2.0；OSM 派生数据受 ODbL 约束。原文缓存、城市数据、生成的地图数据、账号信息均不提交 Git。公共仓库 CI 使用合成测试输入，不需要账号或付费 API。

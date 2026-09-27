@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<edges>
-  <edge id="e5" from="n5" to="n0" numLanes="1" speed="10.0" length="100.0" priority="1" allow="emergency passenger" />
-  <edge id="e0" from="n0" to="n1" numLanes="1" speed="10.0" length="100.0" priority="1" allow="emergency passenger" />
-  <edge id="e2" from="n1" to="n2" numLanes="1" speed="10.0" length="100.0" priority="1" allow="emergency passenger" />
-  <edge id="e1" from="n0" to="n3" numLanes="1" speed="10.0" length="250.0" priority="1" allow="emergency passenger" />
-  <edge id="e4" from="n3" to="n2" numLanes="1" speed="10.0" length="250.0" priority="1" allow="emergency passenger" />
-  <edge id="e3" from="n2" to="n4" numLanes="1" speed="10.0" length="100.0" priority="1" allow="emergency passenger" />
-</edges>

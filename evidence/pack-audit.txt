@@ -1,1 +1,0 @@
-PACK AUDIT PASS: 8 work packages, 54 goals, 39 registered sources.

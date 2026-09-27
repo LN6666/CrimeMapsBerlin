@@ -1,7 +1,0 @@
-# Versions actually used for the handoff reference tests, not the production lockfile.
-numpy==2.3.5
-scipy==1.17.0
-networkx==3.6.1
-pytest==9.0.2
-jsonschema==4.26.0
-PyYAML==6.0.3

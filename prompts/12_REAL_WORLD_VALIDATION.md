@@ -1,3 +1,0 @@
-# REAL_WORLD_VALIDATION
-
-执行docs/02与09，先取得并冻结真实bytes、查date覆盖，然后对照cases中source facts建立review map。不可将公告输入自身当独立outcome；不可用今天GTFS装历史；火灾case assumptions必须逐字段显示。最多两轮获取历史观测，找到则holdout验证，找不到写NOT_VALIDATED并完成source replay和what-if。每个score有分母、missing、data hash、allowed claim。不要重复网页搜索直到得到想要的结论。

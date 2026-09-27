@@ -1,2 +1,16 @@
-import {defineConfig,devices} from '@playwright/test';
-export default defineConfig({testDir:'./tests',timeout:45000,expect:{timeout:15000},fullyParallel:false,workers:1,retries:0,reporter:[['list'],['json',{outputFile:'test-results/results.json'}]],use:{baseURL:'http://127.0.0.1:8766',channel:'chromium',trace:'retain-on-failure',screenshot:'only-on-failure',...devices['Desktop Chrome'],launchOptions:{args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}},webServer:[{command:`cd .. && PYTHONPATH=core:. CIVIFLUX_WORKSPACE=.runtime/browser-${Date.now()} SIMPLEJEV_ALLOW_EGRESS=0 SIMPLEJEV_MAX_CALLS=0 QWEN_API_ALLOW_EGRESS=0 QWEN_API_MAX_CALLS=0 .venv/bin/python -m api --port 8766`,url:'http://127.0.0.1:8766/api/v1/health',reuseExistingServer:false,timeout:30000},{command:`cd .. && PYTHONPATH=core:. CIVIFLUX_WORKSPACE=.runtime/browser-cancel-${Date.now()} SIMPLEJEV_ALLOW_EGRESS=0 SIMPLEJEV_MAX_CALLS=0 QWEN_API_ALLOW_EGRESS=0 QWEN_API_MAX_CALLS=0 .venv/bin/python web/tests/cancel_server.py`,url:'http://127.0.0.1:8767/api/v1/health',reuseExistingServer:false,timeout:30000}]});
+import { defineConfig } from "@playwright/test";
+export default defineConfig({
+  testDir: "tests",
+  workers: 1,
+  use: {
+    baseURL: "http://127.0.0.1:4173",
+    headless: true,
+    launchOptions: { args: ["--use-angle=swiftshader", "--enable-webgl"] },
+  },
+  webServer: {
+    command:
+      "npm run build && npm exec vite preview -- --host 127.0.0.1 --port 4173",
+    url: "http://127.0.0.1:4173",
+    reuseExistingServer: false,
+  },
+});
