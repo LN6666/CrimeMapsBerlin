@@ -220,18 +220,35 @@ def article_record(page: str, requested_url: str) -> dict:
 
 COLOGNE = re.compile(r"\b(?:in\s+Köln(?:-[\wÄÖÜäöüß]+)?|Köln-[\wÄÖÜäöüß]+|im\s+Kölner\s+Stadtteil|in\s+der\s+Kölner\s+Innenstadt)\b", re.I)
 OUTSIDE = re.compile(
-    r"\b(?:in|bei)\s+(?:Leverkusen|Erftstadt|Weisweiler|Düsseldorf|Bonn|Gevelsberg|Kleve)(?:-[\wÄÖÜäöüß]+)?\b"
-    r"|\b(?:Leverkusen|Erftstadt|Weisweiler|Düsseldorf|Gevelsberg)-[\wÄÖÜäöüß]+",
+    r"\b(?:in|bei)\s+(?:Leverkusen|Erftstadt|Weisweiler|Düsseldorf|Bonn|Gevelsberg|Kleve|"
+    r"Pulheim|Bergheim|Hürth|Frechen|Brühl|Wesseling|Dormagen|Bergisch\s+Gladbach)"
+    r"(?:-[\wÄÖÜäöüß]+)?\b"
+    r"|\b(?:Leverkusen|Erftstadt|Weisweiler|Düsseldorf|Gevelsberg|Pulheim|Bergheim|"
+    r"Hürth|Frechen|Brühl|Wesseling|Dormagen)-[\wÄÖÜäöüß]+",
     re.I,
 )
+RESPONSE_CONTEXT = re.compile(
+    r"\b(?:festgenommen|festnahmen?|verhaftet|aufgegriffen|angetroffen|kontrolliert)\b|"
+    r"\b(?:nahm|nahmen|nimmt|nehmen)\b.{0,100}\bfest\b|"
+    r"\b(?:wohnt|wohnte|wohnhaft)\b",
+    re.I,
+)
+
+
+def _scene_scope_match(pattern: re.Pattern, text: str):
+    for sentence in re.split(r"(?<=[.!?;])\s+|\n+", text):
+        match = pattern.search(sentence)
+        if match and not RESPONSE_CONTEXT.search(sentence):
+            return match
+    return None
 
 
 def city_scope(title: str, body: str) -> tuple[str, str]:
     """Return a municipal review lead, not an incident-scene finding."""
     # Ignore publisher/contact boilerplate before checking the narrative.
     narrative = re.sub(r"\b(?:Polizei|Polizeipräsidium|Staatsanwaltschaft)\s+Köln\b", "", title + "\n" + body)
-    inside = COLOGNE.search(narrative)
-    outside = OUTSIDE.search(narrative)
+    inside = _scene_scope_match(COLOGNE, narrative)
+    outside = _scene_scope_match(OUTSIDE, narrative)
     if inside and outside:
         return "needs_review", f"mixed municipality mentions: {inside[0]}; {outside[0]}"
     if inside:

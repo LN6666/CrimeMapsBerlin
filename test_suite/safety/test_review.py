@@ -53,6 +53,20 @@ def test_review_tracks_both_source_and_extraction_versions(tmp_path):
     assert review_status(db, "hamburg", event(source_sha256="0" * 64)) == "pending"
 
 
+def test_review_hashes_exact_stored_body_but_normalizes_quote_whitespace(tmp_path):
+    db = connect(tmp_path / "review.sqlite")
+    body = "Die Polizei meldet einen Überfall\nam Ostpreußenplatz in Hamburg-Wandsbek."
+    candidate = event(source_sha256=hashlib.sha256(body.encode()).hexdigest())
+    assert record_reviews(
+        db,
+        "cologne",
+        [candidate],
+        {candidate["id"]: body},
+        [decision(candidate, evidence_quote="einen Überfall am Ostpreußenplatz")],
+    ) == 1
+    assert review_status(db, "cologne", candidate) == "supported"
+
+
 def test_review_rejects_stale_or_unsupported_decisions_atomically(tmp_path):
     db = connect(tmp_path / "review.sqlite")
     first = event()

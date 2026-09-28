@@ -92,6 +92,20 @@ def test_singular_hamburg_tatort_heading_scopes_a_road_without_inventing_missing
     assert mixed["coordinates"] is None
     assert mixed["geocode_method"] == "multiple_official_scenes"
     assert "Neuer Wall" not in mixed["location_label"]
+    searches = gaz.locate(
+        "Orte: Hamburg-Winterhude, Baumkamp, und Hamburg-Harburg, Nebenstraße. "
+        "In dem Geschäft am Baumkamp wurden Beweismittel sichergestellt.",
+        title="Durchsuchungen an mehreren Orten",
+    )
+    assert searches["coordinates"] is None
+    assert searches["geocode_method"] == "multiple_official_scenes"
+    repeated_singular = gaz.locate(
+        "Tatort: Hamburg-Winterhude, Baumkamp. Dort wurde ein Mann beraubt. "
+        "Tatort: Hamburg-Harburg, Nebenstraße. Dort wurde eine Frau beraubt.",
+        title="Zwei Zeugenaufrufe",
+    )
+    assert repeated_singular["coordinates"] is None
+    assert repeated_singular["geocode_method"] == "multiple_official_scenes"
     collision = gaz.locate(
         body.replace("Tatort:", "Unfallort:"),
         title="Unfall in Hamburg-Winterhude", district="Winterhude",
@@ -106,6 +120,27 @@ def test_singular_hamburg_tatort_heading_scopes_a_road_without_inventing_missing
     safety_balance = gaz.locate(body, title="Verkehrssicherheitsbilanz 2025", district="Winterhude")
     assert safety_balance["coordinates"] is None
     assert safety_balance["geocode_method"] == "multi_event_summary"
+    boats = gaz.locate(body, title="Neue Streifenboote für die Wasserschutzpolizei")
+    assert boats["coordinates"] is None
+    assert boats["geocode_method"] == "non_incident_report"
+    prevention = gaz.locate(
+        "Präventionsberatung in der Teststraße.",
+        title='"In Hamburg ist man plietsch - Dein Lifehack gegen krumme Dinger"',
+    )
+    assert prevention["coordinates"] is None
+    assert prevention["geocode_method"] == "non_incident_report"
+    broadcast = gaz.locate(
+        "Ein alter Fall wird im Fernsehen erneut vorgestellt.",
+        title='Sendehinweis - Hamburger Fall bei "Aktenzeichen XY... Ungelöst"',
+    )
+    assert broadcast["coordinates"] is None
+    assert broadcast["geocode_method"] == "non_incident_report"
+    summit = gaz.locate(
+        "Für einen Gipfel richtet die Polizei eine Sicherheitszone ein.",
+        title="Nordseegipfel 2026 in Hamburg - Hinweise der Polizei",
+    )
+    assert summit["coordinates"] is None
+    assert summit["geocode_method"] == "non_incident_report"
 
 
 def test_official_scene_heading_survives_later_arrest_in_same_sentence():
@@ -379,6 +414,61 @@ def test_reported_section_stays_between_end_roads():
     point = transform(TO_METRIC, Point(result["coordinates"]))
     assert X <= point.x <= X + 500 and abs(point.y - Y) < 0.1
     assert result["reported_location_geometry"]["type"] == "LineString"
+
+
+def test_official_heading_keeps_section_boundary_roads():
+    gaz = Gazetteer([
+        road("Mainstraße", [(0, 0), (100, 0)]),
+        road("Weststraße", [(20, -40), (20, 40)]),
+        road("Oststraße", [(80, -40), (80, 40)]),
+    ])
+    result = gaz.locate(
+        "Tatort: Berlin-Mitte, Mainstraße, Gehweg zwischen Weststraße und Oststraße. "
+        "Dort wurde eine Person mit einem Messer verletzt.",
+        title="Zeugenaufruf nach Auseinandersetzung",
+    )
+    assert result["geocode_method"] == "reported_street_section"
+    assert result["location_label"] == "mainstrasse (zwischen weststrasse / oststrasse)"
+
+
+def test_official_height_and_later_junction_refine_a_long_road():
+    gaz = Gazetteer([
+        road("Mainstraße", [(0, 0), (1000, 0)]),
+        road("Querweg", [(200, -100), (200, 100)]),
+    ])
+    official_height = gaz.locate(
+        "Tatort: Berlin-Mitte, Mainstraße (Höhe Querweg). "
+        "Dort wurde eine Person angegriffen.",
+        title="Zeugenaufruf nach Angriff",
+    )
+    assert official_height["geocode_method"] == "named_street_intersection"
+    assert official_height["location_label"] == "mainstrasse / querweg"
+
+    later_detail = gaz.locate(
+        "Unfallort: Berlin-Mitte, Mainstraße. Eine Autofahrerin wurde abgedrängt. "
+        "Kurz hinter der Einmündung Querweg/Mainstraße wechselte ein Lkw auf ihren Fahrstreifen. "
+        "Sie kollidierte dort mit einem Baum.",
+        title="Zeugenaufruf nach Verkehrsunfallflucht",
+    )
+    assert later_detail["geocode_method"] == "named_street_intersection"
+    assert later_detail["location_label"] == "mainstrasse / querweg"
+
+
+def test_road_race_route_is_not_reduced_to_first_named_street():
+    gaz = Gazetteer([road("Teststraße", [(0, 0), (100, 0)])])
+    result = gaz.locate(
+        "Auf der Teststraße fiel ein Fahrzeug auf und fuhr anschließend über mehrere Autobahnen.",
+        title="Verbotenes Kraftfahrzeugrennen - Polizei stoppt Raser",
+    )
+    assert result["coordinates"] is None
+    assert result["geocode_method"] == "moving_scene_review"
+
+    fixed_scene = gaz.locate(
+        "Tatort: Berlin-Mitte, Teststraße. Dort führte der Fahrer ein Straßenrennen durch.",
+        title="Verbotenes Straßenrennen",
+    )
+    assert fixed_scene["coordinates"] is not None
+    assert fixed_scene["geocode_method"] == "street_representative"
 
 
 def test_section_without_identified_main_road_is_not_end_point():

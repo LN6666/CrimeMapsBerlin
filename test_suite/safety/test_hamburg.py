@@ -42,6 +42,12 @@ def test_article_ignores_navigation_contacts_and_related_reports():
     assert article_district("Tatort: Hamburg-Mitte, Straße. Tatort: Hamburg-Wandsbek, Platz.") == ""
     assert article_district("Tatort: Hamburg-St. Georg, Besenbinderhof") == "St. Georg"
     assert article_district("Unfallort: Hamburg-Moorfleet, Amandus-Stubbe-Straße") == "Moorfleet"
+    assert article_district(
+        "Tatzeitraum: Mai bis August; Tatort: Hamburg-Wandsbek Die Polizei ermittelt."
+    ) == "Wandsbek"
+    assert article_district(
+        "Tatort: Hamburg-Mitte Tatort: Hamburg-Wandsbek Die Polizei ermittelt."
+    ) == ""
     with pytest.raises(ValueError, match="publisher"):
         article_body(ARTICLE.replace("<a>Polizei Hamburg</a>", "<a>Other publisher</a>"))
 

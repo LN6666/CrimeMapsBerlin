@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -84,6 +85,14 @@ def test_cologne_native_schema_selects_only_city_leads(tmp_path, monkeypatch):
     with pytest.raises(SystemExit, match="Publication blocked: cologne"):
         build.main()
     assert not paths_for("cologne", tmp_path).public.exists()
+    monkeypatch.setitem(
+        build.CITY_SPECS,
+        "cologne",
+        replace(build.CITY_SPECS["cologne"], publication_enabled=True),
+    )
+    with pytest.raises(SystemExit, match="Publication blocked: cologne"):
+        build.main()
+    assert not paths_for("cologne", tmp_path).public.exists()
     monkeypatch.setattr(sys, "argv", ["build.py", "--city", "cologne", "--db", "other.sqlite"])
     with pytest.raises(SystemExit, match="--db override"):
         build.main()
@@ -93,6 +102,14 @@ def test_frankfurt_newsroom_boilerplate_does_not_establish_city_scope(tmp_path):
     assert frankfurt_scope("POL-F: Bericht", "Frankfurt (ots) - Auf einer Autobahn kam es zum Unfall.") == "needs_review"
     assert frankfurt_scope("POL-F: Bericht", "Frankfurt (ots) - In Offenbach geschah ein Diebstahl.") == "outside_candidate"
     assert frankfurt_scope("POL-F: Bericht", "Frankfurt (ots) - In Frankfurt am Main geschah ein Diebstahl.") == "city_candidate"
+    assert frankfurt_scope(
+        "POL-F: Festnahme",
+        "Frankfurt (ots) - In Bad Vilbel geschah ein Raub. Der Täter wurde in Frankfurt festgenommen.",
+    ) == "outside_candidate"
+    assert frankfurt_scope(
+        "POL-F: Festnahmen in Frankfurt am Main",
+        "Frankfurt (ots) - Der Überfall ereignete sich in Kronberg.",
+    ) == "needs_review"
 
     osm_indexes(tmp_path, "frankfurt")
     path = paths_for("frankfurt", tmp_path).source_db
@@ -112,6 +129,7 @@ def test_frankfurt_newsroom_boilerplate_does_not_establish_city_scope(tmp_path):
     candidates = json.loads((paths_for("frankfurt", tmp_path).runtime / "review-candidates.json").read_text())
     assert audit["coverage"]["selected"] == 1
     assert audit["coverage"]["outside"] == 1
+    assert audit["archive_complete"] is False
     assert [event["id"] for event in candidates["events"]] == ["333"]
     assert not paths_for("frankfurt", tmp_path).public.exists()
 

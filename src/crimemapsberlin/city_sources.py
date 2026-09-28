@@ -29,10 +29,25 @@ FRANKFURT_CITY = re.compile(
 )
 FRANKFURT_OUTSIDE = re.compile(
     r"\b(?:in|bei)\s+(?:Offenbach|Bad\s+Homburg|Hanau|Darmstadt|Wiesbaden|"
-    r"Neu-Isenburg|Oberursel|Eschborn|Maintal)\b",
+    r"Bad\s+Vilbel|Neu-Isenburg|Oberursel|Eschborn|Maintal|Hofheim|Kelsterbach|"
+    r"Hattersheim|Mörfelden-Walldorf)\b",
     re.I,
 )
 FRANKFURT_BOILERPLATE = re.compile(r"^\s*Frankfurt(?:\s+am\s+Main)?\s*\(ots\)\s*[-–]?\s*", re.I)
+RESPONSE_CONTEXT = re.compile(
+    r"\b(?:festgenommen|festnahmen?|verhaftet|aufgegriffen|angetroffen|kontrolliert)\b|"
+    r"\b(?:nahm|nahmen|nimmt|nehmen)\b.{0,100}\bfest\b|"
+    r"\b(?:wohnt|wohnte|wohnhaft)\b",
+    re.I,
+)
+
+
+def _scene_scope_match(pattern: re.Pattern, text: str):
+    for sentence in re.split(r"(?<=[.!?;])\s+|\n+", text):
+        match = pattern.search(sentence)
+        if match and not RESPONSE_CONTEXT.search(sentence):
+            return match
+    return None
 
 
 def frankfurt_scope(title: str, body: str) -> str:
@@ -40,8 +55,8 @@ def frankfurt_scope(title: str, body: str) -> str:
     narrative = FRANKFURT_BOILERPLATE.sub("", body)
     narrative = re.sub(r"\bPolizeipräsidium\s+Frankfurt\s+am\s+Main\b", "", narrative, flags=re.I)
     text = title + "\n" + narrative
-    inside = FRANKFURT_CITY.search(text)
-    outside = FRANKFURT_OUTSIDE.search(text)
+    inside = _scene_scope_match(FRANKFURT_CITY, text)
+    outside = _scene_scope_match(FRANKFURT_OUTSIDE, text)
     if inside and not outside:
         return "city_candidate"
     if outside and not inside:
@@ -50,18 +65,11 @@ def frankfurt_scope(title: str, body: str) -> str:
 
 
 def _archive_complete(db: sqlite3.Connection, city: str) -> bool:
-    if city == "cologne":
-        table, column = "archive_scan", "complete"
-    elif city == "frankfurt":
-        table, column = "frankfurt_archive_cursor", "complete"
-    else:
-        # Hamburg's current collector has no durable whole-year archive marker.
-        return False
-    try:
-        rows = db.execute(f"SELECT {column} FROM {table}").fetchall()
-    except sqlite3.OperationalError:
-        return False
-    return bool(rows) and all(bool(row[0]) for row in rows)
+    # Existing adapter cursors describe only the years already requested. They
+    # cannot prove that every required year or native supplement was scanned.
+    # Keep the cross-city audit fail-closed until an explicit coverage range is
+    # stored and reconciled for each source.
+    return False
 
 
 def read_city_source(city: str, path: Path) -> SourceSelection:

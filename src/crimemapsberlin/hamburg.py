@@ -134,7 +134,20 @@ def article_body(page):
 
 
 def article_district(body):
-    matches = re.findall(r"\b(?:Tatort|Unfallort|Ort):\s*Hamburg-([^,;\n]{2,55})\s*[,;]", body)
+    headings = re.findall(r"\b(?:Tatort|Unfallort|Ort):\s*Hamburg-", body)
+    if len(headings) != 1:
+        # Two singular headings are still two scenes. Do not let the lazy
+        # district capture consume the second heading as part of one name.
+        return ""
+    narrative_start = (
+        r"Die|Der|Den|Dem|Das|Ein|Eine|Einen|Am|An|Im|In|Heute|Gestern|Seit|Nach|Vor|"
+        r"Einsatzkräfte|Polizei|Mehrere|Zwei|Drei|Unbekannte|Aufgrund"
+    )
+    matches = re.findall(
+        rf"\b(?:Tatort|Unfallort|Ort):\s*Hamburg-([^,;\n]{{2,55}}?)"
+        rf"(?=\s*[,;]|\s+(?:{narrative_start})\b)",
+        body,
+    )
     # Multiple scene headings need an incident-by-incident location review.
     return matches[0].strip() if len(matches) == 1 else ""
 

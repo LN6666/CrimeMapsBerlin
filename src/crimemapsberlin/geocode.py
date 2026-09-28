@@ -32,12 +32,16 @@ from .spatial import TO_METRIC, TO_WGS
 
 GEOCODE_VERSION = "5"
 MULTI_EVENT_SUMMARY = re.compile(r"bilanz")
-MULTIPLE_OFFICIAL_SCENES = re.compile(r"\b(?:tatorte|unfallorte)\s*:", re.I)
+MULTIPLE_OFFICIAL_SCENES = re.compile(r"\b(?:tatorte|unfallorte|orte)\s*:", re.I)
+OFFICIAL_LOCATION_HEADING = re.compile(r"\b(?:tatort|unfallort|ort)\s*:", re.I)
+SINGULAR_OFFICIAL_SCENE = re.compile(r"\b(?:tatort|unfallort)\s*:", re.I)
+MOVING_ROAD_EVENT = re.compile(r"kraftfahrzeugrennen|straßenrennen|strassenrennen")
 NON_INCIDENT = re.compile(
     r"allgemeinverfügung|aktionstag|videoschutz|präventions|speedweek|"
     r"gemeinsam für mehr sicherheit|stadtweite durchsuchungs|koordinierte internationale kontroll|"
     r"vermisstenfahndung|einladung|kriminalstatistik|verkehrshinweis|pressekonferenz|fototermin|"
-    r"bilanz einer aktionswoche"
+    r"bilanz einer aktionswoche|neue streifenboote|in hamburg ist man plietsch|"
+    r"sendehinweis|nordseegipfel"
 )
 
 
@@ -303,9 +307,18 @@ class Gazetteer:
         if MULTI_EVENT_SUMMARY.search(normalized_title):
             result["geocode_method"] = "multi_event_summary"
             return result
+        if len(OFFICIAL_LOCATION_HEADING.findall(body)) > 1:
+            result["geocode_method"] = "multiple_official_scenes"
+            return result
+        if MOVING_ROAD_EVENT.search(normalized_title) and not SINGULAR_OFFICIAL_SCENE.search(body):
+            # A race described over a route has no single incident point unless
+            # the source supplies a separate, explicit scene heading.
+            result["geocode_method"] = "moving_scene_review"
+            return result
         if MULTIPLE_OFFICIAL_SCENES.search(body):
-            # A plural official scene heading names more than one possible map
-            # location. Later arrests or recovered property cannot select one.
+            # A plural official location heading can name several incident,
+            # search or seizure sites. Later narrative detail cannot silently
+            # reduce the announcement to one of those places.
             result["geocode_method"] = "multiple_official_scenes"
             return result
         selected = []
@@ -328,6 +341,20 @@ class Gazetteer:
                 unscoped.extend(primary)
                 if any(locative(sentence, m["start"]) or m["kind"] == "place" for m in primary):
                     linked = [m for m in primary if incident_at_location(sentence, m)]
+                    streets = [m for m in primary if m["kind"] == "street"]
+                    official_height = (
+                        len(streets) >= 2
+                        and any(official_scene_heading(sentence, m["start"]) for m in primary)
+                        and re.search(r"\(\s*höhe\b", sentence)
+                    )
+                    near_junction = (
+                        len(streets) >= 2
+                        and re.search(r"\bkurz (?:hinter|vor) der einmündung\b", sentence)
+                    )
+                    if official_height or near_junction:
+                        linked = primary
+                    if linked and self._section_reference(sentence, primary):
+                        linked = primary
                     if (linked and re.search(r",\s*als\b", sentence)) or (
                         re.search(r"kreuzung|einmündung", sentence) and re.search(r"\bund\s+kollid", sentence)
                     ):
@@ -382,6 +409,20 @@ class Gazetteer:
         result["excluded_location_context"] = ignored
         if scene_options:
             selected_index, selected = scene_options[0]
+            selected_keys = {(m["kind"], m["key"]) for m in selected}
+            if len([m for m in selected if m["kind"] == "street"]) == 1:
+                for refined_index, refined in scene_options[1:]:
+                    refined_keys = {(m["kind"], m["key"]) for m in refined}
+                    if (
+                        selected_keys < refined_keys
+                        and len([m for m in refined if m["kind"] == "street"]) >= 2
+                        and re.search(
+                            r"\bkurz (?:hinter|vor) der einmündung\b",
+                            sentences[refined_index],
+                        )
+                    ):
+                        selected_index, selected = refined_index, refined
+                        break
             result["location_selection"] = (
                 "official_tatort_heading"
                 if any(official_scene_heading(sentences[selected_index], m["start"]) for m in selected)
@@ -658,7 +699,11 @@ CATEGORY_RULES = [
 
 def category(title):
     low = title.casefold()
-    if re.search(r"verkehrsunfall|\bunfall\b|angefahren|zusammenstoß|tretroller|kollision", low):
+    if re.search(
+        r"\b\w*unfall\w*\b|angefahren|fährt[^.]{0,80}\ban\b|"
+        r"zusammenstoß|tretroller|kollision",
+        low,
+    ):
         return "Verkehr / sonstige Meldung", False
     for label, pattern in CATEGORY_RULES:
         if re.search(pattern, low):

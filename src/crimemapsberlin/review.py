@@ -92,10 +92,11 @@ def record_reviews(
         evidence = " ".join(decision.get("evidence_quote", "").split())
         note = " ".join(decision.get("note", "").split())
         reviewer = " ".join(decision.get("reviewer", "").split())
-        body = " ".join(bodies.get(ident, "").split())
+        raw_body = bodies.get(ident, "")
+        body = " ".join(raw_body.split())
         if not body or not reviewer or not note:
             raise ValueError(f"Missing body, reviewer or explanation for {ident}")
-        if hashlib.sha256(body.encode()).hexdigest() != source_sha:
+        if hashlib.sha256(raw_body.encode()).hexdigest() != source_sha:
             raise ValueError(f"Source changed after candidate extraction for {ident}")
         if verdict == "supported" and (len(evidence) < 15 or evidence not in body):
             raise ValueError(f"Supported review lacks a verbatim source excerpt for {ident}")

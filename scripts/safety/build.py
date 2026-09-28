@@ -43,7 +43,10 @@ def main():
     city = args.city
     settings = CITY_SETTINGS[city]
     spec = CITY_SPECS[city]
-    if not spec.publication_enabled:
+    if city not in {"berlin", "hamburg"} or not spec.publication_enabled:
+        # These source schemas have only local candidate contracts. Keeping an
+        # explicit city allowlist prevents a future flag change from routing
+        # them through Berlin's collector schema and bypassing city selection.
         if args.db:
             raise SystemExit("Candidate preparation blocked: --db override is not supported for staged cities")
         if not spec.candidate_enabled:

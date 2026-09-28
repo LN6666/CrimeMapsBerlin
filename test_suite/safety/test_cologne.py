@@ -1,3 +1,5 @@
+import hashlib
+
 import httpx
 import pytest
 
@@ -59,9 +61,17 @@ def test_city_scope_never_infers_scene_from_issuing_authority_or_zip():
     assert city_scope("Polizei Köln", "Polizei Köln | PLZ: 51103")[0] == "needs_review"
     assert city_scope("Brandstiftung", "In Leverkusen-Schlebusch brannte ein Haus.")[0] == "outside_candidate"
     assert city_scope("Explosion", "In Köln-Ehrenfeld explodierte ein Kasten.")[0] == "cologne_candidate"
-    assert city_scope("Ermittlungen", "Tat in Erftstadt; Festnahme in Köln.")[0] == "needs_review"
+    assert city_scope("Ermittlungen", "Tat in Erftstadt; Festnahme in Köln.")[0] == "outside_candidate"
     assert city_scope("Unfall auf der BAB 3", "Auf der Autobahn 3 kam es zum Unfall.")[0] == "needs_review"
     assert city_scope("In der Kölner Straße", "In Leverkusen trafen sich Zeugen.")[0] == "outside_candidate"
+    assert city_scope(
+        "Polizei nimmt Täter in Köln fest",
+        "Der Überfall geschah in Pulheim. Danach wurde der Täter in Köln festgenommen.",
+    )[0] == "outside_candidate"
+    assert city_scope(
+        "Festnahmen in Köln",
+        "Der Überfall ereignete sich in Hilden.",
+    )[0] == "needs_review"
 
 
 def test_checkpoint_revisions_and_source_id_are_local(tmp_path):
@@ -73,8 +83,12 @@ def test_checkpoint_revisions_and_source_id_are_local(tmp_path):
     assert accept(db, row["url"], record, {}, 3) == "unchanged"
     changed = {**record, "body": record["body"] + " Neue Erkenntnisse."}
     assert accept(db, row["url"], changed, {}, 4) == "revised"
-    stored = db.execute("SELECT source_id,revision,city_scope,scope_evidence FROM reports").fetchone()
-    assert tuple(stored) == ("217132", 2, "outside_candidate", "In Leverkusen-Schlebusch")
+    stored = db.execute(
+        "SELECT source_id,revision,city_scope,scope_evidence,body,sha256 FROM reports"
+    ).fetchone()
+    assert tuple(stored)[:4] == ("217132", 2, "outside_candidate", "In Leverkusen-Schlebusch")
+    assert stored["body"] == changed["body"]
+    assert stored["sha256"] == hashlib.sha256(changed["body"].encode()).hexdigest()
     assert db.execute("SELECT count(*) FROM revisions").fetchone()[0] == 2
     db.close()
 
