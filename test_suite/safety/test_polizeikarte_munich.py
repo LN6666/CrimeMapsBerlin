@@ -119,7 +119,10 @@ def test_complete_snapshot_is_atomic_hash_bound_and_idempotent(tmp_path, monkeyp
     assert indexed["polizeikarte:101"]["coordinates"] == [11.57, 48.13]
     assert indexed["polizeikarte:102"]["coordinates"] is None
     assert indexed["polizeikarte:102"]["upstream_coordinates"] == [11.57, 48.13]
+    assert indexed["polizeikarte:102"]["semantic_basis"] == "owner_accepted_polizeikarte_upstream"
     assert audit["coverage"]["city_or_district_representatives_withheld"] == 1
+    assert audit["review_basis"] == "owner_accepted_polizeikarte_upstream"
+    assert audit["source_first_llm_rereview_required"] is False
     with sqlite3.connect(db_path) as db:
         assert db.execute("SELECT count(*) FROM polizeikarte_revisions").fetchone()[0] == 3
         assert db.execute(

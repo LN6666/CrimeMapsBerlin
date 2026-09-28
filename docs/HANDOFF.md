@@ -63,7 +63,7 @@ The owner requested visible road ranges for reports whose source gives a road bu
 
 ## External maps and supplementation
 
-The page includes a direct Berlin POLIZEIKARTE link and a German-city directory. Those remain external references for other cities. For Munich, the owner explicitly selected POLIZEIKARTE's 365-day dataset as the project input and allowed later work to rely on its prior structuring. The new adapter uses category pages instead of the 50-entry feed, retains all original police links and marks POLIZEIKARTE as the upstream provider. It does not relabel the third-party project as a police-operated map.
+The page includes a direct Berlin POLIZEIKARTE link and a German-city directory. Those remain external references for other cities. For Munich, the owner explicitly selected POLIZEIKARTE's 365-day dataset as the project input and allowed later work to rely on its prior structuring without a second source-first LLM review of every row. The new adapter uses category pages instead of the 50-entry feed, retains all original police links and marks POLIZEIKARTE as the upstream provider. It does not relabel the third-party project as a police-operated map.
 
 ## Git workflow
 

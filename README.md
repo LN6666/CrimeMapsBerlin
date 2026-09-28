@@ -71,7 +71,8 @@ uv run python -m crimemapsberlin.source_review_pack \
 POLIZEIKARTE ID、详情页、分类、摘要、位置精度、上游坐标和对应的警方原文链接。
 总页最多只展示 500 条，因此采集器遍历十个互斥分类及其分页，并且只有在分类声明数、
 地图载荷 ID、分页列表 ID 和总数完全一致时才保存完整快照。程序直接保存上游成果，
-不再用关键词重新判定慕尼黑案件或地点。
+不再用关键词重新判定慕尼黑案件或地点，也不把这些条目重新送入逐篇原文 LLM 复核；
+后续分析直接继承所有者接受的 POLIZEIKARTE 分类与位置成果。
 
 ```sh
 uv run python -m crimemapsberlin.polizeikarte_munich --collect --delay 1

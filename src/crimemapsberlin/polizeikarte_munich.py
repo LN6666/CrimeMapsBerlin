@@ -796,6 +796,7 @@ def candidate_snapshot(path: Path | str) -> tuple[list[dict[str, object]], dict[
                     "upstream_public_precision": row["public_precision"],
                     "upstream_coordinates": upstream_coordinates,
                     "upstream_provider": "POLIZEIKARTE",
+                    "semantic_basis": "owner_accepted_polizeikarte_upstream",
                 }
             )
         audit = {
@@ -817,6 +818,8 @@ def candidate_snapshot(path: Path | str) -> tuple[list[dict[str, object]], dict[
                 ).fetchone()[0],
             },
             "upstream_semantics": "owner selected POLIZEIKARTE classifications and locations",
+            "review_basis": "owner_accepted_polizeikarte_upstream",
+            "source_first_llm_rereview_required": False,
             "publication_ready": False,
             "publication_block": "local candidate snapshot still needs POI integration and owner approval",
         }
