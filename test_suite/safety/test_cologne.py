@@ -47,6 +47,32 @@ def test_native_archive_keeps_only_own_rows_and_pagination():
                                      "https://foreign.example/story"))
 
 
+def test_native_archive_skips_fully_parsed_other_nrw_authority_row():
+    mixed = LISTING.replace(
+        "Polizei Köln | PLZ: 51103",
+        "Polizei Düren | PLZ: 52349",
+        1,
+    )
+    rows = listing_rows(mixed)
+    assert [row["id"] for row in rows] == [
+        "polizei-sucht-nach-mutmasslichem-brandstifter",
+    ]
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    ["", '<div class="combined-location">Other Publisher | PLZ: 51103</div>'],
+)
+def test_native_archive_still_rejects_unverifiable_row(replacement):
+    malformed = LISTING.replace(
+        '<div class="combined-location">Polizei Köln | PLZ: 51103</div>',
+        replacement,
+        1,
+    )
+    with pytest.raises(ValueError, match="unparsed"):
+        listing_rows(malformed)
+
+
 def test_native_article_uses_stable_id_and_excludes_sidebar():
     url = "https://koeln.polizei.nrw/presse/polizei-sucht-nach-mutmasslichem-brandstifter"
     record = article_record(ARTICLE, url)

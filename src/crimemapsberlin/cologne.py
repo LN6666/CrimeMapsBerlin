@@ -84,6 +84,7 @@ class ListingParser(HTMLParser):
         self.row_depth = None
         self.field = None
         self.rows_seen = 0
+        self.foreign_rows = 0
         self.rows = []
         self.current = None
 
@@ -126,10 +127,17 @@ class ListingParser(HTMLParser):
             if row is not None:
                 row["title"] = _text(row["title"])
                 row["authority"] = _text(row.get("authority", ""))
-                if row["url"] and row["title"] and row["published"] and row["authority"].startswith("Polizei Köln"):
+                if row["url"] and row["title"] and row["published"] and row["authority"]:
                     datetime.fromisoformat(row["published"])
                     row["id"] = urlparse(row["url"]).path.removeprefix("/presse/")
-                    self.rows.append(row)
+                    if row["authority"].startswith("Polizei Köln"):
+                        self.rows.append(row)
+                    elif re.match(r"^(?:Polizei|Landeskriminalamt)\b", row["authority"]):
+                        # The shared NRW archive can insert a fully formed item
+                        # from another issuing authority into a Köln result page.
+                        # Record that it parsed cleanly, but do not discover or
+                        # fetch it as a Polizei Köln source article.
+                        self.foreign_rows += 1
             self.current = None
             self.row_depth = None
         if self.view_depth == self.depth:
@@ -140,8 +148,8 @@ class ListingParser(HTMLParser):
 def listing_rows(page: str) -> list[dict]:
     parser = ListingParser()
     parser.feed(page)
-    if not parser.rows_seen or parser.rows_seen != len(parser.rows):
-        raise ValueError("Native Köln archive contains unparsed or foreign rows")
+    if not parser.rows_seen or parser.rows_seen != len(parser.rows) + parser.foreign_rows:
+        raise ValueError("Native Köln archive contains unparsed rows")
     dates = [row["published"] for row in parser.rows]
     if dates != sorted(dates, reverse=True):
         raise ValueError("Native Köln archive order changed")
