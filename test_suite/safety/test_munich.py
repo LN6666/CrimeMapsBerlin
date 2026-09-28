@@ -1,11 +1,21 @@
+import hashlib
+from email.message import EmailMessage
+from html import escape
+
 import httpx
 import pytest
 
+from crimemapsberlin.local_document import verify_local_document
 from crimemapsberlin.munich import (
-    ARCHIVE_URL, ROBOTS_URL, connect, item_scope, parse_daily_document, robots_status,
+    ARCHIVE_URL,
+    ROBOTS_URL,
+    connect,
+    item_scope,
+    parse_daily_document,
+    review_rows,
+    robots_status,
     stage_document,
 )
-
 
 REPORT = """10.07.2026, Polizeipräsidium München
 Inhalt:
@@ -133,6 +143,71 @@ def test_robots_probe_only_fetches_robots_and_blocks_articles():
 
 
 def test_robots_probe_fails_closed_when_file_is_missing():
-    with httpx.Client(transport=httpx.MockTransport(lambda _: httpx.Response(200, text=""))) as client:
-        with pytest.raises(ValueError, match="robots.txt"):
-            robots_status(client)
+    with (
+        httpx.Client(transport=httpx.MockTransport(lambda _: httpx.Response(200, text=""))) as client,
+        pytest.raises(ValueError, match="robots.txt"),
+    ):
+        robots_status(client)
+
+
+def test_saved_html_is_bound_to_each_numbered_review_item(tmp_path):
+    source = tmp_path / "official.html"
+    source.write_text(f"<html><main><pre>{escape(REPORT)}</pre></main></html>")
+    payload = document()
+    payload["source_file"] = str(source)
+    payload["source_file_sha256"] = hashlib.sha256(source.read_bytes()).hexdigest()
+    db_path = tmp_path / "munich.sqlite"
+    with connect(db_path) as db:
+        assert stage_document(db, payload)["items"] == 4
+    rows = review_rows(db_path)
+    assert len(rows) == 4
+    assert rows[0]["id"] == "105609:1011"
+    assert rows[0]["source_file_sha256"] == payload["source_file_sha256"]
+    assert rows[0]["source_file_text_matches"] is True
+    assert rows[0]["source_sha256"] == hashlib.sha256(rows[0]["source_body"].encode()).hexdigest()
+    replacement = tmp_path / "relocated.html"
+    source.rename(replacement)
+    payload["source_file"] = str(replacement)
+    with connect(db_path) as db:
+        assert stage_document(db, payload)["result"] == "unchanged"
+    assert review_rows(db_path)[0]["source_file_path"] == str(replacement)
+    source = replacement
+    source.write_text(source.read_text() + "<!-- modified after staging -->")
+    with pytest.raises(ValueError, match="SHA-256 mismatch"):
+        review_rows(db_path)
+
+
+def test_local_email_rss_and_pdf_have_explicit_text_verification_boundary(tmp_path):
+    text = "Ort: München. Dies ist ein ausreichend langer synthetischer Polizeibericht."
+    email = tmp_path / "saved.eml"
+    email.write_text(f"From: press@example.test\nDate: Tue, 29 Sep 2026 10:00:00 +0200\n"
+                     f"Content-Type: text/plain; charset=utf-8\n\n{text}")
+    rss = tmp_path / "saved.xml"
+    rss.write_text(f"<rss version='2.0'><channel><item><description>{text}</description></item></channel></rss>")
+    pdf = tmp_path / "saved.pdf"
+    pdf.write_bytes(b"%PDF-1.4\nsynthetic local fixture\n%%EOF")
+    for path, matches in ((email, True), (rss, True), (pdf, False)):
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        assert verify_local_document(path, digest, text)["text_matches_file"] is matches
+    with pytest.raises(ValueError, match="not present"):
+        verify_local_document(email, hashlib.sha256(email.read_bytes()).hexdigest(), text + " Missing words")
+
+
+def test_account_email_html_part_and_rss_cdata_can_contain_full_text(tmp_path):
+    text = "Ort: München. Ein vollständiger synthetischer Bericht mit ausreichend Originaltext."
+    message = EmailMessage()
+    message["From"] = "press@example.test"
+    message["Date"] = "Tue, 29 Sep 2026 10:00:00 +0200"
+    message.set_content("Nur ein kurzer Hinweis auf die neue Pressemitteilung.")
+    message.add_alternative(f"<html><article>{text}</article></html>", subtype="html")
+    email = tmp_path / "account.eml"
+    email.write_bytes(message.as_bytes())
+    rss = tmp_path / "feed.xml"
+    rss.write_text(
+        f"<rss version='2.0'><channel><item><description><![CDATA[<p>{text}</p>]]>"
+        "</description></item></channel></rss>"
+    )
+    for path in (email, rss):
+        assert verify_local_document(path, hashlib.sha256(path.read_bytes()).hexdigest(), text)[
+            "text_matches_file"
+        ] is True

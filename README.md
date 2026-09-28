@@ -53,6 +53,25 @@ uv run python -m crimemapsberlin.source_review_pack \
 生成包只代表来源输入。每篇公告的城市范围、案件数量、全部场景以及所有者确认
 仍需完成，才能进入发布流程。
 
+慕尼黑原生站受 robots 限制，只能把已由人保存或官方提供的材料放在本机
+`.runtime/safety/cities/munich/`。`munich.py --import-json` 接收一份日报 JSON，包含
+`source_url`、`publisher`、`published`、`title`、`text`；若有对应 HTML、邮件、RSS/Atom
+或 PDF 文件，再加相对路径 `source_file` 和该文件字节的 `source_file_sha256`。
+HTML、邮件及完整 RSS 正文须包含所提供的文字；PDF 只校验文件签名和 SHA-256，
+转写仍须对照原件逐字复核。程序按日报编号拆成单篇，保留来源哈希和修订号。
+
+```sh
+uv run python -m crimemapsberlin.munich \
+  --import-json .runtime/safety/cities/munich/import.json
+uv run python -m crimemapsberlin.munich \
+  --export-review .runtime/safety/cities/munich/review-input.ndjson --review-limit 100
+```
+
+导出前会重新核对保存的正文、各编号、修订及原文件 SHA-256；导出含原文，必须留在
+Git 忽略的本地目录。它只是逐篇 Codex 复核输入，`source_verified` 和
+`publication_ready` 仍为 `false`，不证明历史档案完整或可发布。后续批次可用
+`--review-offset` 按编号顺序分页，并为每批选择不同的本地输出文件。
+
 仓库按已选城市顺序分为三组，名称保留产品前缀及清晰的城市序号：
 
 | GitHub 仓库名 | 城市 | 当前状态 |

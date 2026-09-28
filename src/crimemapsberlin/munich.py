@@ -13,12 +13,14 @@ import hashlib
 import json
 import re
 import sqlite3
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
 
 import httpx
+
+from .local_document import verify_local_document
 
 ORIGIN = "https://www.polizei.bayern.de"
 ROBOTS_URL = ORIGIN + "/robots.txt"
@@ -79,6 +81,11 @@ CREATE TABLE IF NOT EXISTS items (
 CREATE TABLE IF NOT EXISTS article_revisions (
     source_id TEXT NOT NULL, revision INTEGER NOT NULL, sha256 TEXT NOT NULL,
     observed TEXT NOT NULL, PRIMARY KEY(source_id, revision)
+);
+CREATE TABLE IF NOT EXISTS local_evidence (
+    source_id TEXT PRIMARY KEY REFERENCES articles(source_id),
+    path TEXT NOT NULL, sha256 TEXT NOT NULL, format TEXT NOT NULL,
+    text_matches_file INTEGER NOT NULL
 );
 """
 
@@ -153,7 +160,7 @@ def parse_daily_document(document: dict[str, str]) -> tuple[str, list[dict[str, 
         raise ValueError("Missing daily-report source metadata")
     url = urlparse(document["source_url"])
     match = ARTICLE_PATH.fullmatch(url.path)
-    if url.scheme != "https" or url.netloc != "www.polizei.bayern.de" or url.query or not match:
+    if url.scheme != "https" or url.netloc != "www.polizei.bayern.de" or url.query or url.fragment or not match:
         raise ValueError("Unexpected Munich police article URL")
     if document["publisher"].strip() != "Polizeipräsidium München":
         raise ValueError("Not a Polizeipräsidium München publication")
@@ -161,7 +168,8 @@ def parse_daily_document(document: dict[str, str]) -> tuple[str, list[dict[str, 
     if not daily:
         raise ValueError("Not a Munich numbered daily report")
     published = date.fromisoformat(document["published"])
-    if datetime.strptime(daily[1], "%d.%m.%Y").date() != published:
+    day, month, year = map(int, daily[1].split("."))
+    if date(year, month, day) != published:
         raise ValueError("Daily report title and publication date differ")
     return match[1], split_daily_items(document["text"])
 
@@ -179,8 +187,18 @@ def connect(path: Path | str) -> sqlite3.Connection:
 def stage_document(db: sqlite3.Connection, document: dict[str, str]) -> dict[str, object]:
     """Atomically checkpoint an offline document and every numbered item."""
     source_id, items = parse_daily_document(document)
+    evidence = None
+    if "source_file" in document or "source_file_sha256" in document:
+        if not document.get("source_file") or not document.get("source_file_sha256"):
+            raise ValueError("Local source file and SHA-256 must be supplied together")
+        evidence = verify_local_document(
+            document["source_file"], document["source_file_sha256"], document["text"]
+        )
     canonical = json.dumps(
-        {key: document[key] for key in ("source_url", "publisher", "published", "title", "text")},
+        {
+            **{key: document[key] for key in ("source_url", "publisher", "published", "title", "text")},
+            "source_file_sha256": evidence["sha256"] if evidence else None,
+        },
         ensure_ascii=False, sort_keys=True,
     )
     digest = hashlib.sha256(canonical.encode()).hexdigest()
@@ -188,9 +206,19 @@ def stage_document(db: sqlite3.Connection, document: dict[str, str]) -> dict[str
         "SELECT revision, source_sha256 FROM articles WHERE source_id=?", (source_id,)
     ).fetchone()
     if previous and previous["source_sha256"] == digest:
+        if evidence:
+            with db:
+                db.execute(
+                    """INSERT INTO local_evidence VALUES(?,?,?,?,?)
+                    ON CONFLICT(source_id) DO UPDATE SET path=excluded.path,
+                    sha256=excluded.sha256,format=excluded.format,
+                    text_matches_file=excluded.text_matches_file""",
+                    (source_id, evidence["path"], evidence["sha256"], evidence["format"],
+                     int(evidence["text_matches_file"])),
+                )
         return {"source_id": source_id, "items": len(items), "result": "unchanged"}
     revision = 1 if previous is None else previous["revision"] + 1
-    observed = datetime.now(timezone.utc).isoformat()
+    observed = datetime.now(UTC).isoformat()
     with db:
         db.execute(
             """INSERT INTO articles VALUES(?,?,?,?,?,?,?,?,?,?)
@@ -216,14 +244,110 @@ def stage_document(db: sqlite3.Connection, document: dict[str, str]) -> dict[str
         )
         db.execute("INSERT INTO article_revisions VALUES(?,?,?,?)",
                    (source_id, revision, digest, observed))
+        db.execute("DELETE FROM local_evidence WHERE source_id=?", (source_id,))
+        if evidence:
+            db.execute(
+                "INSERT INTO local_evidence VALUES(?,?,?,?,?)",
+                (source_id, evidence["path"], evidence["sha256"], evidence["format"],
+                 int(evidence["text_matches_file"])),
+            )
     return {"source_id": source_id, "items": len(items),
             "result": "new" if previous is None else "revised"}
+
+
+def review_rows(db_path: Path | str, *, limit: int = 100, offset: int = 0) -> list[dict[str, object]]:
+    """Read-only, hash-checked numbered announcements for source-first review."""
+    if not 1 <= limit <= 200:
+        raise ValueError("Review limit must be 1–200")
+    if offset < 0:
+        raise ValueError("Review offset must be nonnegative")
+    path = Path(db_path)
+    if not path.is_file():
+        raise ValueError("Munich source checkpoint is missing")
+    with sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True) as db:
+        db.row_factory = sqlite3.Row
+        db.execute("PRAGMA query_only=ON")
+        has_evidence = db.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='local_evidence'"
+        ).fetchone() is not None
+        rows = []
+        seen = 0
+        for article in db.execute("SELECT * FROM articles ORDER BY published,source_id"):
+            source_id, _ = parse_daily_document({
+                "source_url": article["source_url"], "publisher": article["publisher"],
+                "published": article["published"], "title": article["title"],
+                "text": article["source_text"],
+            })
+            if source_id != article["source_id"]:
+                raise ValueError("Munich source ID mismatch")
+            evidence = db.execute(
+                "SELECT * FROM local_evidence WHERE source_id=?", (article["source_id"],)
+            ).fetchone() if has_evidence else None
+            file_sha = None
+            if evidence:
+                checked = verify_local_document(
+                    evidence["path"], evidence["sha256"], article["source_text"]
+                )
+                if checked["format"] != evidence["format"] or int(checked["text_matches_file"]) != evidence["text_matches_file"]:
+                    raise ValueError("Munich local evidence metadata changed")
+                file_sha = evidence["sha256"]
+            payload = {key: article[key] for key in ("source_url", "publisher", "published", "title")}
+            payload["text"] = article["source_text"]
+            canonical = json.dumps(
+                {**payload, "source_file_sha256": file_sha}, ensure_ascii=False, sort_keys=True,
+            )
+            legacy = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+            valid_hashes = {hashlib.sha256(canonical.encode()).hexdigest()}
+            if file_sha is None:
+                valid_hashes.add(hashlib.sha256(legacy.encode()).hexdigest())
+            if article["source_sha256"] not in valid_hashes:
+                raise ValueError("Munich source hash mismatch")
+            revision = db.execute(
+                "SELECT sha256 FROM article_revisions WHERE source_id=? AND revision=?",
+                (article["source_id"], article["revision"]),
+            ).fetchone()
+            if revision is None or revision["sha256"] != article["source_sha256"]:
+                raise ValueError("Munich revision hash mismatch")
+            expected = {item["number"]: item for item in split_daily_items(article["source_text"])}
+            saved = db.execute(
+                "SELECT * FROM items WHERE source_id=? ORDER BY item_number", (article["source_id"],)
+            ).fetchall()
+            if len(saved) != len(expected):
+                raise ValueError("Munich numbered item set is incomplete")
+            for item in saved:
+                parsed = expected.get(item["item_number"])
+                if parsed is None or any(item[key] != parsed[key] for key in ("title", "body", "city_scope", "locality")):
+                    raise ValueError("Munich numbered item differs from source")
+                digest = hashlib.sha256((item["title"] + "\n" + item["body"]).encode()).hexdigest()
+                if digest != item["sha256"] or item["item_id"] != f"{article['source_id']}:{item['item_number']}":
+                    raise ValueError("Munich numbered item hash mismatch")
+                if seen < offset:
+                    seen += 1
+                    continue
+                rows.append({
+                    "city": "munich", "id": item["item_id"], "source_id": article["source_id"],
+                    "source_url": article["source_url"], "published": article["published"],
+                    "title": item["title"], "source_body": item["title"] + "\n" + item["body"],
+                    "source_sha256": digest, "parent_source_sha256": article["source_sha256"],
+                    "source_file_sha256": file_sha, "source_file_format": evidence["format"] if evidence else None,
+                    "source_file_text_matches": bool(evidence["text_matches_file"]) if evidence else None,
+                    "source_file_path": evidence["path"] if evidence else None,
+                    "revision": article["revision"], "city_scope": item["city_scope"],
+                    "review_status": item["review_status"], "source_verified": False,
+                    "publication_ready": False,
+                })
+                if len(rows) >= limit:
+                    return rows
+        return rows
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Stage offline Munich police daily reports")
     parser.add_argument("--check-robots", action="store_true")
     parser.add_argument("--import-json", type=Path, help="Local JSON document under .runtime/")
+    parser.add_argument("--export-review", type=Path, help="Write local, hash-checked item NDJSON")
+    parser.add_argument("--review-limit", type=int, default=100)
+    parser.add_argument("--review-offset", type=int, default=0)
     parser.add_argument("--db", type=Path,
                         default=Path(".runtime/safety/cities/munich/police.sqlite"))
     args = parser.parse_args()
@@ -234,15 +358,32 @@ def main() -> None:
         if not status["archive_allowed"] or not status["article_allowed"]:
             raise SystemExit(2)
         return
-    if args.import_json is None:
-        parser.error("Provide --check-robots or --import-json")
+    if args.import_json is None and args.export_review is None:
+        parser.error("Provide --check-robots, --import-json or --export-review")
     runtime = (Path.cwd() / ".runtime").resolve()
-    if not args.import_json.resolve().is_relative_to(runtime) or not args.db.resolve().is_relative_to(runtime):
-        parser.error("Input and SQLite checkpoint must both be under .runtime/")
-    document = json.loads(args.import_json.read_text(encoding="utf-8"))
-    with connect(args.db) as db:
-        result = stage_document(db, document)
-    print(json.dumps(result, indent=2))
+    paths = [args.db, args.import_json, args.export_review]
+    if any(path and not path.resolve().is_relative_to(runtime) for path in paths):
+        parser.error("Input, output and SQLite checkpoint must be under .runtime/")
+    if args.import_json is not None:
+        if args.import_json.stat().st_size > 20_000_000:
+            parser.error("Local Munich import is too large")
+        document = json.loads(args.import_json.read_text(encoding="utf-8"))
+        if document.get("source_file") and not Path(document["source_file"]).is_absolute():
+            document["source_file"] = str(args.import_json.parent / document["source_file"])
+        if document.get("source_file") and not Path(document["source_file"]).resolve().is_relative_to(runtime):
+            parser.error("Local source file must be under .runtime/")
+        with connect(args.db) as db:
+            result = stage_document(db, document)
+        print(json.dumps(result, indent=2))
+    if args.export_review is not None:
+        if args.export_review.suffix != ".ndjson" or args.export_review.resolve() == args.db.resolve():
+            parser.error("Review output must be a distinct .ndjson file")
+        rows = review_rows(args.db, limit=args.review_limit, offset=args.review_offset)
+        args.export_review.parent.mkdir(parents=True, exist_ok=True)
+        args.export_review.write_text(
+            "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8"
+        )
+        print(json.dumps({"review_rows": len(rows), "output": str(args.export_review)}))
 
 
 if __name__ == "__main__":
