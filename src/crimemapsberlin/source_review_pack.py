@@ -61,14 +61,32 @@ def read_checkpoint(path: Path) -> tuple[list[dict], dict]:
                     "review_status": "pending",
                 }
             )
-        discovered = db.execute("SELECT count(*) FROM reports").fetchone()[0]
-        errors = (
-            db.execute(
-                "SELECT count(*) FROM reports WHERE COALESCE(error,'')<>''"
-            ).fetchone()[0]
-            if "error" in columns
-            else 0
-        )
+        tables = {
+            row[0] for row in db.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            )
+        }
+        if "sachsen_queue" in tables:
+            discovered = db.execute("SELECT count(*) FROM sachsen_queue").fetchone()[0]
+            queue_columns = {
+                row[1] for row in db.execute("PRAGMA table_info(sachsen_queue)")
+            }
+            errors = (
+                db.execute(
+                    "SELECT count(*) FROM sachsen_queue WHERE COALESCE(error,'')<>''"
+                ).fetchone()[0]
+                if "error" in queue_columns
+                else 0
+            )
+        else:
+            discovered = db.execute("SELECT count(*) FROM reports").fetchone()[0]
+            errors = (
+                db.execute(
+                    "SELECT count(*) FROM reports WHERE COALESCE(error,'')<>''"
+                ).fetchone()[0]
+                if "error" in columns
+                else 0
+            )
         cursor_tables = [
             row[0]
             for row in db.execute(

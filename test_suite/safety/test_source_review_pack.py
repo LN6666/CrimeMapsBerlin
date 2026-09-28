@@ -91,6 +91,41 @@ def native_checkpoint(path):
         db.execute("INSERT INTO archive_scan VALUES (2026,0,1,0)")
 
 
+def sachsen_checkpoint(path):
+    body = "Synthetic Sachsen source body with a complete quoted narrative."
+    with sqlite3.connect(path) as db:
+        db.executescript(
+            """
+            CREATE TABLE reports (
+                source_id TEXT, source_url TEXT, title TEXT, published TEXT, body TEXT,
+                sha256 TEXT, revision INTEGER, error TEXT
+            );
+            CREATE TABLE sachsen_queue (
+                source_id TEXT, source_url TEXT, error TEXT
+            );
+            CREATE TABLE sachsen_archive_cursor (
+                year INTEGER, next_page INTEGER, pages_scanned INTEGER,
+                complete INTEGER, updated REAL
+            );
+            """
+        )
+        db.execute(
+            "INSERT INTO reports VALUES (?,?,?,?,?,?,?,NULL)",
+            (
+                "sachsen-1", "https://example.invalid/sachsen-1", "Sachsen report",
+                "2026-09-28T12:00:00+02:00", body, digest(body), 1,
+            ),
+        )
+        db.executemany(
+            "INSERT INTO sachsen_queue VALUES (?,?,NULL)",
+            [
+                ("sachsen-1", "https://example.invalid/sachsen-1"),
+                ("sachsen-2", "https://example.invalid/sachsen-2"),
+            ],
+        )
+        db.execute("INSERT INTO sachsen_archive_cursor VALUES (2026,2,1,0,0)")
+
+
 def rewrite_zip(source, target, transform):
     with zipfile.ZipFile(source) as archive:
         files = {info.filename: archive.read(info) for info in archive.infolist()}
@@ -163,6 +198,20 @@ def test_native_source_columns_and_archive_scan_are_supported(tmp_path):
         "missing_bodies": 0,
         "source_errors": 0,
         "channel_scan_complete": True,
+    }
+
+
+def test_sachsen_queue_controls_discovered_and_missing_body_counts(tmp_path):
+    db_path = tmp_path / "sachsen.sqlite"
+    sachsen_checkpoint(db_path)
+    rows, coverage = read_checkpoint(db_path)
+    assert len(rows) == 1
+    assert coverage == {
+        "discovered": 2,
+        "bodies_in_pack": 1,
+        "missing_bodies": 1,
+        "source_errors": 0,
+        "channel_scan_complete": False,
     }
 
 
