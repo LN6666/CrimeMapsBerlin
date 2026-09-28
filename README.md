@@ -115,12 +115,17 @@ POLIZEIKARTE ID、详情页、分类、摘要、位置精度、上游坐标和�
 uv run python -m crimemapsberlin.polizeikarte_munich --collect --delay 1
 uv run python -m crimemapsberlin.polizeikarte_munich --status
 uv run python -m crimemapsberlin.city_candidates --city munich
+uv run python -m crimemapsberlin.munich_map
 ```
 
 当前本地完整快照为 1,814/1,814 条，来自 342 个原警方链接；上游提供 1,355 个坐标。
-候选导出只把 992 个 `STREET` 精度坐标作为点，363 个城市／行政区代表坐标只保留为
-来源字段，避免制造中心点热点；其余 459 条本来就没有坐标。运行数据库、摘要和候选文件
-均位于 Git 忽略目录。慕尼黑仍需 POI 合并、所有者检查和发布门禁，当前不会生成公开地图。
+来源候选中有 992 个 `STREET` 精度坐标；市界核验后，884 个位于慕尼黑市内并进入本地
+地图候选，108 个市界外街道点不进入市域热点。另有 9 个市界外行政区代表坐标；所有
+117 条市界外记录均保留原始坐标用于核查。城市／行政区精度代表坐标只作来源字段，
+459 条本来就没有坐标，不为它们生成中心点。本地候选已覆盖 13 个月，并接入经验证的
+13,500 个 POI 和 417 个 POI 瓦片；由于上游没有提供受验证的 OSM 场所对象，当前不建立
+任何“案件发生于某商户”的关联。运行数据库、摘要和候选文件均位于 Git 忽略目录。
+慕尼黑仍需所有者检查和发布门禁，当前不会生成公开地图。
 原有 `munich.py --import-json` 仍可保存另行取得的官方原件，作为补充取证入口。
 
 仓库按已选城市顺序分为三组，名称保留产品前缀及清晰的城市序号：

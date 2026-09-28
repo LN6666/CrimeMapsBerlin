@@ -24,8 +24,13 @@ checks every paginated list ID against the category-wide map payload and
 requires the category sum to equal the displayed city total. Candidate rows
 retain POLIZEIKARTE's category, summary, precision, upstream coordinate,
 detail URL and original police URL. `city_candidates.py --city munich` writes
-the hash-checked local candidate snapshot; `build.py --city munich` still
-stops before publication.
+the hash-checked local candidate snapshot. `munich_map.py` combines that
+snapshot with the independently validated Munich POI product, checks every
+upstream coordinate against the OSM municipality boundary, and writes a
+browser-shaped 13-month map candidate under `.runtime/`. It retains all rows
+but removes outside-city and nonpoint representatives from hex counts. It does
+not infer POI offence associations. `build.py --city munich` still stops before
+publication.
 Cologne and Frankfurt can be staged once their checked OSM indexes are
 available locally with Geofabrik source provenance. `fetch_osm.py` uses the
 Regierungsbezirk Köln extract for Cologne and the Hessen extract for Frankfurt;
@@ -35,6 +40,7 @@ current source-backed reviews and owner approval.
 
 The candidate contract never starts a source or OSM download itself. Munich's
 source collector is a separate explicit command; POI integration and owner
-inspection remain open. The Cologne native archive and
+inspection remain separate gates. The local Munich candidate has completed POI
+display integration but remains unapproved and unpublished. The Cologne native archive and
 the publisher newsroom currently show different 2026 totals; these figures
 must be compared article by article before any completeness claim.
