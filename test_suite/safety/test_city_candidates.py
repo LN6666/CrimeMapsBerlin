@@ -28,7 +28,10 @@ def test_hamburg_candidates_stay_local_and_wait_for_review(tmp_path):
 
     audit = stage("hamburg", root=tmp_path)
     candidates = json.loads((runtime / "review-candidates.json").read_text())
-    assert audit["coverage"] == dict(discovered=1, fetched=1, pending=0, failed=0)
+    assert audit["coverage"] == dict(
+        discovered=1, fetched=1, pending=0, failed=0,
+        selected=1, outside=0, deferred=0,
+    )
     assert audit["located"] == 1
     assert audit["review_counts"]["pending"] == 1
     assert audit["publication_ready"] is False

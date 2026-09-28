@@ -6,41 +6,50 @@ ignored local directories until source review and owner inspection are complete.
 
 import argparse
 import json
+import re
 from collections import Counter
 from pathlib import Path
 
-from crimemapsberlin.collector import connect as connect_source
+from crimemapsberlin.city_contract import CITY_SPECS, paths_for
+from crimemapsberlin.city_sources import normalized_event_db, read_city_source
 from crimemapsberlin.geocode import Gazetteer, events_from_db
 from crimemapsberlin.payload import compact
 from crimemapsberlin.review import connect as connect_review, review_summary
 from crimemapsberlin.spatial import metric_transforms, pois_from_osm
 
 ROOT = Path(__file__).resolve().parents[2]
-CITY_SETTINGS = {"hamburg": dict(epsg=25832, source="Polizei Hamburg / Presseportal")}
+CITY_SETTINGS = {city: spec for city, spec in CITY_SPECS.items() if spec.candidate_enabled}
 
 
 def stage(city: str, *, root: Path = ROOT) -> dict:
     if city not in CITY_SETTINGS:
+        if city == "munich":
+            raise ValueError("Munich source is unverified and robots.txt disallows automated crawling")
         raise ValueError(f"No checked city extraction configuration: {city}")
-    runtime = root / ".runtime/safety/cities" / city
-    raw = root / "data/raw/safety/cities" / city
-    paths = [raw / f"{city}-pois.json", raw / "streets.json",
-             raw / "localities.json", raw / "addresses.json"]
+    spec = CITY_SETTINGS[city]
+    city_paths = paths_for(city, root)
+    runtime = city_paths.runtime
+    paths = city_paths.osm_indexes(city)
     if not all(path.is_file() for path in paths):
-        raise FileNotFoundError(f"Missing {city} OSM indexes; fetch and extract the city PBF first")
-    db_path = runtime / "police.sqlite"
-    if not db_path.is_file():
-        raise FileNotFoundError(f"Missing {city} official announcement checkpoint")
-    source = connect_source(db_path)
-    source.execute("BEGIN")
-    coverage_row = source.execute(
-        """SELECT count(*) AS discovered, sum(body IS NOT NULL) AS fetched,
-        sum(body IS NULL) AS pending, sum(error IS NOT NULL) AS failed FROM reports"""
-    ).fetchone()
-    coverage = {key: coverage_row[key] or 0 for key in coverage_row.keys()}
+        raise FileNotFoundError(f"Missing checked {city} OSM indexes in {city_paths.raw}")
+    if city in {"cologne", "frankfurt"}:
+        provenance_path = city_paths.raw / f"{city}-pois.source.json"
+        if not provenance_path.is_file():
+            raise FileNotFoundError(f"Missing {city} OSM extraction provenance")
+        provenance = json.loads(provenance_path.read_text())
+        digest = provenance.get("sha256")
+        if (not str(provenance.get("url", "")).startswith("https://download.geofabrik.de/")
+                or provenance.get("license") != "ODbL-1.0"
+                or not isinstance(digest, str)
+                or not re.fullmatch(r"[0-9a-f]{64}", digest)):
+            raise ValueError(f"Invalid {city} OSM extraction provenance")
+    source = read_city_source(city, city_paths.source_db)
+    coverage = source.coverage
     if not coverage["fetched"]:
         raise ValueError(f"No fetched {city} official announcements")
-    to_metric, to_wgs = metric_transforms(CITY_SETTINGS[city]["epsg"])
+    if not coverage["selected"]:
+        raise ValueError(f"No {city} municipality candidates; source scope needs review")
+    to_metric, to_wgs = metric_transforms(spec.epsg)
     pois, poi_notes = pois_from_osm(
         json.loads(paths[0].read_text()), to_metric=to_metric, to_wgs=to_wgs,
     )
@@ -50,9 +59,13 @@ def stage(city: str, *, root: Path = ROOT) -> dict:
         addresses=json.loads(paths[3].read_text()),
         to_metric=to_metric, to_wgs=to_wgs,
     )
-    events = [compact(event) for event in events_from_db(source, gazetteer)]
-    if len(events) != coverage["fetched"]:
-        raise ValueError("Fetched report count differs from extracted candidate count")
+    normalized = normalized_event_db(source.reports)
+    try:
+        events = [compact(event) for event in events_from_db(normalized, gazetteer)]
+    finally:
+        normalized.close()
+    if len(events) != coverage["selected"]:
+        raise ValueError("Selected report count differs from extracted candidate count")
     if len({event["id"] for event in events}) != len(events):
         raise ValueError("Duplicate article IDs in candidate extraction")
     review = connect_review(runtime / "review.sqlite")
@@ -60,12 +73,13 @@ def stage(city: str, *, root: Path = ROOT) -> dict:
     review.close()
     methods = Counter(event["geocode_method"] for event in events)
     audit = dict(
-        city=city, source=CITY_SETTINGS[city]["source"], epsg=CITY_SETTINGS[city]["epsg"],
+        city=city, source=spec.source, epsg=spec.epsg,
+        archive_complete=source.archive_complete,
         coverage=coverage, located=sum(bool(event["coordinates"]) for event in events),
         geocode_methods=dict(sorted(methods.items())), review_counts=counts,
         poi_count=len(pois["features"]), poi_geometry_notes=poi_notes,
         publication_ready=False,
-        publication_block="city map requires complete source, per-article review and owner approval",
+        publication_block="city map requires source scope and completeness checks, per-article review and owner approval",
     )
     runtime.mkdir(parents=True, exist_ok=True)
     candidate_path = runtime / "review-candidates.json"
@@ -77,7 +91,6 @@ def stage(city: str, *, root: Path = ROOT) -> dict:
     tmp = audit_path.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(audit, ensure_ascii=False, indent=2))
     tmp.replace(audit_path)
-    source.close()
     return audit
 
 

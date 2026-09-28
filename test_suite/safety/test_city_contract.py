@@ -1,0 +1,123 @@
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+from crimemapsberlin.city_candidates import stage
+from crimemapsberlin.city_contract import CITY_SPECS, paths_for
+from crimemapsberlin.city_sources import frankfurt_scope, read_city_source
+from crimemapsberlin.collector import accept as accept_standard
+from crimemapsberlin.collector import connect as connect_standard
+from crimemapsberlin.collector import discover as discover_standard
+from crimemapsberlin.cologne import accept as accept_cologne
+from crimemapsberlin.cologne import connect as connect_cologne
+from crimemapsberlin.cologne import discover as discover_cologne
+
+
+def osm_indexes(root, city):
+    raw = paths_for(city, root).raw
+    raw.mkdir(parents=True)
+    (raw / f"{city}-pois.json").write_text('{"elements":[]}')
+    (raw / "streets.json").write_text(json.dumps([{
+        "name": "Teststraße", "geometry": {"type": "LineString", "coordinates": [
+            [6.96, 50.94], [6.961, 50.94],
+        ]},
+    }]))
+    (raw / "localities.json").write_text("[]")
+    (raw / "addresses.json").write_text("[]")
+    (raw / f"{city}-pois.source.json").write_text(json.dumps({
+        "url": f"https://download.geofabrik.de/europe/germany/{city}-latest.osm.pbf",
+        "sha256": "0" * 64,
+        "license": "ODbL-1.0",
+    }))
+
+
+def test_first_group_paths_and_permissions_are_explicit(tmp_path):
+    assert set(CITY_SPECS) == {"berlin", "hamburg", "cologne", "frankfurt", "munich"}
+    assert CITY_SPECS["berlin"].epsg == 25833
+    assert all(CITY_SPECS[city].epsg == 25832 for city in ("hamburg", "cologne", "frankfurt", "munich"))
+    assert paths_for("berlin", tmp_path).raw == tmp_path / "data/raw/safety"
+    assert paths_for("cologne", tmp_path).source_db == tmp_path / ".runtime/safety/cities/cologne/police.sqlite"
+    assert paths_for("frankfurt", tmp_path).public == tmp_path / "web/public/safety/cities/frankfurt"
+    assert not CITY_SPECS["munich"].candidate_enabled
+    assert not CITY_SPECS["cologne"].publication_enabled
+
+
+def test_cologne_native_schema_selects_only_city_leads(tmp_path, monkeypatch):
+    osm_indexes(tmp_path, "cologne")
+    path = paths_for("cologne", tmp_path).source_db
+    db = connect_cologne(path)
+    rows = [
+        dict(url="https://koeln.polizei.nrw/presse/koeln-probe", title="Vorfall in Köln-Ehrenfeld",
+             published="2026-09-01T12:00:00+02:00"),
+        dict(url="https://koeln.polizei.nrw/presse/leverkusen-probe", title="Vorfall in Leverkusen",
+             published="2026-09-02T12:00:00+02:00"),
+    ]
+    discover_cologne(db, rows, 1)
+    accept_cologne(db, rows[0]["url"], dict(source_id="111", source_url=rows[0]["url"],
+                  body="In Köln-Ehrenfeld auf der Teststraße wurde ein Fahrzeug gestohlen."), {}, 2)
+    accept_cologne(db, rows[1]["url"], dict(source_id="222", source_url=rows[1]["url"],
+                  body="In Leverkusen-Schlebusch wurde auf der Teststraße ein Fahrzeug gestohlen."), {}, 2)
+    db.close()
+
+    selection = read_city_source("cologne", path)
+    assert selection.coverage == dict(
+        discovered=2, fetched=2, pending=0, failed=0,
+        selected=1, outside=1, deferred=0,
+    )
+    assert [row["id"] for row in selection.reports] == ["111"]
+    audit = stage("cologne", root=tmp_path)
+    candidates = json.loads((paths_for("cologne", tmp_path).runtime / "review-candidates.json").read_text())
+    assert audit["coverage"]["outside"] == 1
+    assert [event["id"] for event in candidates["events"]] == ["111"]
+    assert "body" not in candidates["events"][0]
+    assert not paths_for("cologne", tmp_path).public.exists()
+    spec = importlib.util.spec_from_file_location(
+        "candidate_build", Path(__file__).resolve().parents[2] / "scripts/safety/build.py",
+    )
+    build = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(build)
+    monkeypatch.setattr(build, "ROOT", tmp_path)
+    monkeypatch.setattr(sys, "argv", ["build.py", "--city", "cologne"])
+    with pytest.raises(SystemExit, match="Publication blocked: cologne"):
+        build.main()
+    assert not paths_for("cologne", tmp_path).public.exists()
+    monkeypatch.setattr(sys, "argv", ["build.py", "--city", "cologne", "--db", "other.sqlite"])
+    with pytest.raises(SystemExit, match="--db override"):
+        build.main()
+
+
+def test_frankfurt_newsroom_boilerplate_does_not_establish_city_scope(tmp_path):
+    assert frankfurt_scope("POL-F: Bericht", "Frankfurt (ots) - Auf einer Autobahn kam es zum Unfall.") == "needs_review"
+    assert frankfurt_scope("POL-F: Bericht", "Frankfurt (ots) - In Offenbach geschah ein Diebstahl.") == "outside_candidate"
+    assert frankfurt_scope("POL-F: Bericht", "Frankfurt (ots) - In Frankfurt am Main geschah ein Diebstahl.") == "city_candidate"
+
+    osm_indexes(tmp_path, "frankfurt")
+    path = paths_for("frankfurt", tmp_path).source_db
+    db = connect_standard(path)
+    rows = [
+        dict(id="333", url="https://www.presseportal.de/blaulicht/pm/4970/333",
+             title="POL-F: Diebstahl", published="2026-09-01T12:00:00", district=""),
+        dict(id="444", url="https://www.presseportal.de/blaulicht/pm/4970/444",
+             title="POL-F: Unfall", published="2026-09-02T12:00:00", district=""),
+    ]
+    discover_standard(db, rows, 1)
+    accept_standard(db, "333", "Frankfurt (ots) - In Frankfurt am Main auf der Teststraße wurde ein Fahrzeug gestohlen.", {}, 2)
+    accept_standard(db, "444", "Frankfurt (ots) - In Offenbach geschah auf der Teststraße ein Verkehrsunfall.", {}, 2)
+    db.close()
+
+    audit = stage("frankfurt", root=tmp_path)
+    candidates = json.loads((paths_for("frankfurt", tmp_path).runtime / "review-candidates.json").read_text())
+    assert audit["coverage"]["selected"] == 1
+    assert audit["coverage"]["outside"] == 1
+    assert [event["id"] for event in candidates["events"]] == ["333"]
+    assert not paths_for("frankfurt", tmp_path).public.exists()
+
+
+def test_munich_staging_fails_before_source_or_osm_access(tmp_path):
+    with pytest.raises(ValueError, match="robots.txt"):
+        stage("munich", root=tmp_path)
+    assert not (tmp_path / ".runtime").exists()
+    assert not (tmp_path / "web").exists()

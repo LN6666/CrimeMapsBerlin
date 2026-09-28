@@ -10,6 +10,8 @@ from pathlib import Path
 
 from shapely.geometry import MultiLineString, mapping
 
+from crimemapsberlin.city_candidates import stage as stage_city_candidates
+from crimemapsberlin.city_contract import CITY_SPECS, paths_for
 from crimemapsberlin.collector import connect
 from crimemapsberlin.geocode import Gazetteer, events_from_db
 from crimemapsberlin.payload import compact
@@ -22,10 +24,9 @@ from crimemapsberlin.tiles import DX, DY, tiles
 
 ROOT = Path(__file__).resolve().parents[2]
 CITY_SETTINGS = {
-    "berlin": dict(name="Berlin", epsg=25833, source="Polizei Berlin official archive",
-                   attribution="© OpenStreetMap contributors / Geofabrik (ODbL); Polizei Berlin"),
-    "hamburg": dict(name="Hamburg", epsg=25832, source="Polizei Hamburg / Presseportal",
-                    attribution="© OpenStreetMap contributors / Geofabrik (ODbL); Polizei Hamburg"),
+    city: dict(name=spec.name, epsg=spec.epsg, source=spec.source,
+               attribution=spec.attribution)
+    for city, spec in CITY_SPECS.items()
 }
 
 
@@ -41,13 +42,19 @@ def main():
     args = p.parse_args()
     city = args.city
     settings = CITY_SETTINGS[city]
-    raw = ROOT / "data/raw/safety"
-    runtime = ROOT / ".runtime/safety"
-    out = ROOT / "web/public/safety"
-    if city != "berlin":
-        raw = raw / "cities" / city
-        runtime = runtime / "cities" / city
-        out = out / "cities" / city
+    spec = CITY_SPECS[city]
+    if not spec.publication_enabled:
+        if args.db:
+            raise SystemExit("Candidate preparation blocked: --db override is not supported for staged cities")
+        if not spec.candidate_enabled:
+            raise SystemExit("Publication blocked: Munich source remains unverified; robots.txt disallows crawling")
+        try:
+            stage_city_candidates(city, root=ROOT)
+        except (FileNotFoundError, ValueError) as exc:
+            raise SystemExit(f"Candidate preparation blocked: {exc}") from exc
+        raise SystemExit(f"Publication blocked: {city} has local review candidates only")
+    city_paths = paths_for(city, ROOT)
+    raw, runtime, out = city_paths.raw, city_paths.runtime, city_paths.public
     db = connect(args.db or runtime / "police.sqlite")
     to_metric, to_wgs = metric_transforms(settings["epsg"])
     print("Building POIs and local gazetteer…", flush=True)
