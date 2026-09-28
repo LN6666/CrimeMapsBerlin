@@ -12,6 +12,23 @@ import zipfile
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 
+CANONICAL_CITY_SLUGS = (
+    "berlin",
+    "hamburg",
+    "munich",
+    "cologne",
+    "frankfurt",
+    "dusseldorf",
+    "stuttgart",
+    "leipzig",
+    "dortmund",
+    "bremen",
+    "essen",
+    "dresden",
+    "hannover",
+    "nuremberg",
+)
+
 
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
@@ -434,7 +451,7 @@ an owner-approved review set or evidence of complete police-report coverage.
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--city", required=True)
+    parser.add_argument("--city", choices=CANONICAL_CITY_SLUGS, required=True)
     parser.add_argument("--db", type=Path, required=True)
     parser.add_argument("--channel", required=True)
     parser.add_argument(

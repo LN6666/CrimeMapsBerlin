@@ -5,7 +5,12 @@ import zipfile
 
 import pytest
 
-from crimemapsberlin.source_review_pack import build_pack, read_base_pack, read_checkpoint
+from crimemapsberlin.source_review_pack import (
+    CANONICAL_CITY_SLUGS,
+    build_pack,
+    read_base_pack,
+    read_checkpoint,
+)
 
 
 def digest(text):
@@ -184,6 +189,13 @@ def test_pack_is_hash_bound_batched_and_local_only(tmp_path):
         for line in checksums:
             expected, relative = line.split("  ", 1)
             assert hashlib.sha256(archive.read(f"{root}/{relative}")).hexdigest() == expected
+
+
+def test_cli_city_slugs_use_project_identifiers_not_external_url_spellings():
+    assert len(CANONICAL_CITY_SLUGS) == 14
+    assert len(set(CANONICAL_CITY_SLUGS)) == 14
+    assert "dusseldorf" in CANONICAL_CITY_SLUGS
+    assert "duesseldorf" not in CANONICAL_CITY_SLUGS
 
 
 def test_native_source_columns_and_archive_scan_are_supported(tmp_path):
