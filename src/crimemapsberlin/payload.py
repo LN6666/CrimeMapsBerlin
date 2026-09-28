@@ -10,3 +10,13 @@ def compact(value):
     if isinstance(value, dict):
         return {k: compact(v) for k, v in value.items() if k != "location_geometry"}
     return value
+
+
+def canonical_events(raw_events):
+    """Use one rounded, validated event value for review, spatial work and JSON."""
+    from .spatial import count_location
+
+    events = [compact(event) for event in raw_events]
+    for event in events:
+        count_location(event)
+    return events

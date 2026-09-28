@@ -15,12 +15,12 @@ from crimemapsberlin.city_contract import CITY_SPECS, paths_for
 from crimemapsberlin.collector import connect
 from crimemapsberlin.geocode import Gazetteer, events_from_db
 from crimemapsberlin.multiple_scenes import scene_decision_index
-from crimemapsberlin.payload import compact
+from crimemapsberlin.payload import canonical_events, compact
 from crimemapsberlin.quality import location_changes, publication_problems
 from crimemapsberlin.review import (
     connect as connect_review, owner_approved, review_packet, review_summary, reviewed_tags,
 )
-from crimemapsberlin.spatial import build_months, count_location, metric_transforms, pois_from_osm
+from crimemapsberlin.spatial import build_months, metric_transforms, pois_from_osm
 from crimemapsberlin.tiles import DX, DY, tiles
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -34,14 +34,6 @@ CITY_SETTINGS = {
 def write(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(compact(value), ensure_ascii=False, separators=(",", ":")))
-
-
-def canonical_events(raw_events):
-    """Use one rounded, validated event value for review, spatial work and JSON."""
-    events = [compact(event) for event in raw_events]
-    for event in events:
-        count_location(event)
-    return events
 
 
 def main():

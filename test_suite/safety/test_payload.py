@@ -1,7 +1,6 @@
-from crimemapsberlin.payload import compact
+from crimemapsberlin.payload import canonical_events, compact
 from crimemapsberlin.review import fingerprint
 from crimemapsberlin.spatial import cell_for, hexagons
-from scripts.safety.build import canonical_events
 
 
 def test_compact_keeps_public_scene_geometry_and_order():
