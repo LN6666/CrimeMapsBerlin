@@ -14,7 +14,7 @@ import json
 import re
 import sqlite3
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlencode, urljoin, urlparse
@@ -237,44 +237,12 @@ def article_record(page: str, requested_url: str) -> dict:
     return {"source_id": match[1], "source_url": url, "body": body}
 
 
-COLOGNE = re.compile(r"\b(?:in\s+Köln(?:-[\wÄÖÜäöüß]+)?|Köln-[\wÄÖÜäöüß]+|im\s+Kölner\s+Stadtteil|in\s+der\s+Kölner\s+Innenstadt)\b", re.I)
-OUTSIDE = re.compile(
-    r"\b(?:in|bei)\s+(?:Leverkusen|Erftstadt|Weisweiler|Düsseldorf|Bonn|Gevelsberg|Kleve|"
-    r"Pulheim|Bergheim|Hürth|Frechen|Brühl|Wesseling|Dormagen|Bergisch\s+Gladbach)"
-    r"(?:-[\wÄÖÜäöüß]+)?\b"
-    r"|\b(?:Leverkusen|Erftstadt|Weisweiler|Düsseldorf|Gevelsberg|Pulheim|Bergheim|"
-    r"Hürth|Frechen|Brühl|Wesseling|Dormagen)-[\wÄÖÜäöüß]+",
-    re.I,
-)
-RESPONSE_CONTEXT = re.compile(
-    r"\b(?:festgenommen|festnahmen?|verhaftet|aufgegriffen|angetroffen|kontrolliert)\b|"
-    r"\b(?:nahm|nahmen|nimmt|nehmen)\b.{0,100}\bfest\b|"
-    r"\b(?:wohnt|wohnte|wohnhaft)\b",
-    re.I,
-)
+LLM_SCOPE_EVIDENCE = "full-text LLM municipality and scene review required"
 
 
-def _scene_scope_match(pattern: re.Pattern, text: str):
-    for sentence in re.split(r"(?<=[.!?;])\s+|\n+", text):
-        match = pattern.search(sentence)
-        if match and not RESPONSE_CONTEXT.search(sentence):
-            return match
-    return None
-
-
-def city_scope(title: str, body: str) -> tuple[str, str]:
-    """Return a municipal review lead, not an incident-scene finding."""
-    # Ignore publisher/contact boilerplate before checking the narrative.
-    narrative = re.sub(r"\b(?:Polizei|Polizeipräsidium|Staatsanwaltschaft)\s+Köln\b", "", title + "\n" + body)
-    inside = _scene_scope_match(COLOGNE, narrative)
-    outside = _scene_scope_match(OUTSIDE, narrative)
-    if inside and outside:
-        return "needs_review", f"mixed municipality mentions: {inside[0]}; {outside[0]}"
-    if inside:
-        return "cologne_candidate", inside[0]
-    if outside:
-        return "outside_candidate", outside[0]
-    return "needs_review", "no unambiguous Köln municipality mention"
+def city_scope(_title: str, _body: str) -> tuple[str, str]:
+    """Return only the technical gate; the LLM must read and decide every report."""
+    return "needs_review", LLM_SCOPE_EVIDENCE
 
 
 def connect(path: str | Path) -> sqlite3.Connection:
@@ -282,6 +250,12 @@ def connect(path: str | Path) -> sqlite3.Connection:
     db = sqlite3.connect(path)
     db.row_factory = sqlite3.Row
     db.executescript(SCHEMA)
+    db.execute(
+        """UPDATE reports SET city_scope='needs_review',scope_evidence=?
+           WHERE body IS NOT NULL AND (city_scope<>'needs_review' OR scope_evidence<>?)""",
+        (LLM_SCOPE_EVIDENCE, LLM_SCOPE_EVIDENCE),
+    )
+    db.commit()
     db.execute("PRAGMA journal_mode=WAL")
     return db
 
@@ -347,13 +321,15 @@ def archive_url(year: int, page: int) -> str:
 
 def sync(path: str | Path, year: int, *, full: bool = False, max_pages: int = 2,
          limit: int = 20, delay: float = 1.0) -> dict:
-    if not 2015 <= year <= datetime.now().year or not 1 <= max_pages <= 100 or not 1 <= limit <= 500 or delay < 1:
+    if not 2015 <= year <= datetime.now(UTC).year or not 1 <= max_pages <= 100 or not 1 <= limit <= 500 or delay < 1:
         raise ValueError("Use an available year, 1–100 pages, 1–500 articles and delay >= 1 second")
     db = connect(path)
     started = time.time()
-    stats = dict(year=year, full_archive_scan=full, archive_pages=0, discovered=0,
-                 new=0, revised=0, unchanged=0, failed=0, attempted=0,
-                 stopped_on_http_status=None)
+    stats = {
+        "year": year, "full_archive_scan": full, "archive_pages": 0, "discovered": 0,
+        "new": 0, "revised": 0, "unchanged": 0, "failed": 0, "attempted": 0,
+        "stopped_on_http_status": None,
+    }
     db.execute("INSERT INTO runs(started) VALUES(?)", (started,))
     db.commit()
     try:
@@ -463,7 +439,7 @@ def sync(path: str | Path, year: int, *, full: bool = False, max_pages: int = 2,
                    error IS NULL AND (body IS NULL OR checked IS NULL OR checked<? OR published>=?)
                    ORDER BY body IS NOT NULL,COALESCE(checked,0),published DESC LIMIT ?""",
                 (f"{year}-%", started, started - 7 * 86400,
-                 datetime.fromtimestamp(started - 2 * 86400).isoformat()[:19],
+                 datetime.fromtimestamp(started - 2 * 86400, UTC).isoformat()[:19],
                  max(0, limit - stats["attempted"])),
             ).fetchall()
             if not stopped:
@@ -493,7 +469,7 @@ def sync(path: str | Path, year: int, *, full: bool = False, max_pages: int = 2,
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--db", default=".runtime/safety/cities/cologne/police.sqlite")
-    parser.add_argument("--year", type=int, default=datetime.now().year)
+    parser.add_argument("--year", type=int, default=datetime.now(UTC).year)
     parser.add_argument("--full", action="store_true", help="resume the bounded full-year native archive scan")
     parser.add_argument("--max-pages", type=int, default=2)
     parser.add_argument("--limit", type=int, default=20)

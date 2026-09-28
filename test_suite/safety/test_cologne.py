@@ -4,13 +4,16 @@ import httpx
 import pytest
 
 from crimemapsberlin import cologne
-
 from crimemapsberlin.cologne import (
-    accept, article_record, city_scope, connect, discover, listing_rows,
+    accept,
+    article_record,
+    city_scope,
+    connect,
+    discover,
+    listing_rows,
     next_archive_page,
     sync,
 )
-
 
 LISTING = '''<div class="view view-list-view-press-releases-solr"><div class="view-content">
 <div class="views-row"><div class="field-content"><div class="press-list">
@@ -96,21 +99,23 @@ def test_native_article_with_nested_media_keeps_later_author_and_body():
     assert "Pressestelle" not in record["body"]
 
 
-def test_city_scope_never_infers_scene_from_issuing_authority_or_zip():
-    assert city_scope("Polizei Köln", "Polizei Köln | PLZ: 51103")[0] == "needs_review"
-    assert city_scope("Brandstiftung", "In Leverkusen-Schlebusch brannte ein Haus.")[0] == "outside_candidate"
-    assert city_scope("Explosion", "In Köln-Ehrenfeld explodierte ein Kasten.")[0] == "cologne_candidate"
-    assert city_scope("Ermittlungen", "Tat in Erftstadt; Festnahme in Köln.")[0] == "outside_candidate"
-    assert city_scope("Unfall auf der BAB 3", "Auf der Autobahn 3 kam es zum Unfall.")[0] == "needs_review"
-    assert city_scope("In der Kölner Straße", "In Leverkusen trafen sich Zeugen.")[0] == "outside_candidate"
-    assert city_scope(
-        "Polizei nimmt Täter in Köln fest",
-        "Der Überfall geschah in Pulheim. Danach wurde der Täter in Köln festgenommen.",
-    )[0] == "outside_candidate"
-    assert city_scope(
-        "Festnahmen in Köln",
-        "Der Überfall ereignete sich in Hilden.",
-    )[0] == "needs_review"
+def test_collector_never_assigns_semantic_municipality_scope():
+    for title, body in (
+        ("Polizei Köln", "Polizei Köln | PLZ: 51103"),
+        ("Brandstiftung", "In Leverkusen-Schlebusch brannte ein Haus."),
+        ("Explosion", "In Köln-Ehrenfeld explodierte ein Kasten."),
+        ("Ermittlungen", "Tat in Erftstadt; Festnahme in Köln."),
+        ("Unfall auf der BAB 3", "Auf der Autobahn 3 kam es zum Unfall."),
+        ("In der Kölner Straße", "In Leverkusen trafen sich Zeugen."),
+        (
+            "Polizei nimmt Täter in Köln fest",
+            "Der Überfall geschah in Pulheim. Danach wurde der Täter in Köln festgenommen.",
+        ),
+        ("Festnahmen in Köln", "Der Überfall ereignete sich in Hilden."),
+    ):
+        assert city_scope(title, body) == (
+            "needs_review", cologne.LLM_SCOPE_EVIDENCE
+        )
 
 
 def test_checkpoint_revisions_and_source_id_are_local(tmp_path):
@@ -125,7 +130,9 @@ def test_checkpoint_revisions_and_source_id_are_local(tmp_path):
     stored = db.execute(
         "SELECT source_id,revision,city_scope,scope_evidence,body,sha256 FROM reports"
     ).fetchone()
-    assert tuple(stored)[:4] == ("217132", 2, "outside_candidate", "In Leverkusen-Schlebusch")
+    assert tuple(stored)[:4] == (
+        "217132", 2, "needs_review", cologne.LLM_SCOPE_EVIDENCE
+    )
     assert stored["body"] == changed["body"]
     assert stored["sha256"] == hashlib.sha256(changed["body"].encode()).hexdigest()
     assert db.execute("SELECT count(*) FROM revisions").fetchone()[0] == 2

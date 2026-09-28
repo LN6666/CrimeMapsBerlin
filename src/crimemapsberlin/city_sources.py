@@ -1,18 +1,18 @@
 """Read first-group source checkpoints into a common extraction input.
 
-The issuing police authority is wider than a municipality. Reports without
-positive city evidence stay in the source checkpoint for later review, rather
-than being geocoded into a city candidate batch.
+The issuing police authority is wider than a municipality. Cologne and
+Frankfurt reports require a full-text LLM municipality decision bound to the
+current source hash before they can enter a geocoding candidate batch.
 """
 
 from __future__ import annotations
 
-import re
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 
 from .city_contract import CITY_SPECS
+from .city_scope import scope_decisions, valid_scope_verdict
 
 
 @dataclass(frozen=True)
@@ -22,46 +22,11 @@ class SourceSelection:
     archive_complete: bool
 
 
-FRANKFURT_CITY = re.compile(
-    r"\b(?:in\s+Frankfurt(?:\s+am\s+Main)?|Frankfurt-[\wÄÖÜäöüß]+|"
-    r"im\s+Frankfurter\s+Stadtteil|in\s+der\s+Frankfurter\s+Innenstadt)\b",
-    re.I,
-)
-FRANKFURT_OUTSIDE = re.compile(
-    r"\b(?:in|bei)\s+(?:Offenbach|Bad\s+Homburg|Hanau|Darmstadt|Wiesbaden|"
-    r"Bad\s+Vilbel|Neu-Isenburg|Oberursel|Eschborn|Maintal|Hofheim|Kelsterbach|"
-    r"Hattersheim|Mörfelden-Walldorf)\b",
-    re.I,
-)
-FRANKFURT_BOILERPLATE = re.compile(r"^\s*Frankfurt(?:\s+am\s+Main)?\s*\(ots\)\s*[-–]?\s*", re.I)
-RESPONSE_CONTEXT = re.compile(
-    r"\b(?:festgenommen|festnahmen?|verhaftet|aufgegriffen|angetroffen|kontrolliert)\b|"
-    r"\b(?:nahm|nahmen|nimmt|nehmen)\b.{0,100}\bfest\b|"
-    r"\b(?:wohnt|wohnte|wohnhaft)\b",
-    re.I,
-)
 PARSER_VERSIONS = {"hamburg": 3, "frankfurt": 3}
 
 
-def _scene_scope_match(pattern: re.Pattern, text: str):
-    for sentence in re.split(r"(?<=[.!?;])\s+|\n+", text):
-        match = pattern.search(sentence)
-        if match and not RESPONSE_CONTEXT.search(sentence):
-            return match
-    return None
-
-
-def frankfurt_scope(title: str, body: str) -> str:
-    """A positive municipality mention is a review lead, not a scene finding."""
-    narrative = FRANKFURT_BOILERPLATE.sub("", body)
-    narrative = re.sub(r"\bPolizeipräsidium\s+Frankfurt\s+am\s+Main\b", "", narrative, flags=re.I)
-    text = title + "\n" + narrative
-    inside = _scene_scope_match(FRANKFURT_CITY, text)
-    outside = _scene_scope_match(FRANKFURT_OUTSIDE, text)
-    if inside and not outside:
-        return "city_candidate"
-    if outside and not inside:
-        return "outside_candidate"
+def frankfurt_scope(_title: str, _body: str) -> str:
+    """Return only the technical gate; source meaning is decided by the LLM."""
     return "needs_review"
 
 
@@ -127,8 +92,11 @@ def read_city_source(city: str, path: Path) -> SourceSelection:
                 f"""SELECT id,url,title,published,district,body,sha256,revision,
                    http_status,error,{parser_version} FROM reports ORDER BY published,id"""
             ).fetchall()
-        counts = dict(discovered=len(rows), fetched=0, pending=0, failed=0,
-                      selected=0, outside=0, deferred=0)
+        counts = {
+            "discovered": len(rows), "fetched": 0, "pending": 0, "failed": 0,
+            "selected": 0, "outside": 0, "deferred": 0,
+        }
+        decisions = scope_decisions(db) if city in {"cologne", "frankfurt"} else {}
         selected = []
         for row in rows:
             report = dict(row)
@@ -141,18 +109,17 @@ def read_city_source(city: str, path: Path) -> SourceSelection:
                 counts["pending"] += 1
                 continue
             counts["fetched"] += 1
-            if city == "cologne":
-                scope = report.pop("city_scope")
-                if not report["id"]:
-                    scope = "needs_review"
-            elif city == "frankfurt":
-                scope = frankfurt_scope(report["title"], report["body"])
+            if city in {"cologne", "frankfurt"}:
+                report.pop("city_scope", None)
+                scope = valid_scope_verdict(
+                    decisions.get(report["id"]), report["body"], report["sha256"]
+                )
             else:
-                scope = "city_candidate"
-            if scope in {"cologne_candidate", "city_candidate"}:
+                scope = "in_city"
+            if scope == "in_city":
                 counts["selected"] += 1
                 selected.append(report)
-            elif scope in {"outside_candidate", "outside"}:
+            elif scope == "out_of_city":
                 counts["outside"] += 1
             else:
                 counts["deferred"] += 1

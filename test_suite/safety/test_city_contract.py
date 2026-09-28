@@ -8,6 +8,7 @@ import pytest
 
 from crimemapsberlin.city_candidates import stage
 from crimemapsberlin.city_contract import CITY_SPECS, paths_for
+from crimemapsberlin.city_scope import record_city_scope
 from crimemapsberlin.city_sources import frankfurt_scope, read_city_source
 from crimemapsberlin.collector import accept as accept_standard
 from crimemapsberlin.collector import connect as connect_standard
@@ -100,6 +101,13 @@ def test_stale_pressportal_parser_version_blocks_city_candidates(
     db.close()
     current = read_city_source(city, path)
     assert current.coverage["fetched"] == 1
+    if city == "frankfurt":
+        assert current.coverage["selected"] == 0
+        assert current.coverage["deferred"] == 1
+        db = connect_standard(path)
+        record_city_scope(db, "123", "in_city", body, 4)
+        db.close()
+        current = read_city_source(city, path)
     assert current.coverage["selected"] == 1
 
 
@@ -108,23 +116,35 @@ def test_cologne_native_schema_selects_only_city_leads(tmp_path, monkeypatch):
     path = paths_for("cologne", tmp_path).source_db
     db = connect_cologne(path)
     rows = [
-        dict(url="https://koeln.polizei.nrw/presse/koeln-probe", title="Vorfall in Köln-Ehrenfeld",
-             published="2026-09-01T12:00:00+02:00"),
-        dict(url="https://koeln.polizei.nrw/presse/leverkusen-probe", title="Vorfall in Leverkusen",
-             published="2026-09-02T12:00:00+02:00"),
+        {"url": "https://koeln.polizei.nrw/presse/koeln-probe",
+         "title": "Vorfall in Köln-Ehrenfeld", "published": "2026-09-01T12:00:00+02:00"},
+        {"url": "https://koeln.polizei.nrw/presse/leverkusen-probe",
+         "title": "Vorfall in Leverkusen", "published": "2026-09-02T12:00:00+02:00"},
     ]
     discover_cologne(db, rows, 1)
-    accept_cologne(db, rows[0]["url"], dict(source_id="111", source_url=rows[0]["url"],
-                  body="In Köln-Ehrenfeld auf der Teststraße wurde ein Fahrzeug gestohlen."), {}, 2)
-    accept_cologne(db, rows[1]["url"], dict(source_id="222", source_url=rows[1]["url"],
-                  body="In Leverkusen-Schlebusch wurde auf der Teststraße ein Fahrzeug gestohlen."), {}, 2)
+    accept_cologne(db, rows[0]["url"], {
+        "source_id": "111", "source_url": rows[0]["url"],
+        "body": "In Köln-Ehrenfeld auf der Teststraße wurde ein Fahrzeug gestohlen.",
+    }, {}, 2)
+    accept_cologne(db, rows[1]["url"], {
+        "source_id": "222", "source_url": rows[1]["url"],
+        "body": "In Leverkusen-Schlebusch wurde auf der Teststraße ein Fahrzeug gestohlen.",
+    }, {}, 2)
+    record_city_scope(
+        db, "111", "in_city",
+        "In Köln-Ehrenfeld auf der Teststraße wurde ein Fahrzeug gestohlen.", 3,
+    )
+    record_city_scope(
+        db, "222", "out_of_city",
+        "In Leverkusen-Schlebusch wurde auf der Teststraße ein Fahrzeug gestohlen.", 3,
+    )
     db.close()
 
     selection = read_city_source("cologne", path)
-    assert selection.coverage == dict(
-        discovered=2, fetched=2, pending=0, failed=0,
-        selected=1, outside=1, deferred=0,
-    )
+    assert selection.coverage == {
+        "discovered": 2, "fetched": 2, "pending": 0, "failed": 0,
+        "selected": 1, "outside": 1, "deferred": 0,
+    }
     assert [row["id"] for row in selection.reports] == ["111"]
     audit = stage("cologne", root=tmp_path)
     candidates = json.loads((paths_for("cologne", tmp_path).runtime / "review-candidates.json").read_text())
@@ -157,12 +177,12 @@ def test_cologne_native_schema_selects_only_city_leads(tmp_path, monkeypatch):
 
 def test_frankfurt_newsroom_boilerplate_does_not_establish_city_scope(tmp_path):
     assert frankfurt_scope("POL-F: Bericht", "Frankfurt (ots) - Auf einer Autobahn kam es zum Unfall.") == "needs_review"
-    assert frankfurt_scope("POL-F: Bericht", "Frankfurt (ots) - In Offenbach geschah ein Diebstahl.") == "outside_candidate"
-    assert frankfurt_scope("POL-F: Bericht", "Frankfurt (ots) - In Frankfurt am Main geschah ein Diebstahl.") == "city_candidate"
+    assert frankfurt_scope("POL-F: Bericht", "Frankfurt (ots) - In Offenbach geschah ein Diebstahl.") == "needs_review"
+    assert frankfurt_scope("POL-F: Bericht", "Frankfurt (ots) - In Frankfurt am Main geschah ein Diebstahl.") == "needs_review"
     assert frankfurt_scope(
         "POL-F: Festnahme",
         "Frankfurt (ots) - In Bad Vilbel geschah ein Raub. Der Täter wurde in Frankfurt festgenommen.",
-    ) == "outside_candidate"
+    ) == "needs_review"
     assert frankfurt_scope(
         "POL-F: Festnahmen in Frankfurt am Main",
         "Frankfurt (ots) - Der Überfall ereignete sich in Kronberg.",
@@ -172,14 +192,22 @@ def test_frankfurt_newsroom_boilerplate_does_not_establish_city_scope(tmp_path):
     path = paths_for("frankfurt", tmp_path).source_db
     db = connect_standard(path)
     rows = [
-        dict(id="333", url="https://www.presseportal.de/blaulicht/pm/4970/333",
-             title="POL-F: Diebstahl", published="2026-09-01T12:00:00", district=""),
-        dict(id="444", url="https://www.presseportal.de/blaulicht/pm/4970/444",
-             title="POL-F: Unfall", published="2026-09-02T12:00:00", district=""),
+        {"id": "333", "url": "https://www.presseportal.de/blaulicht/pm/4970/333",
+         "title": "POL-F: Diebstahl", "published": "2026-09-01T12:00:00", "district": ""},
+        {"id": "444", "url": "https://www.presseportal.de/blaulicht/pm/4970/444",
+         "title": "POL-F: Unfall", "published": "2026-09-02T12:00:00", "district": ""},
     ]
     discover_standard(db, rows, 1)
     accept_standard(db, "333", "Frankfurt (ots) - In Frankfurt am Main auf der Teststraße wurde ein Fahrzeug gestohlen.", {}, 2)
     accept_standard(db, "444", "Frankfurt (ots) - In Offenbach geschah auf der Teststraße ein Verkehrsunfall.", {}, 2)
+    record_city_scope(
+        db, "333", "in_city",
+        "Frankfurt (ots) - In Frankfurt am Main auf der Teststraße wurde ein Fahrzeug gestohlen.", 3,
+    )
+    record_city_scope(
+        db, "444", "out_of_city",
+        "Frankfurt (ots) - In Offenbach geschah auf der Teststraße ein Verkehrsunfall.", 3,
+    )
     db.close()
 
     audit = stage("frankfurt", root=tmp_path)
@@ -189,6 +217,32 @@ def test_frankfurt_newsroom_boilerplate_does_not_establish_city_scope(tmp_path):
     assert audit["archive_complete"] is False
     assert [event["id"] for event in candidates["events"]] == ["333"]
     assert not paths_for("frankfurt", tmp_path).public.exists()
+
+
+def test_first_group_llm_scope_decision_is_quote_and_hash_bound(tmp_path):
+    path = tmp_path / "frankfurt.sqlite"
+    db = connect_standard(path)
+    row = {
+        "id": "555", "url": "https://www.presseportal.de/blaulicht/pm/4970/555",
+        "title": "POL-F: Probe", "published": "2026-09-03T12:00:00", "district": "",
+    }
+    body = "In Frankfurt am Main auf der Teststraße wurde ein Fahrzeug gestohlen."
+    discover_standard(db, [row], 1)
+    accept_standard(db, "555", body, {}, 2)
+    with pytest.raises(ValueError, match="quote"):
+        record_city_scope(
+            db, "555", "in_city", "Diese erfundene Passage steht nicht im Bericht.", 3
+        )
+    record_city_scope(db, "555", "in_city", body, 3)
+    db.close()
+    assert read_city_source("frankfurt", path).coverage["selected"] == 1
+
+    db = connect_standard(path)
+    accept_standard(db, "555", body + " Neue Erkenntnisse.", {}, 4)
+    db.close()
+    stale = read_city_source("frankfurt", path)
+    assert stale.coverage["selected"] == 0
+    assert stale.coverage["deferred"] == 1
 
 
 def test_munich_staging_requires_complete_direct_source_before_osm_access(tmp_path):
