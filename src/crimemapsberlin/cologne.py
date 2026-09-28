@@ -203,14 +203,25 @@ def article_record(page: str, requested_url: str) -> dict:
     if url != requested_url:
         # A changed alias is valid only when the HTTP layer redirected to it.
         raise ValueError("Native Köln canonical URL differs from fetched URL")
-    if not re.search(r'<article\s+about="' + re.escape(urlparse(url).path) + r'"[^>]*node--type--press-release', page):
+    opening = re.search(
+        r'<article\s+about="' + re.escape(urlparse(url).path)
+        + r'"[^>]*node--type--press-release[^>]*>', page
+    )
+    if not opening:
         raise ValueError("Not a native Polizei Köln press-release article")
-    parser = NativeArticleParser()
-    # Limit parsing to the actual press-release article; contacts/sidebar follow it.
-    article = re.search(r'<article\s+about="' + re.escape(urlparse(url).path) + r'".*?</article>', page, re.S)
-    if not article:
+    # Media embeds can contain nested <article> elements. Stop at the matching
+    # outer close, not the first close tag, and exclude contacts/sidebar after it.
+    depth = 0
+    end = None
+    for tag in re.finditer(r"</?article\b[^>]*>", page[opening.start():], re.IGNORECASE):
+        depth += -1 if tag[0].startswith("</") else 1
+        if depth == 0:
+            end = opening.start() + tag.end()
+            break
+    if end is None:
         raise ValueError("Native press-release article container missing")
-    parser.feed(article[0])
+    parser = NativeArticleParser()
+    parser.feed(page[opening.start():end])
     author = _text("".join(parser.author))
     body = "\n".join(_text(part) for part in "".join(parser.parts).splitlines() if _text(part))
     if author != "Polizei Köln" or len(body) < 30:
@@ -333,7 +344,8 @@ def sync(path: str | Path, year: int, *, full: bool = False, max_pages: int = 2,
     db = connect(path)
     started = time.time()
     stats = dict(year=year, full_archive_scan=full, archive_pages=0, discovered=0,
-                 new=0, revised=0, unchanged=0, failed=0)
+                 new=0, revised=0, unchanged=0, failed=0, attempted=0,
+                 stopped_on_http_status=None)
     db.execute("INSERT INTO runs(started) VALUES(?)", (started,))
     db.commit()
     try:
@@ -370,9 +382,51 @@ def sync(path: str | Path, year: int, *, full: bool = False, max_pages: int = 2,
                     return response
                 raise ValueError("Too many native archive redirects")
 
+            def fetch_body(row: sqlite3.Row) -> int | None:
+                """Save one article, returning a stop status for 429/503."""
+                stats["attempted"] += 1
+                headers = {}
+                if row["etag"]:
+                    headers["If-None-Match"] = row["etag"]
+                if row["modified"]:
+                    headers["If-Modified-Since"] = row["modified"]
+                try:
+                    response = get(row["source_url"], headers)
+                    if response.status_code == 304:
+                        if row["body"] is None:
+                            raise ValueError("304 without cached native article")
+                        db.execute(
+                            "UPDATE reports SET checked=?,error=NULL,failures=0,retry_after=0 WHERE source_url=?",
+                            (time.time(), row["source_url"]),
+                        )
+                        db.commit()
+                        stats["unchanged"] += 1
+                    else:
+                        record = article_record(response.text, str(response.url))
+                        stats[accept(db, row["source_url"], record, response.headers, time.time())] += 1
+                except (httpx.HTTPError, ValueError) as exc:
+                    fail(db, row["source_url"], f"{type(exc).__name__}: {exc}", time.time())
+                    stats["failed"] += 1
+                    if isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code in (429, 503):
+                        status = exc.response.status_code
+                        stats["stopped_on_http_status"] = status
+                        return status
+                return None
+
+            failed_first = db.execute(
+                """SELECT * FROM reports WHERE published LIKE ? AND error IS NOT NULL
+                   AND retry_after<=? ORDER BY retry_after,published DESC LIMIT ?""",
+                (f"{year}-%", started, limit),
+            ).fetchall()
+            stopped = False
+            for row in failed_first:
+                if fetch_body(row) is not None:
+                    stopped = True
+                    break
+
             state = db.execute("SELECT next_page,complete FROM archive_scan WHERE year=?", (year,)).fetchone()
             page_number = state["next_page"] if full and state and not state["complete"] else 0
-            for _ in range(max_pages if full else min(max_pages, 2)):
+            for _ in range((max_pages if full else min(max_pages, 2)) if not stopped else 0):
                 page = get(archive_url(year, page_number)).text
                 rows = listing_rows(page)
                 if any(not row["published"].startswith(str(year)) for row in rows):
@@ -398,32 +452,16 @@ def sync(path: str | Path, year: int, *, full: bool = False, max_pages: int = 2,
 
             pending = db.execute(
                 """SELECT * FROM reports WHERE published LIKE ? AND retry_after<=? AND
-                   (body IS NULL OR checked IS NULL OR checked<? OR published>=?)
+                   error IS NULL AND (body IS NULL OR checked IS NULL OR checked<? OR published>=?)
                    ORDER BY body IS NOT NULL,COALESCE(checked,0),published DESC LIMIT ?""",
                 (f"{year}-%", started, started - 7 * 86400,
-                 datetime.fromtimestamp(started - 2 * 86400).isoformat()[:19], limit),
+                 datetime.fromtimestamp(started - 2 * 86400).isoformat()[:19],
+                 max(0, limit - stats["attempted"])),
             ).fetchall()
-            for row in pending:
-                headers = {}
-                if row["etag"]:
-                    headers["If-None-Match"] = row["etag"]
-                if row["modified"]:
-                    headers["If-Modified-Since"] = row["modified"]
-                try:
-                    response = get(row["source_url"], headers)
-                    if response.status_code == 304:
-                        if row["body"] is None:
-                            raise ValueError("304 without cached native article")
-                        db.execute("UPDATE reports SET checked=?,error=NULL,failures=0,retry_after=0 WHERE source_url=?",
-                                   (time.time(), row["source_url"]))
-                        db.commit()
-                        stats["unchanged"] += 1
-                    else:
-                        record = article_record(response.text, str(response.url))
-                        stats[accept(db, row["source_url"], record, response.headers, time.time())] += 1
-                except (httpx.HTTPError, ValueError) as exc:
-                    fail(db, row["source_url"], f"{type(exc).__name__}: {exc}", time.time())
-                    stats["failed"] += 1
+            if not stopped:
+                for row in pending:
+                    if fetch_body(row) is not None:
+                        break
             stats["stored"] = db.execute("SELECT count(*) FROM reports WHERE published LIKE ? AND body IS NOT NULL",
                                           (f"{year}-%",)).fetchone()[0]
             stats["pending"] = db.execute("SELECT count(*) FROM reports WHERE published LIKE ? AND body IS NULL",
