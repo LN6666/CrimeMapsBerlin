@@ -15,7 +15,11 @@ from crimemapsberlin.city_sources import normalized_event_db, read_city_source
 from crimemapsberlin.geocode import Gazetteer, events_from_db
 from crimemapsberlin.multiple_scenes import scene_decision_index
 from crimemapsberlin.payload import compact
-from crimemapsberlin.review import connect as connect_review, review_summary
+from crimemapsberlin.polizeikarte_munich import (
+    candidate_snapshot as munich_candidate_snapshot,
+)
+from crimemapsberlin.review import connect as connect_review
+from crimemapsberlin.review import review_summary
 from crimemapsberlin.spatial import metric_transforms, pois_from_osm
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -24,12 +28,28 @@ CITY_SETTINGS = {city: spec for city, spec in CITY_SPECS.items() if spec.candida
 
 def stage(city: str, *, root: Path = ROOT) -> dict:
     if city not in CITY_SETTINGS:
-        if city == "munich":
-            raise ValueError("Munich source is unverified and robots.txt disallows automated crawling")
         raise ValueError(f"No checked city extraction configuration: {city}")
     spec = CITY_SETTINGS[city]
     city_paths = paths_for(city, root)
     runtime = city_paths.runtime
+    if city == "munich":
+        events, audit = munich_candidate_snapshot(city_paths.source_db)
+        runtime.mkdir(parents=True, exist_ok=True)
+        candidate_path = runtime / "review-candidates.json"
+        tmp = candidate_path.with_suffix(".json.tmp")
+        tmp.write_text(
+            json.dumps(
+                {"city": city, "events": events, "changed_locations": []},
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+        )
+        tmp.replace(candidate_path)
+        audit_path = runtime / "candidate-audit.json"
+        tmp = audit_path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(audit, ensure_ascii=False, indent=2))
+        tmp.replace(audit_path)
+        return audit
     paths = city_paths.osm_indexes(city)
     if not all(path.is_file() for path in paths):
         raise FileNotFoundError(f"Missing checked {city} OSM indexes in {city_paths.raw}")

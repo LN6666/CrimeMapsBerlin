@@ -55,9 +55,9 @@ CITY_SPECS = {
         "collector_frankfurt", True, False,
     ),
     "munich": CitySpec(
-        "München", 25832, "Polizeipräsidium München offline supplied, source unverified",
-        "© OpenStreetMap contributors / Geofabrik (ODbL); Polizeipräsidium München",
-        "munich_unverified", False, False,
+        "München", 25832, "POLIZEIKARTE Munich 365-day index linked to police originals",
+        "© OpenStreetMap contributors / Geofabrik (ODbL); POLIZEIKARTE; source police publishers",
+        "polizeikarte_munich", True, False,
     ),
 }
 

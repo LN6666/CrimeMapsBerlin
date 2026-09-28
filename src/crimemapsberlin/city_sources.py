@@ -102,9 +102,9 @@ def _archive_complete(db: sqlite3.Connection, city: str) -> bool:
 
 def read_city_source(city: str, path: Path) -> SourceSelection:
     spec = CITY_SPECS[city]
-    if spec.source_schema == "munich_unverified":
+    if spec.source_schema == "polizeikarte_munich":
         raise ValueError(
-            "Munich source is offline-supplied and unverified; robots.txt disallows automated crawling"
+            "Munich uses its direct POLIZEIKARTE candidate adapter, not the official-archive schema"
         )
     if not path.is_file():
         raise FileNotFoundError(f"Missing {city} official announcement checkpoint")

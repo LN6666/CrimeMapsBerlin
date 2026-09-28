@@ -18,10 +18,14 @@ Frankfurt, `Frankfurt (ots)` and the issuing authority are ignored as city
 evidence; only explicit municipality wording creates a local candidate.
 These are still review leads, not verified incident scenes or boundary checks.
 
-Munich's separately supplied daily documents have unverified source
-provenance, and the Bavarian police site's robots rules currently disallow
-automated crawling. `city_candidates.py --city munich` and
-`build.py --city munich` fail before touching any source or public files.
+Munich uses the owner-selected POLIZEIKARTE rolling 365-day dataset. Its
+collector partitions the capped city page by all ten exclusive categories,
+checks every paginated list ID against the category-wide map payload and
+requires the category sum to equal the displayed city total. Candidate rows
+retain POLIZEIKARTE's category, summary, precision, upstream coordinate,
+detail URL and original police URL. `city_candidates.py --city munich` writes
+the hash-checked local candidate snapshot; `build.py --city munich` still
+stops before publication.
 Cologne and Frankfurt can be staged once their checked OSM indexes are
 available locally with Geofabrik source provenance. `fetch_osm.py` uses the
 Regierungsbezirk Köln extract for Cologne and the Hessen extract for Frankfurt;
@@ -29,9 +33,8 @@ the source-scope and locality checks must still exclude the rest of those region
 files. `build.py` always stops before publication for these two cities. The existing Berlin/Hamburg publication gate still requires
 current source-backed reviews and owner approval.
 
-The candidate contract never starts a source or OSM download itself. Munich
-remains excluded from automated source and OSM work. Coverage remains incomplete until the
-native/partner archive cross-check, city boundary validation, per-announcement
-review and owner's inspection have been done. The Cologne native archive and
+The candidate contract never starts a source or OSM download itself. Munich's
+source collector is a separate explicit command; POI integration and owner
+inspection remain open. The Cologne native archive and
 the publisher newsroom currently show different 2026 totals; these figures
 must be compared article by article before any completeness claim.

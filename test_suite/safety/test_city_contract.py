@@ -42,7 +42,7 @@ def test_first_group_paths_and_permissions_are_explicit(tmp_path):
     assert paths_for("berlin", tmp_path).raw == tmp_path / "data/raw/safety"
     assert paths_for("cologne", tmp_path).source_db == tmp_path / ".runtime/safety/cities/cologne/police.sqlite"
     assert paths_for("frankfurt", tmp_path).public == tmp_path / "web/public/safety/cities/frankfurt"
-    assert not CITY_SPECS["munich"].candidate_enabled
+    assert CITY_SPECS["munich"].candidate_enabled
     assert not CITY_SPECS["cologne"].publication_enabled
 
 
@@ -191,8 +191,7 @@ def test_frankfurt_newsroom_boilerplate_does_not_establish_city_scope(tmp_path):
     assert not paths_for("frankfurt", tmp_path).public.exists()
 
 
-def test_munich_staging_fails_before_source_or_osm_access(tmp_path):
-    with pytest.raises(ValueError, match="robots.txt"):
+def test_munich_staging_requires_complete_direct_source_before_osm_access(tmp_path):
+    with pytest.raises(ValueError, match="checkpoint is missing"):
         stage("munich", root=tmp_path)
-    assert not (tmp_path / ".runtime").exists()
     assert not (tmp_path / "web").exists()

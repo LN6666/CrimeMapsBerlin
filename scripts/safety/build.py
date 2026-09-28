@@ -51,7 +51,7 @@ def main():
         if args.db:
             raise SystemExit("Candidate preparation blocked: --db override is not supported for staged cities")
         if not spec.candidate_enabled:
-            raise SystemExit("Publication blocked: Munich source remains unverified; robots.txt disallows crawling")
+            raise SystemExit(f"Publication blocked: {city} has no enabled local candidate source")
         try:
             stage_city_candidates(city, root=ROOT)
         except (FileNotFoundError, ValueError) as exc:
