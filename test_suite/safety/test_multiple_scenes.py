@@ -4,6 +4,7 @@ import pytest
 
 from crimemapsberlin.multiple_scenes import (
     scene_decision_index,
+    validated_article_semantics,
     validated_scene_decision,
 )
 
@@ -64,3 +65,45 @@ def test_scene_decision_file_rejects_wrong_city_and_duplicate_articles():
         scene_decision_index(payload, city="berlin")
     with pytest.raises(ValueError, match="Duplicate"):
         scene_decision_index(dict(payload, articles=[article, article]), city="hamburg")
+
+
+def test_reviewed_article_semantics_require_verbatim_evidence_and_linked_hash():
+    row = {
+        "id": "42", "sha256": "current",
+        "title": "Aktualisierung der vorläufigen Bilanz",
+        "body": "Die Übersicht nennt Straftaten und wiederholt den früheren Bericht.",
+    }
+    decision = {
+        "classification": {
+            "category": "Verkehr / sonstige Meldung", "is_crime_report": True,
+            "evidence_quote": "Die Übersicht nennt Straftaten",
+        },
+        "followup": {
+            "source_id": "7", "source_sha256": "old-hash",
+            "evidence_quote": "Aktualisierung der vorläufigen Bilanz",
+        },
+    }
+    assert validated_article_semantics(row, decision, {"7": "old-hash"}) == {
+        "category": "Verkehr / sonstige Meldung", "is_crime_report": True,
+        "followup_of_source_id": "7",
+    }
+    with pytest.raises(ValueError, match="classification"):
+        validated_article_semantics(
+            row,
+            dict(decision, classification=dict(decision["classification"], evidence_quote="absent")),
+            {"7": "old-hash"},
+        )
+    with pytest.raises(ValueError, match="followup"):
+        validated_article_semantics(row, decision, {"7": "changed"})
+
+
+def test_legacy_row_without_title_only_skips_absent_semantic_overrides():
+    row = {"id": "42", "sha256": "current", "body": "Verbatim source body."}
+    assert validated_article_semantics(row, {}) == {}
+    with pytest.raises(ValueError, match="classification"):
+        validated_article_semantics(row, {
+            "classification": {
+                "category": "Unklassifiziert", "is_crime_report": True,
+                "evidence_quote": "evidence present only in a missing title",
+            },
+        })

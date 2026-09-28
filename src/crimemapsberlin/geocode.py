@@ -28,7 +28,7 @@ from .location_text import (
     station_context,
     venue_context,
 )
-from .multiple_scenes import validated_scene_decision
+from .multiple_scenes import validated_article_semantics, validated_scene_decision
 from .spatial import TO_METRIC, TO_WGS
 
 GEOCODE_VERSION = "5"
@@ -2060,11 +2060,24 @@ def events_from_db(db, gazetteer, scene_decisions=None):
         elif references:
             location["source_reference_ids"] = references
         reviewed_scene = scene_decisions.get(str(r["id"]))
+        reviewed_semantics = (
+            validated_article_semantics(r, reviewed_scene, source_hashes)
+            if reviewed_scene is not None else {}
+        )
+        if "category" in reviewed_semantics:
+            label = reviewed_semantics["category"]
+            crime = reviewed_semantics["is_crime_report"]
         attach_scene_locations(
             r, location, reviewed_scene, source_hashes,
         )
         if reviewed_scene is not None:
             used_scene_decisions.add(str(r["id"]))
+        reviewed_followup = reviewed_semantics.get("followup_of_source_id")
+        if reviewed_followup:
+            existing_followup = location.get("followup_of_source_id")
+            if existing_followup and existing_followup != reviewed_followup:
+                raise ValueError(f"Conflicting reviewed followup for {r['id']}")
+            location["followup_of_source_id"] = reviewed_followup
         poi_kinds = mentions(r["body"])
         if location["location_precision"] == "place":
             poi_kinds = sorted(

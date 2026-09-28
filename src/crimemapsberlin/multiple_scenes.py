@@ -19,6 +19,11 @@ CASE_RELATIONS = {
     "independent_case", "same_case_phase", "search_arrest_operation", "background_reference",
     "unresolved_relation",
 }
+REVIEWED_CATEGORIES = {
+    "Betrug", "Betäubungsmittel", "Diebstahl", "Eigentumsdelikt", "Gewalt",
+    "Raub", "Sachbeschädigung", "Sexualdelikt", "Unklassifiziert",
+    "Verkehr / sonstige Meldung", "Waffendelikt",
+}
 
 def _valid_lonlat(value):
     return (
@@ -90,11 +95,59 @@ def scene_decision_index(payload, *, city=None):
     return indexed
 
 
+def validated_article_semantics(row, decision, source_hashes=None):
+    """Validate optional human-reviewed article semantics without inferring them."""
+    ident = str(row["id"])
+    result = {}
+    classification = decision.get("classification")
+    followup = decision.get("followup")
+    if classification is None and followup is None:
+        return result
+    try:
+        title = row["title"]
+    except (KeyError, IndexError):
+        title = ""
+    haystack = " ".join(f"{title} {row['body']}".split())
+    if classification is not None:
+        if not isinstance(classification, dict):
+            raise ValueError(f"Invalid reviewed classification for {ident}")
+        category = classification.get("category")
+        crime = classification.get("is_crime_report")
+        evidence = " ".join(str(classification.get("evidence_quote", "")).split())
+        if (
+            category not in REVIEWED_CATEGORIES
+            or type(crime) is not bool
+            or len(evidence) < 15
+            or evidence not in haystack
+        ):
+            raise ValueError(f"Invalid reviewed classification for {ident}")
+        result.update(category=category, is_crime_report=crime)
+    if followup is not None:
+        if not isinstance(followup, dict):
+            raise ValueError(f"Invalid reviewed followup for {ident}")
+        source_id = str(followup.get("source_id", ""))
+        supplied_hash = followup.get("source_sha256")
+        evidence = " ".join(str(followup.get("evidence_quote", "")).split())
+        expected_hash = (source_hashes or {}).get(source_id)
+        if (
+            not source_id
+            or source_id == ident
+            or expected_hash is None
+            or supplied_hash != expected_hash
+            or len(evidence) < 15
+            or evidence not in haystack
+        ):
+            raise ValueError(f"Invalid reviewed followup for {ident}")
+        result["followup_of_source_id"] = source_id
+    return result
+
+
 def validated_scene_decision(row, decision, source_hashes=None):
     """Bind an LLM-reviewed scene list to the exact official source revision."""
     ident = str(row["id"])
     if str(decision.get("id")) != ident or decision.get("source_sha256") != row["sha256"]:
         raise ValueError(f"Stale scene decision for {ident}")
+    validated_article_semantics(row, decision, source_hashes)
     scenes = decision.get("scenes")
     if not isinstance(scenes, list) or not scenes:
         raise ValueError(f"Scene decision has no scenes for {ident}")
