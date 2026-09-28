@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import sqlite3
 
+SCOPE_VERDICTS = {"in_city", "out_of_city", "mixed", "uncertain"}
+
 
 def ensure_scope_table(db: sqlite3.Connection) -> None:
     db.execute(
@@ -35,7 +37,7 @@ def record_city_scope(
     reviewed: float,
 ) -> None:
     """Store one full-text LLM decision against the current source hash."""
-    if verdict not in {"in_city", "out_of_city", "uncertain"}:
+    if verdict not in SCOPE_VERDICTS:
         raise ValueError("Invalid city-scope verdict")
     evidence = " ".join(evidence.split())
     if len(evidence) < 20:
@@ -80,7 +82,7 @@ def scope_decisions(db: sqlite3.Connection) -> dict[str, sqlite3.Row]:
 def valid_scope_verdict(decision: sqlite3.Row | None, body: str, digest: str) -> str | None:
     if decision is None or decision["source_sha256"] != digest:
         return None
-    if decision["verdict"] not in {"in_city", "out_of_city", "uncertain"}:
+    if decision["verdict"] not in SCOPE_VERDICTS:
         return None
     evidence = " ".join(str(decision["evidence"]).split())
     if len(evidence) < 20 or evidence.casefold() not in " ".join(body.split()).casefold():

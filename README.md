@@ -66,6 +66,32 @@ uv run python -m crimemapsberlin.source_review_pack \
 生成包只代表来源输入。每篇公告的城市范围、案件数量、全部场景以及所有者确认
 仍需完成，才能进入发布流程。
 
+Berlin、Hamburg、Cologne 和 Frankfurt 的复核结果可通过统一的来源哈希门禁导入：
+
+```sh
+uv run python -m crimemapsberlin.review_decisions \
+  --city hamburg \
+  --db .runtime/safety/cities/hamburg/police.sqlite \
+  --review-decisions .runtime/review/hamburg/review-decisions.delta.ndjson \
+  --scope-decisions .runtime/review/hamburg/scope-decisions.delta.ndjson \
+  --scene-decisions .runtime/review/hamburg/scene-decisions.delta.json
+```
+
+三个文件必须覆盖完全相同的 `source_id` 集合。每条记录都重复 `schema_version: 1`、
+`city`、`source_id`、`source_url` 和 `source_sha256`，且必须与当前来源正文完全一致。
+review 和 scope 决定、每个独立案件及每个正式地点都要引用当前全文中的逐字证据；
+scene 文件必须明确声明案件和地点清单完整，允许零案、一案或多案，也允许一案对应多个
+正式地点。街道、区域、区级和未知精度地点不得带生成的代表点坐标。
+
+门禁复用来源包的 SQLite 字段规范化、`city_scope` 的市域枚举及
+`multiple_scenes` 的地点角色和精度枚举。当前决定和历史只写入本地来源复核账本，
+不会同时改写已有 `city_scope_decisions`、抽取复核库或 `scene-decisions.json`。
+正文 URL 或 SHA-256 改变会让旧决定 stale；决定变化会生成新的
+`decision_set_digest`。导入永远返回 `owner_approved: false` 和
+`publication_ready: false`，后续仍须经过现有抽取、几何、所有者质询与批准门禁。
+慕尼黑是所有者明确接受 POLIZEIKARTE 上游语义的例外，此入口会拒绝 `munich`。
+三个决定文件、全文、本地账本及生成数据都留在 Git 忽略目录。
+
 慕尼黑采用所有者指定的 [POLIZEIKARTE 慕尼黑页](https://polizeikarte.de/muenchen)
 作为滚动 365 天主数据入口。POLIZEIKARTE 是独立项目；每条记录均保留其
 POLIZEIKARTE ID、详情页、分类、摘要、位置精度、上游坐标和对应的警方原文链接。

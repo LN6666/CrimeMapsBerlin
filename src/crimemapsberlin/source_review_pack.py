@@ -17,97 +17,85 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def read_checkpoint(path: Path) -> tuple[list[dict], dict]:
-    if not path.is_file():
-        raise ValueError(f"SQLite checkpoint does not exist: {path}")
-    with sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True) as db:
-        db.row_factory = sqlite3.Row
-        db.execute("PRAGMA query_only=ON")
-        # Keep report rows, coverage counts, and cursor state on one read snapshot
-        # if a collector commits new checkpoint data while the pack is built.
-        db.execute("BEGIN")
-        columns = {row[1] for row in db.execute("PRAGMA table_info(reports)")}
-        id_column = "id" if "id" in columns else "source_id" if "source_id" in columns else None
-        url_column = "url" if "url" in columns else "source_url" if "source_url" in columns else None
-        required = {"title", "published", "body", "sha256", "revision"}
-        if id_column is None or url_column is None:
-            raise ValueError("Checkpoint reports table has an unsupported schema")
-        if not required.issubset(columns):
-            raise ValueError("Checkpoint reports table has an unsupported schema")
-        error_expr = "error" if "error" in columns else "NULL AS error"
-        rows = []
-        for row in db.execute(
-            f"""SELECT {id_column} AS id,{url_column} AS url,title,published,body,
-                       sha256,revision,{error_expr}
-                FROM reports WHERE body IS NOT NULL ORDER BY published,{id_column}"""
-        ):
-            body = row["body"]
-            if not isinstance(body, str) or not body.strip():
-                raise ValueError(f"Stored source body is empty for {row['id']}")
-            digest = sha256(body.encode("utf-8"))
-            if digest != row["sha256"]:
-                raise ValueError(f"Stored source hash mismatch for {row['id']}")
-            if row["error"]:
-                raise ValueError(f"Fetched source still has an error for {row['id']}")
-            rows.append(
-                {
-                    "source_id": row["id"],
-                    "source_url": row["url"],
-                    "title": row["title"],
-                    "published": row["published"],
-                    "source_body": body,
-                    "source_sha256": digest,
-                    "revision": row["revision"],
-                    "review_status": "pending",
-                }
-            )
-        tables = {
-            row[0] for row in db.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            )
-        }
-        if "sachsen_queue" in tables:
-            discovered = db.execute("SELECT count(*) FROM sachsen_queue").fetchone()[0]
-            queue_columns = {
-                row[1] for row in db.execute("PRAGMA table_info(sachsen_queue)")
+def read_checkpoint_connection(db: sqlite3.Connection) -> tuple[list[dict], dict]:
+    """Normalize and verify one already-open checkpoint snapshot."""
+    db.row_factory = sqlite3.Row
+    columns = {row[1] for row in db.execute("PRAGMA table_info(reports)")}
+    id_column = "id" if "id" in columns else "source_id" if "source_id" in columns else None
+    url_column = "url" if "url" in columns else "source_url" if "source_url" in columns else None
+    required = {"title", "published", "body", "sha256", "revision"}
+    if id_column is None or url_column is None or not required.issubset(columns):
+        raise ValueError("Checkpoint reports table has an unsupported schema")
+    error_expr = "error" if "error" in columns else "NULL AS error"
+    rows = []
+    for row in db.execute(
+        f"""SELECT {id_column} AS id,{url_column} AS url,title,published,body,
+                   sha256,revision,{error_expr}
+            FROM reports WHERE body IS NOT NULL ORDER BY published,{id_column}"""
+    ):
+        body = row["body"]
+        if not isinstance(body, str) or not body.strip():
+            raise ValueError(f"Stored source body is empty for {row['id']}")
+        digest = sha256(body.encode("utf-8"))
+        if digest != row["sha256"]:
+            raise ValueError(f"Stored source hash mismatch for {row['id']}")
+        if row["error"]:
+            raise ValueError(f"Fetched source still has an error for {row['id']}")
+        rows.append(
+            {
+                "source_id": row["id"],
+                "source_url": row["url"],
+                "title": row["title"],
+                "published": row["published"],
+                "source_body": body,
+                "source_sha256": digest,
+                "revision": row["revision"],
+                "review_status": "pending",
             }
-            errors = (
-                db.execute(
-                    "SELECT count(*) FROM sachsen_queue WHERE COALESCE(error,'')<>''"
-                ).fetchone()[0]
-                if "error" in queue_columns
-                else 0
+        )
+    tables = {
+        row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    }
+    if "sachsen_queue" in tables:
+        discovered = db.execute("SELECT count(*) FROM sachsen_queue").fetchone()[0]
+        queue_columns = {row[1] for row in db.execute("PRAGMA table_info(sachsen_queue)")}
+        errors = (
+            db.execute(
+                "SELECT count(*) FROM sachsen_queue WHERE COALESCE(error,'')<>''"
+            ).fetchone()[0]
+            if "error" in queue_columns
+            else 0
+        )
+    else:
+        discovered = db.execute("SELECT count(*) FROM reports").fetchone()[0]
+        errors = (
+            db.execute(
+                "SELECT count(*) FROM reports WHERE COALESCE(error,'')<>''"
+            ).fetchone()[0]
+            if "error" in columns
+            else 0
+        )
+    cursor_tables = [
+        row[0]
+        for row in db.execute(
+            """SELECT name FROM sqlite_master WHERE type='table' AND
+               (name LIKE '%archive_cursor' OR name IN ('archive_scan','archive_coverage'))"""
+        )
+    ]
+    cursor_complete = []
+    for table in cursor_tables:
+        cursor_columns = {row[1] for row in db.execute(f"PRAGMA table_info({table})")}
+        complete_column = (
+            "complete"
+            if "complete" in cursor_columns
+            else "historical_scan_complete"
+            if "historical_scan_complete" in cursor_columns
+            else None
+        )
+        if complete_column:
+            cursor_complete.extend(
+                bool(row[0]) for row in db.execute(f"SELECT {complete_column} FROM {table}")
             )
-        else:
-            discovered = db.execute("SELECT count(*) FROM reports").fetchone()[0]
-            errors = (
-                db.execute(
-                    "SELECT count(*) FROM reports WHERE COALESCE(error,'')<>''"
-                ).fetchone()[0]
-                if "error" in columns
-                else 0
-            )
-        cursor_tables = [
-            row[0]
-            for row in db.execute(
-                """SELECT name FROM sqlite_master WHERE type='table' AND
-                   (name LIKE '%archive_cursor' OR name IN ('archive_scan','archive_coverage'))"""
-            )
-        ]
-        cursor_complete = []
-        for table in cursor_tables:
-            cursor_columns = {row[1] for row in db.execute(f"PRAGMA table_info({table})")}
-            complete_column = (
-                "complete"
-                if "complete" in cursor_columns
-                else "historical_scan_complete"
-                if "historical_scan_complete" in cursor_columns
-                else None
-            )
-            if complete_column:
-                cursor_complete.extend(bool(row[0]) for row in db.execute(
-                    f"SELECT {complete_column} FROM {table}"
-                ))
     if len({row["source_id"] for row in rows}) != len(rows):
         raise ValueError("Duplicate source IDs in checkpoint")
     return rows, {
@@ -117,6 +105,18 @@ def read_checkpoint(path: Path) -> tuple[list[dict], dict]:
         "source_errors": errors,
         "channel_scan_complete": bool(cursor_complete) and all(cursor_complete),
     }
+
+
+def read_checkpoint(path: Path) -> tuple[list[dict], dict]:
+    if not path.is_file():
+        raise ValueError(f"SQLite checkpoint does not exist: {path}")
+    with sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True) as db:
+        db.row_factory = sqlite3.Row
+        db.execute("PRAGMA query_only=ON")
+        # Keep report rows, coverage counts, and cursor state on one read snapshot
+        # if a collector commits new checkpoint data while the pack is built.
+        db.execute("BEGIN")
+        return read_checkpoint_connection(db)
 
 
 def _safe_zip_path(name: str) -> PurePosixPath:
@@ -310,6 +310,12 @@ Return one delta-only ZIP and one status Markdown file. The ZIP must contain:
 
 Each decision must include `city`, `source_id`, `source_url`, `source_sha256`, verdict,
 verbatim evidence and all source-backed scene records. Keep uncertain items uncertain.
+Use `schema_version: 1` in every decision. The review NDJSON adds `verdict`,
+`evidence_quotes`, `review_note`, `reviewer` and timezone-aware `reviewed_at`; the scope
+NDJSON adds `scope_verdict` and `evidence_quotes`. The scene JSON envelope is
+`{{"schema_version":1,"city":"{city}","articles":[...]}}`; every article declares
+`incident_count`, complete `incidents` and complete `formal_locations`, including an
+evidence quote for every incident and location. Zero, one and multiple incidents are valid.
 Do not mark archive coverage complete: this pack reports
 `channel_scan_complete={str(coverage['channel_scan_complete']).lower()}`,
 `missing_bodies={coverage['missing_bodies']}` and `source_errors={coverage['source_errors']}`.
