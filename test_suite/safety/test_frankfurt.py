@@ -214,3 +214,63 @@ def test_frankfurt_fails_closed_if_robots_file_is_not_rules(tmp_path, monkeypatc
     with pytest.raises(ValueError, match="robots.txt"):
         sync(tmp_path / "frankfurt.sqlite", 2026, pages=1, limit=1, delay=0)
     assert seen == ["/robots.txt"]
+
+
+@pytest.mark.parametrize("status", [429, 503, "invalid_publisher"])
+def test_frankfurt_stops_on_first_article_source_error(tmp_path, monkeypatch, status):
+    path = tmp_path / "frankfurt.sqlite"
+    first = listing_rows(LISTING)[0]
+    second = {**first, "id": "6359831", "url": first["url"].replace("6359830", "6359831"),
+              "published": "2026-09-26T12:14:00"}
+    with connect(path) as db:
+        discover(db, [first, second], 1)
+    requested = []
+
+    def handler(request):
+        requested.append(request.url.path)
+        if request.url.path == "/robots.txt":
+            return httpx.Response(200, text="User-agent: *\nAllow: /\n")
+        if request.url.path == "/blaulicht/nr/4970":
+            return httpx.Response(200, text=LISTING)
+        if request.url.path == "/blaulicht/pm/4970/6359830":
+            if status == "invalid_publisher":
+                return httpx.Response(200, text=ARTICLE.replace(
+                    "Polizeipräsidium Frankfurt am Main</a>", "Other publisher</a>"
+                ))
+            return httpx.Response(status, text="source unavailable")
+        raise AssertionError(f"Unexpected request after first source error: {request.url}")
+
+    real_client = httpx.Client
+    monkeypatch.setattr(
+        frankfurt.httpx, "Client",
+        lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs),
+    )
+    monkeypatch.setattr(frankfurt.time, "sleep", lambda _: None)
+    result = sync(path, 2026, pages=1, limit=2, delay=1)
+    assert requested == ["/robots.txt", "/blaulicht/nr/4970", "/blaulicht/pm/4970/6359830"]
+    assert result["failed"] == 1 and result["pending"] == 2
+    assert result["stopped_on_source_error"]["source_id"] == "6359830"
+    assert result["stopped_on_source_error"]["http_status"] == (
+        None if status == "invalid_publisher" else status
+    )
+
+
+@pytest.mark.parametrize("status", [429, 503])
+def test_frankfurt_listing_rate_limit_is_not_retried(tmp_path, monkeypatch, status):
+    requested = []
+
+    def handler(request):
+        requested.append(request.url.path)
+        if request.url.path == "/robots.txt":
+            return httpx.Response(200, text="User-agent: *\nAllow: /\n")
+        return httpx.Response(status, text="slow down")
+
+    real_client = httpx.Client
+    monkeypatch.setattr(
+        frankfurt.httpx, "Client",
+        lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs),
+    )
+    monkeypatch.setattr(frankfurt.time, "sleep", lambda _: None)
+    with pytest.raises(httpx.HTTPStatusError):
+        sync(tmp_path / "frankfurt.sqlite", 2026, pages=1, limit=1, delay=1)
+    assert requested == ["/robots.txt", "/blaulicht/nr/4970"]
