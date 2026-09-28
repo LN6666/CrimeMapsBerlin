@@ -29,6 +29,68 @@ POI_RADIUS_M = 50
 MAPPABLE_PRECISIONS = {"point", "street", "place", "address"}
 
 
+def _valid_coordinates(coordinates):
+    return (
+        isinstance(coordinates, (list, tuple))
+        and len(coordinates) >= 2
+        and all(type(value) in {int, float} and math.isfinite(value) for value in coordinates[:2])
+        and -180 <= coordinates[0] <= 180
+        and -90 < coordinates[1] < 90
+    )
+
+
+def count_location(event: dict) -> dict | None:
+    """Return one source-backed count point per announcement, or no count point.
+
+    Older published events have no scene array and keep their existing top-level
+    location. Scene-aware events must explicitly identify a single primary point.
+    """
+    if "scene_locations" not in event:
+        return event if (
+            event.get("location_precision") in MAPPABLE_PRECISIONS
+            and event.get("coordinates")
+        ) else None
+    scenes = event["scene_locations"]
+    if not isinstance(scenes, list) or not all(isinstance(scene, dict) for scene in scenes):
+        raise ValueError(f"Invalid scene_locations for {event.get('id')}")
+    if event.get("candidate_road_geometry") is not None:
+        raise ValueError(f"Duplicate top-level scene road for {event.get('id')}")
+    if any(type(scene.get("primary_for_count")) is not bool for scene in scenes):
+        raise ValueError(f"Missing scene primary marker for {event.get('id')}")
+    primaries = [scene for scene in scenes if scene["primary_for_count"]]
+    if len(primaries) > 1:
+        raise ValueError(f"Multiple count scenes for {event.get('id')}")
+    if not primaries:
+        if event.get("coordinates") is not None:
+            raise ValueError(f"Top-level point without count scene for {event.get('id')}")
+        return None
+    primary = primaries[0]
+    point = primary.get("coordinates")
+    geometry = primary.get("geometry")
+    if geometry is not None and not isinstance(geometry, dict):
+        raise ValueError(f"Invalid count scene geometry for {event.get('id')}")
+    geometry_point = geometry.get("coordinates") if geometry and geometry.get("type") == "Point" else None
+    if point is None:
+        point = geometry_point
+    if (
+        primary.get("location_precision") not in MAPPABLE_PRECISIONS
+        or not _valid_coordinates(point)
+        or (geometry_point is not None and (
+            not _valid_coordinates(geometry_point)
+            or list(geometry_point[:2]) != list(point[:2])
+        ))
+    ):
+        raise ValueError(f"Invalid count scene point for {event.get('id')}")
+    if (
+        not _valid_coordinates(event.get("coordinates"))
+        or list(event["coordinates"][:2]) != list(point[:2])
+        or event.get("location_precision") != primary["location_precision"]
+        or event.get("location_label") != primary.get("label")
+    ):
+        raise ValueError(f"Top-level location differs from count scene for {event.get('id')}")
+    return dict(primary, coordinates=list(point[:2]))
+
+
 def feature(geometry, properties):
     return {"type": "Feature", "geometry": mapping(geometry), "properties": properties}
 
@@ -59,11 +121,16 @@ def cell_for(lon: float, lat: float, size: float, *, to_metric=TO_METRIC, to_wgs
 def hexagons(events: list[dict], size: float, *, to_metric=TO_METRIC, to_wgs=TO_WGS):
     groups = defaultdict(list)
     geometries = {}
+    seen_ids = set()
     for e in events:
-        if e["location_precision"] not in MAPPABLE_PRECISIONS or not e.get("coordinates"):
+        if e["id"] in seen_ids:
+            raise ValueError(f"Duplicate announcement ID: {e['id']}")
+        seen_ids.add(e["id"])
+        location = count_location(e)
+        if location is None:
             continue
-        key, geometry = cell_for(*e["coordinates"], size, to_metric=to_metric, to_wgs=to_wgs)
-        groups[key].append(e)
+        key, geometry = cell_for(*location["coordinates"], size, to_metric=to_metric, to_wgs=to_wgs)
+        groups[key].append((e, location))
         geometries[key] = geometry
     return collection(
         [
@@ -73,10 +140,10 @@ def hexagons(events: list[dict], size: float, *, to_metric=TO_METRIC, to_wgs=TO_
                     "id": key,
                     "edge_m": size,
                     "count": len(rows),
-                    "event_ids": [e["id"] for e in rows],
-                    "categories": dict(Counter(e["category"] for e in rows)),
-                    "outcomes": dict(Counter(e.get("outcome", "unknown") for e in rows)),
-                    "approximate_count": sum(e["location_precision"] != "point" for e in rows),
+                    "event_ids": [e["id"] for e, _ in rows],
+                    "categories": dict(Counter(e["category"] for e, _ in rows)),
+                    "outcomes": dict(Counter(e.get("outcome", "unknown") for e, _ in rows)),
+                    "approximate_count": sum(location["location_precision"] != "point" for _, location in rows),
                 },
             )
             for key, rows in sorted(groups.items())
@@ -210,34 +277,53 @@ def associate(events: list[dict], pois: dict, matching_types_only: bool = True, 
     links = []
     seen = set()
     for event in events:
-        if not event.get("poi_mentions") or event["location_precision"] not in MAPPABLE_PRECISIONS:
+        location = count_location(event)
+        if location is None:
             continue
-        if not event.get("coordinates"):
+        scene_aware = "scene_locations" in event
+        mentions = location.get("poi_mentions", []) if scene_aware else event.get("poi_mentions", [])
+        object_ids = (
+            location.get("location_object_ids", []) if scene_aware
+            else event.get("location_object_ids", [])
+        )
+        if (not scene_aware and not mentions) or (scene_aware and not mentions and not object_ids):
             continue
-        if event["location_precision"] == "place":
+        if scene_aware and not (location.get("evidence_quote") or location.get("geocode_evidence")):
+            continue
+        mention_basis = (
+            location.get("mention_basis", "scene_specific_source_match") if scene_aware
+            else event["mention_basis"]
+        )
+        if location["location_precision"] == "place":
             # A park/station representative must not accidentally darken unrelated neighbours.
-            for ident in event.get("location_object_ids", []):
+            for ident in dict.fromkeys(object_ids):
                 f = place_by_id.get(ident)
                 if f is None:
                     continue
                 p = f["properties"]
-                if not matching_types_only or p["kind"] in event["poi_mentions"]:
+                pair = event["id"], p["id"]
+                if pair in seen:
+                    continue
+                if not matching_types_only or not mentions or p["kind"] in mentions:
+                    seen.add(pair)
                     links.append(
                         dict(
                             event_id=event["id"],
                             poi_id=p["id"],
                             status="named_place_candidate",
                             source_url=event["source_url"],
-                            mention_basis=event["mention_basis"],
+                            mention_basis=mention_basis,
                         )
                     )
             continue
-        point = transform(to_metric, Point(event["coordinates"]))
+        if not mentions:
+            continue
+        point = transform(to_metric, Point(location["coordinates"]))
         for idx in tree.query(point, predicate="intersects"):
             p = places[int(idx)]["properties"]
             if p["geometry_mode"] == "footprint_missing":
                 continue
-            if matching_types_only and p["kind"] not in event["poi_mentions"]:
+            if matching_types_only and p["kind"] not in mentions:
                 continue
             pair = event["id"], p["id"]
             if pair in seen:
@@ -248,10 +334,10 @@ def associate(events: list[dict], pois: dict, matching_types_only: bool = True, 
                     "event_id": event["id"],
                     "poi_id": p["id"],
                     "status": "nearby_type_match"
-                    if event["location_precision"] == "point"
+                    if location["location_precision"] == "point"
                     else "approximate_candidate",
                     "source_url": event["source_url"],
-                    "mention_basis": event["mention_basis"],
+                    "mention_basis": mention_basis,
                 }
             )
     return links

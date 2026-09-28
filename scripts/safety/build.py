@@ -14,12 +14,13 @@ from crimemapsberlin.city_candidates import stage as stage_city_candidates
 from crimemapsberlin.city_contract import CITY_SPECS, paths_for
 from crimemapsberlin.collector import connect
 from crimemapsberlin.geocode import Gazetteer, events_from_db
+from crimemapsberlin.multiple_scenes import scene_decision_index
 from crimemapsberlin.payload import compact
 from crimemapsberlin.quality import location_changes, publication_problems
 from crimemapsberlin.review import (
     connect as connect_review, owner_approved, review_packet, review_summary, reviewed_tags,
 )
-from crimemapsberlin.spatial import build_months, metric_transforms, pois_from_osm
+from crimemapsberlin.spatial import build_months, count_location, metric_transforms, pois_from_osm
 from crimemapsberlin.tiles import DX, DY, tiles
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,6 +34,14 @@ CITY_SETTINGS = {
 def write(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(compact(value), ensure_ascii=False, separators=(",", ":")))
+
+
+def canonical_events(raw_events):
+    """Use one rounded, validated event value for review, spatial work and JSON."""
+    events = [compact(event) for event in raw_events]
+    for event in events:
+        count_location(event)
+    return events
 
 
 def main():
@@ -76,7 +85,18 @@ def main():
         to_metric=to_metric, to_wgs=to_wgs,
     )
     db.execute("BEGIN")  # consistent read snapshot while the collector keeps writing
-    events = events_from_db(db, gazetteer)
+    # Reviews, metric calculations and public JSON must see the same rounded values.
+    scene_decision_path = runtime / "scene-decisions.json"
+    scene_decisions = (
+        scene_decision_index(json.loads(scene_decision_path.read_text()), city=city)
+        if scene_decision_path.is_file() else {}
+    )
+    try:
+        events = canonical_events(events_from_db(
+            db, gazetteer, scene_decisions=scene_decisions,
+        ))
+    except ValueError as exc:
+        raise SystemExit(f"Publication blocked: {exc}") from exc
     if not events:
         raise SystemExit("No successfully fetched official reports; previous publication retained")
     old_manifest_path = out / "manifest.json"
@@ -91,7 +111,7 @@ def main():
     changed_locations = location_changes(prior_events, events)
     # The initial review backlog should not allocate hundreds of MB of tiles.
     # Keep this candidate file local; it contains derived fields but no article bodies.
-    candidate_events = [compact(event) for event in events]
+    candidate_events = events
     review_candidates_path = runtime / "review-candidates.json"
     write(review_candidates_path, dict(
         city=city, events=candidate_events, changed_locations=changed_locations,
@@ -99,15 +119,27 @@ def main():
     review_db = connect_review(runtime / "review.sqlite")
     review_counts = review_summary(review_db, city, candidate_events)
     approved = owner_approved(review_db, city, candidate_events, changed_locations)
-    if review_counts["pending"] or review_counts["uncertain"] or review_counts["needs_correction"] or not approved:
+    scene_report_ids = {
+        event["id"] for event in candidate_events
+        if event.get("scene_review_required") or "scene_locations" in event
+    }
+    missing_scene_decisions = sorted(scene_report_ids - set(scene_decisions))
+    if (
+        review_counts["pending"] or review_counts["uncertain"]
+        or review_counts["needs_correction"] or not approved or missing_scene_decisions
+    ):
         review_db.close()
         reason = (
-            "article review incomplete" if review_counts["supported"] != len(candidate_events)
+            "LLM scene review incomplete" if missing_scene_decisions
+            else "article review incomplete" if review_counts["supported"] != len(candidate_events)
             else "owner inspection and approval pending"
         )
         write(
             runtime / "publication-block.json",
-            dict(reason=reason, review_counts=review_counts, owner_approved=approved),
+            dict(
+                reason=reason, review_counts=review_counts, owner_approved=approved,
+                missing_scene_decision_ids=missing_scene_decisions,
+            ),
         )
         raise SystemExit("Publication blocked: " + reason + ": " + str(review_counts))
     review_digest = review_packet(review_db, city, candidate_events)["decision_digest"]
@@ -228,7 +260,11 @@ def main():
         **coverage,
         mapped=len(events) - len(review),
         unlocated=len(review),
-        road_ranges=sum(bool(e.get("candidate_road_geometry")) for e in events),
+        road_ranges=sum(
+            bool(e.get("candidate_road_geometry"))
+            or any(bool(scene.get("candidate_road_geometry")) for scene in e.get("scene_locations", []))
+            for e in events
+        ),
         geocode_methods=dict(Counter(e["geocode_method"] for e in events)),
         poi_count=len(pois["features"]),
         generation=generation,

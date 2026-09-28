@@ -23,12 +23,14 @@ provenance, and the Bavarian police site's robots rules currently disallow
 automated crawling. `city_candidates.py --city munich` and
 `build.py --city munich` fail before touching any source or public files.
 Cologne and Frankfurt can be staged once their checked OSM indexes are
-available locally with Geofabrik source provenance, but `build.py` always stops before publication for these
-two cities. The existing Berlin/Hamburg publication gate still requires
+available locally with Geofabrik source provenance. `fetch_osm.py` uses the
+Regierungsbezirk Köln extract for Cologne and the Hessen extract for Frankfurt;
+the source-scope and locality checks must still exclude the rest of those regional
+files. `build.py` always stops before publication for these two cities. The existing Berlin/Hamburg publication gate still requires
 current source-backed reviews and owner approval.
 
-No source downloads or OSM extracts for Cologne, Frankfurt or Munich are
-initiated by this candidate contract. Coverage remains incomplete until the
+The candidate contract never starts a source or OSM download itself. Munich
+remains excluded from automated source and OSM work. Coverage remains incomplete until the
 native/partner archive cross-check, city boundary validation, per-announcement
 review and owner's inspection have been done. The Cologne native archive and
 the publisher newsroom currently show different 2026 totals; these figures

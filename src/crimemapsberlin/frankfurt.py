@@ -27,6 +27,7 @@ PUBLISHER = "Polizeipräsidium Frankfurt am Main"
 ARTICLE_PATH = re.compile(r"/blaulicht/pm/4970/(\d+)$")
 PAGE_PATH = re.compile(r"/blaulicht/nr/4970(?:/\d+)?$")
 NEXT_PAGE = re.compile(r'<link\s+rel="next"\s+href="([^"]+)"')
+PARSER_VERSION = 3
 
 
 class NewsroomParser(HTMLParser):
@@ -96,7 +97,7 @@ class ArticleParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.in_story = False
         self.after_heading = False
-        self.in_paragraph = False
+        self.block_tag = None
         self.stopped = False
         self.parts = []
         self.current = []
@@ -109,17 +110,20 @@ class ArticleParser(HTMLParser):
             self.in_story = True
         elif self.in_story and tag == "p" and "customer" in classes:
             self.in_customer = True
-        elif self.in_story and self.after_heading and tag == "p":
-            if "contact-headline" in classes or "originator" in classes:
-                self.stopped = True
-            elif not self.stopped:
-                self.in_paragraph = True
-                self.current = []
+        elif self.in_story and self.after_heading and (
+            "contact-headline" in classes or "originator" in classes
+        ):
+            self.stopped = True
+            self.block_tag = None
+            self.current = []
+        elif self.in_story and self.after_heading and not self.stopped and tag in {"p", "li", "pre"}:
+            self.block_tag = tag
+            self.current = []
 
     def handle_data(self, data):
         if self.in_customer:
             self.customer += data
-        if self.in_paragraph:
+        if self.block_tag is not None:
             self.current.append(data)
 
     def handle_endtag(self, tag):
@@ -129,12 +133,12 @@ class ArticleParser(HTMLParser):
             self.after_heading = True
         elif tag == "p":
             self.in_customer = False
-            if self.in_paragraph:
-                paragraph = " ".join(" ".join(self.current).split())
-                if paragraph and not paragraph.startswith("Schneller informiert:"):
-                    self.parts.append(paragraph)
-                self.in_paragraph = False
-        elif tag == "article":
+        if tag == self.block_tag:
+            block = " ".join(" ".join(self.current).split())
+            if block and not block.startswith("Schneller informiert:"):
+                self.parts.append(block)
+            self.block_tag = None
+        if tag == "article":
             self.in_story = False
 
 
@@ -176,6 +180,9 @@ def sync(path, year, *, pages=1, limit=5, delay=1.0):
     A bounded run is a checkpoint, not a complete-year coverage claim.
     """
     db = connect(path)
+    if "parser_version" not in {row[1] for row in db.execute("PRAGMA table_info(reports)")}:
+        db.execute("ALTER TABLE reports ADD COLUMN parser_version INTEGER NOT NULL DEFAULT 1")
+        db.commit()
     db.execute(
         """CREATE TABLE IF NOT EXISTS frankfurt_archive_cursor (
            year INTEGER PRIMARY KEY, next_url TEXT, pages_scanned INTEGER NOT NULL,
@@ -314,10 +321,11 @@ def sync(path, year, *, pages=1, limit=5, delay=1.0):
             stats["cursor_pages_scanned"] = scanned
             pending = db.execute(
                 """SELECT * FROM reports WHERE retry_after<=? AND
-                   (body IS NULL OR checked IS NULL OR checked<? OR published>=?)
+                   (body IS NULL OR parser_version<? OR checked IS NULL OR checked<? OR published>=?)
                    ORDER BY body IS NOT NULL, COALESCE(checked,0), published DESC LIMIT ?""",
                 (
                     started,
+                    PARSER_VERSION,
                     started - 7 * 86400,
                     datetime.fromtimestamp(started - 2 * 86400, UTC).isoformat()[:19],
                     limit,
@@ -325,9 +333,9 @@ def sync(path, year, *, pages=1, limit=5, delay=1.0):
             ).fetchall()
             for row in pending:
                 headers = {}
-                if row["etag"]:
+                if row["parser_version"] >= PARSER_VERSION and row["etag"]:
                     headers["If-None-Match"] = row["etag"]
-                if row["modified"]:
+                if row["parser_version"] >= PARSER_VERSION and row["modified"]:
                     headers["If-Modified-Since"] = row["modified"]
                 try:
                     response = get(row["url"], headers)
@@ -335,8 +343,9 @@ def sync(path, year, *, pages=1, limit=5, delay=1.0):
                         if row["body"] is None:
                             raise ValueError("304 without cached body")
                         db.execute(
-                            "UPDATE reports SET checked=?,error=NULL,failures=0,retry_after=0 WHERE id=?",
-                            (time.time(), row["id"]),
+                            """UPDATE reports SET checked=?,error=NULL,failures=0,retry_after=0,
+                               parser_version=? WHERE id=?""",
+                            (time.time(), PARSER_VERSION, row["id"]),
                         )
                         db.commit()
                         result = "unchanged"
@@ -344,6 +353,11 @@ def sync(path, year, *, pages=1, limit=5, delay=1.0):
                         result = accept(
                             db, row["id"], article_body(response.text), response.headers, time.time()
                         )
+                        db.execute(
+                            "UPDATE reports SET parser_version=? WHERE id=?",
+                            (PARSER_VERSION, row["id"]),
+                        )
+                        db.commit()
                     stats[result] += 1
                 except (httpx.HTTPError, ValueError) as exc:
                     fail(
@@ -356,6 +370,10 @@ def sync(path, year, *, pages=1, limit=5, delay=1.0):
                     stats["failed"] += 1
             stats["stored"] = db.execute("SELECT count(*) FROM reports WHERE body IS NOT NULL").fetchone()[0]
             stats["pending"] = db.execute("SELECT count(*) FROM reports WHERE body IS NULL").fetchone()[0]
+            stats["parser_pending"] = db.execute(
+                "SELECT count(*) FROM reports WHERE body IS NOT NULL AND parser_version<?",
+                (PARSER_VERSION,),
+            ).fetchone()[0]
             stats["errors"] = db.execute("SELECT count(*) FROM reports WHERE error IS NOT NULL").fetchone()[0]
     except Exception as exc:
         stats["fatal_error"] = f"{type(exc).__name__}: {exc}"
@@ -392,7 +410,13 @@ def main():
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         result = sync(args.db, args.year, pages=args.pages, limit=args.limit, delay=args.delay)
     print(json.dumps(result, indent=2))
-    if result["failed"] or result["pending"] or result["errors"] or not result["archive_complete"]:
+    if (
+        result["failed"]
+        or result["pending"]
+        or result["parser_pending"]
+        or result["errors"]
+        or not result["archive_complete"]
+    ):
         raise SystemExit(2)
 
 

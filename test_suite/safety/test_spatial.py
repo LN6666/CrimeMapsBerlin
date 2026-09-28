@@ -1,11 +1,15 @@
 import math
+from copy import deepcopy
+
+import pytest
 
 from shapely.geometry import Point, shape
 from shapely.ops import transform
 
 from crimemapsberlin.geocode import Gazetteer
 from crimemapsberlin.spatial import (
-    TO_METRIC, associate, cell_for, hexagons, metric_transforms, pois_from_osm,
+    TO_METRIC, associate, build_months, cell_for, count_location, hexagons,
+    metric_transforms, pois_from_osm,
 )
 from crimemapsberlin.tiles import tiles
 
@@ -27,7 +31,7 @@ def test_hex_metric_geometry_and_count():
     assert polygon.covers(Point(13.4, 52.5))
     metric = transform(TO_METRIC, polygon)
     assert math.isclose(metric.area, 3 * math.sqrt(3) / 2 * 275**2, rel_tol=1e-7)
-    assert hexagons([event(), event("district")], 275)["features"][0]["properties"]["count"] == 1
+    assert hexagons([event(), dict(event("district"), id="2")], 275)["features"][0]["properties"]["count"] == 1
     assert key == cell_for(13.4, 52.5, 275)[0]
 
 
@@ -98,3 +102,119 @@ def test_spatial_partition_includes_boundary_neighbors():
     parts = tiles([f])
     assert len(parts) == 4
     assert all(v["features"] == [f] for v in parts.values())
+
+
+def scene_event():
+    primary = dict(
+        label="Primary junction", role="incident", location_precision="street",
+        geocode_method="osm_explicit_junction", coordinates=[13.4, 52.5],
+        primary_for_count=True, evidence_quote="Incident at the primary junction",
+    )
+    secondary = dict(
+        label="Arrest place", role="arrest", location_precision="point",
+        geocode_method="source_named_point", coordinates=[13.42, 52.52],
+        primary_for_count=False, poi_mentions=["bar"],
+    )
+    return dict(
+        event("street"), location_label=primary["label"],
+        geocode_method="multiple_official_scenes", month="2026-09",
+        scene_locations=[primary, secondary],
+    )
+
+
+def test_scene_hex_uses_only_primary_and_month_retains_one_announcement():
+    report = scene_event()
+    assert count_location(report)["coordinates"] == [13.4, 52.5]
+    for size in (275, 1100):
+        features = hexagons([report], size)["features"]
+        assert len(features) == 1
+        assert features[0]["properties"]["event_ids"] == [report["id"]]
+        assert features[0]["properties"]["count"] == 1
+        assert shape(features[0]["geometry"]).covers(Point(13.4, 52.5))
+    month = build_months([report], {"features": []})["2026-09"]
+    assert month["event_ids"] == [report["id"]]
+    assert month["links"] == []
+
+
+def test_secondary_points_and_road_ranges_display_without_hex_or_poi_links():
+    report = scene_event()
+    report["scene_locations"][0]["primary_for_count"] = False
+    report["coordinates"] = None
+    report["location_precision"] = "unknown"
+    report["scene_locations"].append(dict(
+        label="Road range", role="incident", location_precision="unknown",
+        geocode_method="road_review", primary_for_count=False,
+        candidate_road_geometry={"type": "LineString", "coordinates": [[13.4, 52.5], [13.41, 52.5]]},
+    ))
+    assert count_location(report) is None
+    month = build_months([report], {"features": []})["2026-09"]
+    assert month["event_ids"] == [report["id"]]
+    assert month["hex"]["overview"]["features"] == []
+    assert month["hex"]["detail"]["features"] == []
+    assert month["links"] == []
+
+
+def test_scene_poi_links_need_primary_scene_specific_evidence():
+    pois, _ = pois_from_osm({"elements": [
+        dict(type="node", id=1, lon=13.4, lat=52.5, tags={"amenity": "bar"}),
+        dict(type="node", id=2, lon=13.42, lat=52.52, tags={"amenity": "bar"}),
+    ]})
+    report = scene_event()
+    assert associate([report], pois) == []  # Whole-article mention is insufficient.
+    report["scene_locations"][0]["poi_mentions"] = ["bar"]
+    quote = report["scene_locations"][0].pop("evidence_quote")
+    assert associate([report], pois) == []
+    report["scene_locations"][0]["evidence_quote"] = quote
+    links = associate([report], pois)
+    assert [link["poi_id"] for link in links] == ["osm/node/1"]
+    assert links[0]["mention_basis"] == "scene_specific_source_match"
+
+
+def test_named_place_link_uses_only_primary_scene_object_id():
+    pois, _ = pois_from_osm({"elements": [
+        dict(type="node", id=1, lon=13.4, lat=52.5, tags={"amenity": "bar"}),
+        dict(type="node", id=2, lon=13.42, lat=52.52, tags={"amenity": "bar"}),
+    ]})
+    report = scene_event()
+    report["location_precision"] = "place"
+    report["scene_locations"][0]["location_precision"] = "place"
+    report["scene_locations"][0]["location_object_ids"] = ["osm/node/1"]
+    report["scene_locations"][1]["location_object_ids"] = ["osm/node/2"]
+    assert [(link["poi_id"], link["status"]) for link in associate([report], pois)] == [
+        ("osm/node/1", "named_place_candidate"),
+    ]
+
+
+@pytest.mark.parametrize("change", [
+    lambda report: report["scene_locations"][1].update(primary_for_count=True),
+    lambda report: report["scene_locations"][0].update(location_precision="district"),
+    lambda report: report["scene_locations"][0].update(coordinates=[float("nan"), 52.5]),
+    lambda report: report.update(coordinates=[13.41, 52.5]),
+    lambda report: report.update(location_label="Unrelated place"),
+    lambda report: report.update(candidate_road_geometry={"type": "LineString", "coordinates": []}),
+    lambda report: report["scene_locations"][0].update(
+        geometry={"type": "Point", "coordinates": [13.41, 52.5]}),
+])
+def test_scene_count_fails_closed_on_invalid_primary_or_duplicate_road(change):
+    report = deepcopy(scene_event())
+    change(report)
+    with pytest.raises(ValueError):
+        count_location(report)
+
+
+def test_unmarked_scene_cannot_inherit_top_level_point_and_point_geometry_can_identify_primary():
+    report = scene_event()
+    report["scene_locations"][0]["primary_for_count"] = False
+    with pytest.raises(ValueError, match="Top-level point without count scene"):
+        count_location(report)
+    report["scene_locations"][0]["primary_for_count"] = True
+    point = report["scene_locations"][0].pop("coordinates")
+    report["scene_locations"][0]["geometry"] = {"type": "Point", "coordinates": point}
+    assert count_location(report)["coordinates"] == point
+
+
+def test_legacy_report_without_scene_array_keeps_existing_counting():
+    assert count_location(event()) == event()
+    assert count_location(event("district")) is None
+    with pytest.raises(ValueError, match="Duplicate announcement ID"):
+        hexagons([event(), event()], 275)

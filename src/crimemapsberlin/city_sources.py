@@ -40,6 +40,7 @@ RESPONSE_CONTEXT = re.compile(
     r"\b(?:wohnt|wohnte|wohnhaft)\b",
     re.I,
 )
+PARSER_VERSIONS = {"hamburg": 3, "frankfurt": 3}
 
 
 def _scene_scope_match(pattern: re.Pattern, text: str):
@@ -65,11 +66,38 @@ def frankfurt_scope(title: str, body: str) -> str:
 
 
 def _archive_complete(db: sqlite3.Connection, city: str) -> bool:
-    # Existing adapter cursors describe only the years already requested. They
-    # cannot prove that every required year or native supplement was scanned.
-    # Keep the cross-city audit fail-closed until an explicit coverage range is
-    # stored and reconciled for each source.
-    return False
+    if city != "hamburg" or db.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='archive_coverage'"
+    ).fetchone() is None:
+        # Existing cross-city cursors do not yet prove that every required year
+        # and native supplement was scanned.
+        return False
+    years = [
+        row[0] for row in db.execute(
+            "SELECT DISTINCT CAST(substr(published,1,4) AS INTEGER) FROM reports"
+        )
+    ]
+    if not years:
+        return False
+    for year in years:
+        coverage = db.execute(
+            "SELECT complete,checked FROM archive_coverage WHERE year=?", (year,)
+        ).fetchone()
+        if coverage is None or not coverage["complete"]:
+            return False
+        newer = db.execute(
+            "SELECT 1 FROM reports WHERE published LIKE ? AND first_seen>? LIMIT 1",
+            (f"{year}-%", coverage["checked"]),
+        ).fetchone()
+        if newer is not None:
+            return False
+    current_parser = PARSER_VERSIONS[city]
+    incomplete = db.execute(
+        """SELECT 1 FROM reports
+           WHERE body IS NULL OR error IS NOT NULL OR parser_version<? LIMIT 1""",
+        (current_parser,),
+    ).fetchone()
+    return incomplete is None
 
 
 def read_city_source(city: str, path: Path) -> SourceSelection:
@@ -91,18 +119,25 @@ def read_city_source(city: str, path: Path) -> SourceSelection:
                    city_scope FROM reports ORDER BY published,source_url"""
             ).fetchall()
         else:
+            columns = {row[1] for row in db.execute("PRAGMA table_info(reports)")}
+            parser_version = (
+                "parser_version" if "parser_version" in columns else "NULL AS parser_version"
+            )
             rows = db.execute(
-                """SELECT id,url,title,published,district,body,sha256,revision,
-                   http_status,error FROM reports ORDER BY published,id"""
+                f"""SELECT id,url,title,published,district,body,sha256,revision,
+                   http_status,error,{parser_version} FROM reports ORDER BY published,id"""
             ).fetchall()
         counts = dict(discovered=len(rows), fetched=0, pending=0, failed=0,
                       selected=0, outside=0, deferred=0)
         selected = []
         for row in rows:
             report = dict(row)
+            parsed_with = report.pop("parser_version", None)
             if report["error"]:
                 counts["failed"] += 1
-            if report["body"] is None:
+            if report["body"] is None or (
+                parsed_with is not None and parsed_with < PARSER_VERSIONS.get(city, 0)
+            ):
                 counts["pending"] += 1
                 continue
             counts["fetched"] += 1

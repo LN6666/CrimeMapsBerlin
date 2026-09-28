@@ -26,6 +26,38 @@ def location_changes(previous_events: list[dict], candidate_events: list[dict]):
             distance = GEOD.inv(before[0], before[1], after[0], after[1])[2]
             if distance > 100:
                 changes.append(dict(id=ident, reason="location_moved", distance_m=round(distance)))
+        old_has_scenes = "scene_locations" in old
+        new_has_scenes = "scene_locations" in new
+        if old_has_scenes != new_has_scenes:
+            changes.append(dict(
+                id=ident,
+                reason="scene_locations_added" if new_has_scenes else "scene_locations_removed",
+            ))
+            continue
+        if not old_has_scenes:
+            continue
+        old_scenes, new_scenes = old["scene_locations"], new["scene_locations"]
+        if len(old_scenes) != len(new_scenes):
+            changes.append(dict(
+                id=ident,
+                reason="scene_added" if len(new_scenes) > len(old_scenes) else "scene_removed",
+                before=len(old_scenes), after=len(new_scenes),
+            ))
+        if [scene.get("role") for scene in old_scenes] != [scene.get("role") for scene in new_scenes]:
+            changes.append(dict(id=ident, reason="scene_role_changed"))
+        if [scene.get("primary_for_count") for scene in old_scenes] != [
+            scene.get("primary_for_count") for scene in new_scenes
+        ]:
+            changes.append(dict(id=ident, reason="scene_primary_changed"))
+        geometry_fields = ("coordinates", "geometry", "candidate_road_geometry")
+        if [tuple(scene.get(key) for key in geometry_fields) for scene in old_scenes] != [
+            tuple(scene.get(key) for key in geometry_fields) for scene in new_scenes
+        ]:
+            changes.append(dict(id=ident, reason="scene_geometry_changed"))
+        if old_scenes != new_scenes and not any(
+            row["id"] == ident and row["reason"].startswith("scene_") for row in changes
+        ):
+            changes.append(dict(id=ident, reason="scene_details_changed"))
     return changes
 
 

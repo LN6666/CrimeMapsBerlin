@@ -128,7 +128,9 @@ class Places(osmium.SimpleHandler):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
-    p.add_argument("--city", choices=("berlin", "hamburg"), default="berlin")
+    p.add_argument(
+        "--city", choices=("berlin", "hamburg", "cologne", "frankfurt"), default="berlin"
+    )
     args = p.parse_args()
     city_root = ROOT if args.city == "berlin" else ROOT / "cities" / args.city
     src = city_root / f"{args.city}.osm.pbf"

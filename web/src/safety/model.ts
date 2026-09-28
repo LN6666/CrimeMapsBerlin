@@ -6,6 +6,33 @@ import type {
 } from "geojson";
 export type Properties = Record<string, any>;
 export type FC = FeatureCollection<Geometry, Properties>;
+export type SceneRole =
+  | "incident"
+  | "accident"
+  | "discovery"
+  | "operation"
+  | "arrest"
+  | "search"
+  | "background"
+  | "unknown";
+export type SceneCaseRelation =
+  | "independent_case"
+  | "same_case_phase"
+  | "search_arrest_operation"
+  | "background_reference"
+  | "unresolved_relation";
+export interface SceneLocation {
+  label: string;
+  role: SceneRole;
+  location_precision: string;
+  geocode_method: string;
+  coordinates?: [number, number] | null;
+  geometry?: Geometry | null;
+  candidate_road_geometry?: LineString | MultiLineString | null;
+  primary_for_count: boolean;
+  case_relation?: SceneCaseRelation;
+  minimum_incidents?: number;
+}
 export interface PoliceEvent {
   id: string;
   title: string;
@@ -21,6 +48,7 @@ export interface PoliceEvent {
   location_selection?: string;
   geocode_method?: string;
   other_scene_candidates?: { name: string; sentence_index: number }[];
+  scene_locations?: SceneLocation[];
   reported_location_geometry?: Geometry;
   candidate_road_geometry?: LineString | MultiLineString;
   source_url: string;
@@ -69,6 +97,133 @@ export interface Bundle {
   };
 }
 export const empty = (): FC => ({ type: "FeatureCollection", features: [] });
+export function sceneRoleGroup(role: SceneRole): string {
+  if (role === "incident" || role === "accident") return "incident";
+  if (role === "discovery") return "discovery";
+  if (["operation", "arrest", "search"].includes(role)) return "operation";
+  return "context";
+}
+export function sceneRoleLabel(role: SceneRole): string {
+  return {
+    incident: "案发地点",
+    accident: "事故地点",
+    discovery: "发现地点",
+    operation: "警方行动地点",
+    arrest: "抓捕地点",
+    search: "搜查地点",
+    background: "背景地点",
+    unknown: "地点角色待核",
+  }[role] ?? "地点角色待核";
+}
+const validPoint = (point: number[]): boolean =>
+  point.length >= 2 &&
+  Number.isFinite(point[0]) &&
+  Number.isFinite(point[1]) &&
+  Math.abs(point[0]) <= 180 &&
+  Math.abs(point[1]) <= 90;
+const validLine = (line: number[][]): boolean =>
+  line.length >= 2 && line.every(validPoint);
+const countablePrecision = (precision: string): boolean =>
+  ["street", "point", "place", "address"].includes(precision);
+function validGeometry(geometry: Geometry): boolean {
+  switch (geometry.type) {
+    case "Point":
+      return validPoint(geometry.coordinates);
+    case "MultiPoint":
+      return geometry.coordinates.length > 0 && geometry.coordinates.every(validPoint);
+    case "LineString":
+      return validLine(geometry.coordinates);
+    case "MultiLineString":
+      return geometry.coordinates.length > 0 && geometry.coordinates.every(validLine);
+    case "Polygon":
+      return geometry.coordinates.length > 0 &&
+        geometry.coordinates.every((ring) => ring.length >= 4 && ring.every(validPoint));
+    case "MultiPolygon":
+      return geometry.coordinates.length > 0 &&
+        geometry.coordinates.every((polygon) =>
+          polygon.length > 0 &&
+          polygon.every((ring) => ring.length >= 4 && ring.every(validPoint))
+        );
+    case "GeometryCollection":
+      return geometry.geometries.length > 0 && geometry.geometries.every(validGeometry);
+  }
+}
+function sceneGeometries(geometry: Geometry): Geometry[] {
+  return geometry.type === "GeometryCollection"
+    ? geometry.geometries.flatMap(sceneGeometries)
+    : [geometry];
+}
+/** All displayable scenes share one source; point representatives never replace source geometry. */
+export function sceneFeatures(rows: PoliceEvent[]): FC {
+  return {
+    type: "FeatureCollection",
+    features: rows.flatMap((event) =>
+      (event.scene_locations ?? []).flatMap((scene, index) => {
+        const properties = {
+          id: event.id,
+          scene_id: `${event.id}/${index}`,
+          scene_index: index,
+          label: scene.label,
+          role: scene.role,
+          role_group: sceneRoleGroup(scene.role),
+          primary_for_count: scene.primary_for_count,
+          location_precision: scene.location_precision,
+          geocode_method: scene.geocode_method,
+        };
+        const features: FC["features"] = [];
+        if (scene.geometry && validGeometry(scene.geometry))
+          for (const [part, geometry] of sceneGeometries(scene.geometry).entries())
+            features.push({
+              type: "Feature",
+              geometry,
+              properties: { ...properties, geometry_kind: "reported", part },
+            });
+        if (
+          scene.coordinates &&
+          validPoint(scene.coordinates) &&
+          !(scene.geometry?.type === "Point" &&
+            scene.geometry.coordinates[0] === scene.coordinates[0] &&
+            scene.geometry.coordinates[1] === scene.coordinates[1])
+        )
+          features.push({
+            type: "Feature",
+            geometry: { type: "Point", coordinates: scene.coordinates },
+            properties: { ...properties, geometry_kind: "representative_point" },
+          });
+        if (
+          scene.candidate_road_geometry &&
+          validGeometry(scene.candidate_road_geometry)
+        )
+          features.push({
+            type: "Feature",
+            geometry: scene.candidate_road_geometry,
+            properties: { ...properties, geometry_kind: "candidate_road" },
+          });
+        return features;
+      }),
+    ),
+  };
+}
+export function sceneEventIds(features: FC["features"]): string[] {
+  return [...new Set(features.map((feature) => String(feature.properties.id)))];
+}
+/** Existing snapshots have no scene array; new snapshots count only an explicit primary point. */
+export function countableEventIds(rows: PoliceEvent[]): Set<string> {
+  return new Set(
+    rows
+      .filter((event) =>
+        event.scene_locations === undefined ||
+        event.scene_locations.some(
+          (scene) =>
+            scene.primary_for_count &&
+            countablePrecision(scene.location_precision) &&
+            (Boolean(scene.coordinates && validPoint(scene.coordinates)) ||
+              Boolean(scene.geometry?.type === "Point" && validPoint(scene.geometry.coordinates))),
+        ),
+      )
+      .map((event) => event.id),
+  );
+}
 /** A review range identifies a road, never an incident point. */
 export function candidateRoadGeometry(
   event: PoliceEvent,
@@ -92,14 +247,7 @@ export function candidateRoadGeometry(
     !lines.every(
       (line) =>
         line.length >= 2 &&
-        line.every(
-          (point) =>
-            point.length >= 2 &&
-            Number.isFinite(point[0]) &&
-            Number.isFinite(point[1]) &&
-            Math.abs(point[0]) <= 180 &&
-            Math.abs(point[1]) <= 90,
-        ),
+        line.every(validPoint),
     )
   )
     return null;
@@ -146,12 +294,16 @@ export function monthEvents(
   );
 }
 export function filteredHex(source: FC, ids: Set<string>): FC {
+  // One announcement contributes to at most one cell, including malformed duplicate bundles.
+  const seen = new Set<string>();
   return {
     ...source,
     features: source.features.flatMap((f) => {
-      const eventIds = (f.properties.event_ids as string[]).filter((id) =>
-        ids.has(id),
-      );
+      const eventIds = (f.properties.event_ids as string[]).filter((id) => {
+        if (!ids.has(id) || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
       return eventIds.length
         ? [
             {

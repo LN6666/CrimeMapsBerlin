@@ -21,7 +21,13 @@ TERMS = {
 
 
 def mentions(text):
-    return sorted(kind for kind, pattern in TERMS.items() if re.search(pattern, text, re.I))
+    # German source prose capitalizes the shop noun ``Laden``.  A case-insensitive
+    # match also turns the common invitation verb ``laden`` into a shop mention.
+    return sorted(
+        kind
+        for kind, pattern in TERMS.items()
+        if re.search(pattern, text, 0 if kind == "shop" else re.I)
+    )
 
 
 def article_text(page):

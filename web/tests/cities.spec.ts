@@ -56,7 +56,7 @@ test("Hamburg preview reads only Hamburg data and shows city-specific sources", 
   await expect(page.locator("#city-switch")).toHaveValue("hamburg");
   await expect(page.locator("#stats .big")).toHaveText("1");
   await page.locator("#stats button").click();
-  await expect(page.locator("#drawer-content")).toContainText("原文列出多个案发地点");
+  await expect(page.locator("#drawer-content")).toContainText("原文列出多个地点；逐处展示");
   await expect(page.locator("#kbo")).toBeHidden();
   await expect(page.locator("#basemap option[value='aerial']")).toHaveAttribute("disabled", "");
   await expect(page.locator(".maplibregl-ctrl-attrib")).toContainText("Polizei Hamburg");

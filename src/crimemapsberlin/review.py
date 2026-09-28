@@ -144,6 +144,21 @@ def reviewed_tags(db: sqlite3.Connection, city: str, event: dict) -> list[dict]:
     return json.loads(row["tags_json"]) if row else []
 
 
+def _scene_summary(scene: dict) -> dict:
+    summary = {key: scene.get(key) for key in (
+        "scene_id", "label", "role", "location_precision", "geocode_method",
+        "coordinates", "primary_for_count", "evidence_quote", "source_time",
+        "case_relation", "minimum_incidents", "duplicate_of_source_id",
+        "duplicate_source_sha256", "poi_mentions", "location_object_ids",
+    ) if key in scene}
+    for key in ("geometry", "candidate_road_geometry"):
+        geometry = scene.get(key)
+        if geometry:
+            summary[f"{key}_type"] = geometry.get("type")
+            summary[f"{key}_sha256"] = fingerprint(geometry)
+    return summary
+
+
 def review_packet(
     db: sqlite3.Connection, city: str, events: list[dict],
     changed_locations: list[dict] | None = None,
@@ -163,7 +178,7 @@ def review_packet(
             "verdict", "evidence_quote", "note", "reviewer", "reviewed_at"
         )}
         review["tags"] = json.loads(row["tags_json"])
-        rows.append(dict(
+        item = dict(
             id=event["id"], source_url=event["source_url"],
             source_sha256=event["source_sha256"], extraction_sha256=fingerprint(event),
             category=event.get("category"), location_label=event.get("location_label"),
@@ -171,7 +186,12 @@ def review_packet(
             geocode_method=event.get("geocode_method"),
             geocode_evidence=event.get("geocode_evidence"),
             review=review,
-        ))
+        )
+        if "scene_locations" in event:
+            item["scene_locations"] = [
+                _scene_summary(scene) for scene in event["scene_locations"]
+            ]
+        rows.append(item)
     changes = sorted(changed_locations or [], key=lambda row: (row["id"], row["reason"]))
     # The comparison list is for inspection. After this candidate is published,
     # its previous-map comparison changes, but the approved candidate does not.

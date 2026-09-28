@@ -46,6 +46,63 @@ def test_first_group_paths_and_permissions_are_explicit(tmp_path):
     assert not CITY_SPECS["cologne"].publication_enabled
 
 
+@pytest.mark.parametrize(
+    ("city", "publisher", "title", "body"),
+    [
+        (
+            "hamburg",
+            "6337",
+            "POL-HH: Raub",
+            "Tatort: Hamburg-Mitte, Teststraße. Ein Mann wurde beraubt.",
+        ),
+        (
+            "frankfurt",
+            "4970",
+            "POL-F: Frankfurt - Gallus: Raub",
+            "Tatort: Frankfurt-Gallus, Teststraße. Ein Mann wurde beraubt.",
+        ),
+    ],
+)
+def test_stale_pressportal_parser_version_blocks_city_candidates(
+    tmp_path, city, publisher, title, body
+):
+    path = tmp_path / f"{city}.sqlite"
+    db = connect_standard(path)
+    db.execute("ALTER TABLE reports ADD COLUMN parser_version INTEGER NOT NULL DEFAULT 1")
+    row = {
+        "id": "123",
+        "url": f"https://www.presseportal.de/blaulicht/pm/{publisher}/123",
+        "title": title,
+        "published": "2026-09-01T12:00:00",
+        "district": "",
+    }
+    discover_standard(db, [row], 1)
+    accept_standard(db, "123", body, {}, 2)
+    db.close()
+
+    stale = read_city_source(city, path)
+    assert stale.coverage["fetched"] == 0
+    assert stale.coverage["pending"] == 1
+    assert not stale.reports
+
+    db = connect_standard(path)
+    db.execute("UPDATE reports SET parser_version=2")
+    db.commit()
+    db.close()
+    still_stale = read_city_source(city, path)
+    assert still_stale.coverage["fetched"] == 0
+    assert still_stale.coverage["pending"] == 1
+    assert not still_stale.reports
+
+    db = connect_standard(path)
+    db.execute("UPDATE reports SET parser_version=3")
+    db.commit()
+    db.close()
+    current = read_city_source(city, path)
+    assert current.coverage["fetched"] == 1
+    assert current.coverage["selected"] == 1
+
+
 def test_cologne_native_schema_selects_only_city_leads(tmp_path, monkeypatch):
     osm_indexes(tmp_path, "cologne")
     path = paths_for("cologne", tmp_path).source_db

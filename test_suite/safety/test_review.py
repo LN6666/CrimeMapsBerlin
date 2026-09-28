@@ -132,3 +132,34 @@ def test_owner_approval_requires_inspected_current_decisions(tmp_path):
     record_reviews(db, "hamburg", [first], {first["id"]: BODY},
                    [decision(first, note="Further challenge changed the review")])
     assert not owner_approved(db, "hamburg", [first])
+
+
+def test_scene_changes_invalidate_review_and_approval_and_packet_shows_order(tmp_path):
+    db = connect(tmp_path / "review.sqlite")
+    body = BODY + " Der Tatverdächtige wurde später im Polizeirevier festgenommen."
+    scenes = [
+        dict(scene_id="6358440:1", label="Ostpreußenplatz", role="incident",
+             location_precision="street", geocode_method="junction",
+             coordinates=[10.0, 53.5], primary_for_count=True,
+             evidence_quote="einen Überfall am Ostpreußenplatz"),
+        dict(scene_id="6358440:2", label="Polizeirevier", role="arrest",
+             location_precision="point", geocode_method="named_place",
+             coordinates=[10.01, 53.51], primary_for_count=False,
+             evidence_quote="später im Polizeirevier festgenommen"),
+    ]
+    source_sha256 = hashlib.sha256(body.encode()).hexdigest()
+    first = event(scene_locations=scenes, source_sha256=source_sha256)
+    record_reviews(db, "hamburg", [first], {first["id"]: body}, [decision(first)])
+    packet = review_packet(db, "hamburg", [first])
+    assert [row["role"] for row in packet["items"][0]["scene_locations"]] == ["incident", "arrest"]
+    assert packet["items"][0]["scene_locations"][0]["coordinates"] == [10.0, 53.5]
+    record_owner_approval(db, "hamburg", [first], dict(
+        city="hamburg", decision_digest=packet["decision_digest"],
+        approved_by="owner", note="Reviewed both source-linked locations",
+    ))
+    assert owner_approved(db, "hamburg", [first])
+    revised = event(scene_locations=[scenes[0], dict(scenes[1], role="search")],
+                    source_sha256=source_sha256)
+    assert fingerprint(revised) != fingerprint(first)
+    assert review_status(db, "hamburg", revised) == "pending"
+    assert not owner_approved(db, "hamburg", [revised])

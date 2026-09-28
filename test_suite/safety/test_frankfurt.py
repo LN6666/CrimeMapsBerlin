@@ -19,8 +19,13 @@ ARTICLE = """<nav>Another Polizeipräsidium · Wrongstraße</nav>
 <p><i>Frankfurt (ots)</i></p>
 <p>In der Kleyerstraße wurden zwei Jugendliche festgenommen.</p>
 <p>Das Fahrzeug hatte keine gültige Zulassung.</p>
+<p>Täter 1:</p><pre>   - männlich
+   - circa 30 Jahre alt
+   - trug eine schwarze Kapuze</pre>
+<ul><li>etwa 180 cm groß</li><li><strong>dunkle</strong> Jacke</li></ul>
 <p class="contact-headline">Rückfragen bitte an:</p>
 <p class="contact-text">Pressestelle an der Falschestraße</p>
+<pre>Kontakttelefon 069/000000</pre>
 <p class="originator">Original-Content von: Polizeipräsidium Frankfurt am Main</p>
 </article><article class="news"><p>Another incident in Anderstraße</p></article>"""
 
@@ -45,11 +50,72 @@ def test_frankfurt_article_excludes_navigation_contacts_and_related_stories():
     body = article_body(ARTICLE)
     assert "Kleyerstraße" in body
     assert "Zulassung" in body
+    assert "circa 30 Jahre alt" in body
+    assert "schwarze Kapuze" in body
+    assert "etwa 180 cm groß" in body
+    assert "dunkle Jacke" in body
     assert "Wrongstraße" not in body
     assert "Falschestraße" not in body
+    assert "Kontakttelefon" not in body
     assert "Anderstraße" not in body
     with pytest.raises(ValueError, match="publisher"):
         article_body(ARTICLE.replace("Polizeipräsidium Frankfurt am Main</a>", "Other publisher</a>"))
+
+    nested_contact = ARTICLE.replace(
+        '<p class="contact-headline">Rückfragen bitte an:</p>',
+        '<ul><li>discard this contact wrapper<h2 class="contact-headline">Rückfragen</h2></li></ul>',
+    )
+    assert "discard this contact wrapper" not in article_body(nested_contact)
+
+
+def test_frankfurt_parser_v2_cache_is_refetched_without_conditional_headers(tmp_path, monkeypatch):
+    listing = LISTING.replace("27.09.2026", "01.01.2026")
+    row = listing_rows(listing)[0]
+    path = tmp_path / "frankfurt.sqlite"
+    db = connect(path)
+    db.execute("ALTER TABLE reports ADD COLUMN parser_version INTEGER NOT NULL DEFAULT 1")
+    discover(db, [row], 1)
+    accept(
+        db,
+        row["id"],
+        "In der Kleyerstraße erfolgte eine Festnahme. Alter Parsertext ohne Täterbeschreibung.",
+        {"etag": '"parser-v2"', "last-modified": "Thu, 01 Jan 2026 12:00:00 GMT"},
+        2,
+    )
+    db.execute("UPDATE reports SET parser_version=2,checked=?", (10**12,))
+    db.commit()
+    db.close()
+
+    article_requests = []
+
+    def handler(request):
+        if request.url.path == "/robots.txt":
+            return httpx.Response(200, text="User-agent: *\nAllow: /\n")
+        if request.url.path == "/blaulicht/nr/4970":
+            return httpx.Response(200, text=listing)
+        if request.url.path == "/blaulicht/pm/4970/6359830":
+            article_requests.append(request)
+            return httpx.Response(200, text=ARTICLE, headers={"etag": '"parser-v3"'})
+        raise AssertionError(request.url)
+
+    real_client = httpx.Client
+    monkeypatch.setattr(
+        frankfurt.httpx,
+        "Client",
+        lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs),
+    )
+    result = sync(path, 2026, pages=1, limit=1, delay=0)
+
+    assert result["revised"] == 1
+    assert result["parser_pending"] == 0
+    assert len(article_requests) == 1
+    assert "if-none-match" not in article_requests[0].headers
+    assert "if-modified-since" not in article_requests[0].headers
+    db = connect(path)
+    saved = db.execute("SELECT body,parser_version FROM reports").fetchone()
+    assert saved["parser_version"] == 3
+    assert "schwarze Kapuze" in saved["body"]
+    db.close()
 
 
 def test_frankfurt_pagination_does_not_leave_publisher_newsroom():
@@ -107,6 +173,7 @@ def test_frankfurt_resumes_archive_cursor_and_refreshes_head(tmp_path, monkeypat
     assert seen.count("/blaulicht/nr/4970/30") == 1
     db = connect(path)
     assert db.execute("SELECT pages_scanned,complete FROM frankfurt_archive_cursor").fetchone()[:] == (2, 1)
+    assert db.execute("SELECT parser_version FROM reports").fetchone()[0] == 3
     db.close()
 
 

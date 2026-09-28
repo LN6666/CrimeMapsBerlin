@@ -21,6 +21,12 @@ from crimemapsberlin.review import (
 ROOT = Path(__file__).resolve().parents[2]
 RUNTIME = ROOT / ".runtime/safety"
 SUPPORTED_CITIES = ("berlin", "hamburg")
+SOURCE_FIRST_PROTOCOL = (
+    "Read source_body before extracted. Independently identify the announcement type, "
+    "minimum number of distinct incidents, and every physical location with its role. "
+    "Only then compare extracted and reject omitted, merged, misclassified, or falsely "
+    "located scenes. A missing scene_locations field is not evidence of a single scene."
+)
 
 
 def city_runtime(city: str) -> Path:
@@ -86,7 +92,10 @@ def main():
             if len(items) >= args.limit:
                 break
         args.out.parent.mkdir(parents=True, exist_ok=True)
-        args.out.write_text(json.dumps(dict(city=city, items=items), ensure_ascii=False, indent=2))
+        args.out.write_text(json.dumps(
+            dict(city=city, review_protocol=SOURCE_FIRST_PROTOCOL, items=items),
+            ensure_ascii=False, indent=2,
+        ))
         print(json.dumps(dict(city=city, batch=len(items), output=str(args.out))))
     elif args.command == "record":
         incoming = json.loads(args.input.read_text())

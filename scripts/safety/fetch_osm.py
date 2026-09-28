@@ -12,6 +12,11 @@ ROOT = Path(__file__).resolve().parents[2] / "data/raw/safety"
 EXTRACTS = {
     "berlin": "https://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf",
     "hamburg": "https://download.geofabrik.de/europe/germany/hamburg-latest.osm.pbf",
+    "cologne": (
+        "https://download.geofabrik.de/europe/germany/nordrhein-westfalen/"
+        "koeln-regbez-latest.osm.pbf"
+    ),
+    "frankfurt": "https://download.geofabrik.de/europe/germany/hessen-latest.osm.pbf",
 }
 
 

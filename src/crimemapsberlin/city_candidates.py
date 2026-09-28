@@ -13,6 +13,7 @@ from pathlib import Path
 from crimemapsberlin.city_contract import CITY_SPECS, paths_for
 from crimemapsberlin.city_sources import normalized_event_db, read_city_source
 from crimemapsberlin.geocode import Gazetteer, events_from_db
+from crimemapsberlin.multiple_scenes import scene_decision_index
 from crimemapsberlin.payload import compact
 from crimemapsberlin.review import connect as connect_review, review_summary
 from crimemapsberlin.spatial import metric_transforms, pois_from_osm
@@ -60,8 +61,17 @@ def stage(city: str, *, root: Path = ROOT) -> dict:
         to_metric=to_metric, to_wgs=to_wgs,
     )
     normalized = normalized_event_db(source.reports)
+    scene_decision_path = runtime / "scene-decisions.json"
+    scene_decisions = (
+        scene_decision_index(json.loads(scene_decision_path.read_text()), city=city)
+        if scene_decision_path.is_file() else {}
+    )
     try:
-        events = [compact(event) for event in events_from_db(normalized, gazetteer)]
+        events = [
+            compact(event) for event in events_from_db(
+                normalized, gazetteer, scene_decisions=scene_decisions,
+            )
+        ]
     finally:
         normalized.close()
     if len(events) != coverage["selected"]:
@@ -72,11 +82,16 @@ def stage(city: str, *, root: Path = ROOT) -> dict:
     counts = review_summary(review, city, events)
     review.close()
     methods = Counter(event["geocode_method"] for event in events)
+    scene_report_ids = {
+        event["id"] for event in events
+        if event.get("scene_review_required") or "scene_locations" in event
+    }
     audit = dict(
         city=city, source=spec.source, epsg=spec.epsg,
         archive_complete=source.archive_complete,
         coverage=coverage, located=sum(bool(event["coordinates"]) for event in events),
         geocode_methods=dict(sorted(methods.items())), review_counts=counts,
+        missing_scene_decision_ids=sorted(scene_report_ids - set(scene_decisions)),
         poi_count=len(pois["features"]), poi_geometry_notes=poi_notes,
         publication_ready=False,
         publication_block="city map requires source scope and completeness checks, per-article review and owner approval",

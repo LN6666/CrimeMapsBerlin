@@ -198,6 +198,40 @@ p {
   color: #92501c;
   font-size: 12px;
 }
+.scene-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 8px;
+  margin: 12px 0;
+  font-size: 11px;
+  color: #52665e;
+}
+.scene-swatch {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 5px;
+}
+.scene-swatch.incident { background: #b43d4b; }
+.scene-swatch.discovery { background: #2874a6; }
+.scene-swatch.operation { background: #986223; }
+.scene-swatch.context { background: #677785; }
+.scene-heading {
+  font-weight: 700;
+  margin-top: 10px;
+}
+.scene-list {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 8px;
+}
+.scene-list li {
+  border-left: 3px solid #cddad2;
+  padding: 3px 0 5px 9px;
+  margin: 7px 0;
+  font-size: 12px;
+}
+.scene-list strong { display: block; }
 .report .road-focus {
   display: block;
   margin: 9px 0;

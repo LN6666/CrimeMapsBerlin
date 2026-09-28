@@ -65,3 +65,27 @@ def test_unreviewed_or_uncertain_reports_block_publication():
                                 review_counts=counts, owner_approved=False)
     assert publication_problems(snapshot(), audit(), None, None,
                                 review_counts=counts, owner_approved=True) == []
+
+
+def test_published_secondary_scene_changes_are_listed_for_owner_inspection():
+    primary = dict(label="Junction", role="incident", primary_for_count=True,
+                   coordinates=[13.4, 52.5], geometry={"type": "Point", "coordinates": [13.4, 52.5]})
+    secondary = dict(label="Search site", role="search", primary_for_count=False,
+                     geometry={"type": "LineString", "coordinates": [[13.41, 52.5], [13.42, 52.5]]})
+    old = dict(id="1", coordinates=[13.4, 52.5], scene_locations=[primary, secondary])
+    changed = dict(id="1", coordinates=[13.4, 52.5], scene_locations=[
+        primary,
+        dict(secondary, role="arrest", primary_for_count=True,
+             geometry={"type": "LineString", "coordinates": [[13.41, 52.5], [13.43, 52.5]]}),
+    ])
+    reasons = {row["reason"] for row in location_changes([old], [changed])}
+    assert reasons == {"scene_role_changed", "scene_primary_changed", "scene_geometry_changed"}
+    assert {row["reason"] for row in location_changes([old], [
+        dict(old, scene_locations=[primary, secondary, dict(secondary, label="Third site")])
+    ])} >= {"scene_added"}
+    assert {row["reason"] for row in location_changes([old], [
+        dict(old, scene_locations=[primary])
+    ])} >= {"scene_removed"}
+    assert location_changes([dict(id="1", coordinates=[13.4, 52.5])], [old]) == [
+        dict(id="1", reason="scene_locations_added")
+    ]
