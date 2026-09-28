@@ -92,6 +92,17 @@ scene 文件必须明确声明案件和地点清单完整，允许零案、一�
 慕尼黑是所有者明确接受 POLIZEIKARTE 上游语义的例外，此入口会拒绝 `munich`。
 三个决定文件、全文、本地账本及生成数据都留在 Git 忽略目录。
 
+导入后可生成只读的本地几何工作清单。它会再次核对当前来源 URL、正文哈希、决定哈希
+及逐字证据，保留每篇公告的全部案件和正式地点，并把点、道路、区域及行政区分别交给
+对应的受检几何步骤；它不自行理解正文、不选择代表点，也不生成公开地图：
+
+```sh
+uv run python -m crimemapsberlin.reviewed_scenes \
+  --city cologne \
+  --db .runtime/safety/cities/cologne/police.sqlite \
+  --out .runtime/safety/cities/cologne/reviewed-scene-inventory.json
+```
+
 慕尼黑采用所有者指定的 [POLIZEIKARTE 慕尼黑页](https://polizeikarte.de/muenchen)
 作为滚动 365 天主数据入口。POLIZEIKARTE 是独立项目；每条记录均保留其
 POLIZEIKARTE ID、详情页、分类、摘要、位置精度、上游坐标和对应的警方原文链接。

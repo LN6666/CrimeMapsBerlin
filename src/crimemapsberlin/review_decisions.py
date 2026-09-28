@@ -338,6 +338,17 @@ def _revalidate_stored_decision(
     return normalized
 
 
+def validate_stored_decision(
+    value: object, *, source: dict, city: str, source_id: str
+) -> dict:
+    """Revalidate one stored decision against the current normalized source.
+
+    Later GIS stages use this public boundary instead of trusting a prior
+    importer run or duplicating semantic validation.
+    """
+    return _revalidate_stored_decision(value, source, city, source_id)
+
+
 def _validate_city(city: str) -> None:
     if city == "munich":
         raise ValueError(
