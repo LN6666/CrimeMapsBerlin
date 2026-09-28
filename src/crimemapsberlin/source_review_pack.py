@@ -27,14 +27,19 @@ def read_checkpoint(path: Path) -> tuple[list[dict], dict]:
         # if a collector commits new checkpoint data while the pack is built.
         db.execute("BEGIN")
         columns = {row[1] for row in db.execute("PRAGMA table_info(reports)")}
-        required = {"id", "url", "title", "published", "body", "sha256", "revision"}
+        id_column = "id" if "id" in columns else "source_id" if "source_id" in columns else None
+        url_column = "url" if "url" in columns else "source_url" if "source_url" in columns else None
+        required = {"title", "published", "body", "sha256", "revision"}
+        if id_column is None or url_column is None:
+            raise ValueError("Checkpoint reports table has an unsupported schema")
         if not required.issubset(columns):
             raise ValueError("Checkpoint reports table has an unsupported schema")
         error_expr = "error" if "error" in columns else "NULL AS error"
         rows = []
         for row in db.execute(
-            f"""SELECT id,url,title,published,body,sha256,revision,{error_expr}
-                FROM reports WHERE body IS NOT NULL ORDER BY published,id"""
+            f"""SELECT {id_column} AS id,{url_column} AS url,title,published,body,
+                       sha256,revision,{error_expr}
+                FROM reports WHERE body IS NOT NULL ORDER BY published,{id_column}"""
         ):
             body = row["body"]
             if not isinstance(body, str) or not body.strip():
@@ -58,14 +63,17 @@ def read_checkpoint(path: Path) -> tuple[list[dict], dict]:
             )
         discovered = db.execute("SELECT count(*) FROM reports").fetchone()[0]
         errors = (
-            db.execute("SELECT count(*) FROM reports WHERE error IS NOT NULL").fetchone()[0]
+            db.execute(
+                "SELECT count(*) FROM reports WHERE COALESCE(error,'')<>''"
+            ).fetchone()[0]
             if "error" in columns
             else 0
         )
         cursor_tables = [
             row[0]
             for row in db.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%archive_cursor'"
+                """SELECT name FROM sqlite_master WHERE type='table' AND
+                   (name LIKE '%archive_cursor' OR name IN ('archive_scan','archive_coverage'))"""
             )
         ]
         cursor_complete = []

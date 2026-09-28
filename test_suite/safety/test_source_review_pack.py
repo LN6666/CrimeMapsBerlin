@@ -67,6 +67,30 @@ def add_stored_report(path, ident="source-3", body="Another complete source body
         )
 
 
+def native_checkpoint(path):
+    body = "Synthetic native source body with a complete quoted narrative."
+    with sqlite3.connect(path) as db:
+        db.executescript(
+            """
+            CREATE TABLE reports (
+                source_id TEXT, source_url TEXT, title TEXT, published TEXT, body TEXT,
+                sha256 TEXT, revision INTEGER, error TEXT
+            );
+            CREATE TABLE archive_scan (
+                year INTEGER, next_page INTEGER, complete INTEGER, updated REAL
+            );
+            """
+        )
+        db.execute(
+            "INSERT INTO reports VALUES (?,?,?,?,?,?,?,NULL)",
+            (
+                "native-1", "https://example.invalid/native-1", "Native report",
+                "2026-09-28T12:00:00+02:00", body, digest(body), 1,
+            ),
+        )
+        db.execute("INSERT INTO archive_scan VALUES (2026,0,1,0)")
+
+
 def rewrite_zip(source, target, transform):
     with zipfile.ZipFile(source) as archive:
         files = {info.filename: archive.read(info) for info in archive.infolist()}
@@ -125,6 +149,21 @@ def test_pack_is_hash_bound_batched_and_local_only(tmp_path):
         for line in checksums:
             expected, relative = line.split("  ", 1)
             assert hashlib.sha256(archive.read(f"{root}/{relative}")).hexdigest() == expected
+
+
+def test_native_source_columns_and_archive_scan_are_supported(tmp_path):
+    db_path = tmp_path / "native.sqlite"
+    native_checkpoint(db_path)
+    rows, coverage = read_checkpoint(db_path)
+    assert rows[0]["source_id"] == "native-1"
+    assert rows[0]["source_url"] == "https://example.invalid/native-1"
+    assert coverage == {
+        "discovered": 1,
+        "bodies_in_pack": 1,
+        "missing_bodies": 0,
+        "source_errors": 0,
+        "channel_scan_complete": True,
+    }
 
 
 @pytest.mark.parametrize(
