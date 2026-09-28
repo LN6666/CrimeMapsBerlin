@@ -24,10 +24,25 @@ import type { Manifest } from "./data";
 import { Basemaps, basemapLabels } from "./basemaps";
 import type { BasemapId } from "./basemaps";
 import { externalMaps, externalMapsDirectory } from "./external-maps";
-import { cityGroups, mapViews, requestedMapView } from "./cities";
+import { cityGroups, requestedMapView } from "./cities";
 
 const cityView = requestedMapView(window.location.search);
-const isHamburg = cityView === mapViews.hamburg;
+const currentCity = cityView.id;
+document.title = `CrimeMapsDE · ${cityView.name}警情地图`;
+
+const categoryLabels: Record<string, string> = {
+  betrug: "诈骗",
+  brand: "火灾",
+  diebstahl: "盗窃",
+  drogen: "毒品",
+  einbruch: "入室盗窃",
+  gewalt: "暴力",
+  raub: "抢劫",
+  sexualdelikte: "性犯罪",
+  sonstige: "其他",
+  verkehr: "交通",
+};
+const categoryLabel = (category: string) => categoryLabels[category] ?? category;
 
 const reviewedTagLabels: Record<string, string> = {
   violent_assault: "暴力袭击线索",
@@ -43,7 +58,17 @@ const precisionLabels: Record<string, string> = {
   address: "地址近似位置",
   point: "点位",
   district: "仅区域信息",
+  city: "仅城市级位置",
   unknown: "位置待核验",
+};
+const locationScopeLabels: Record<string, string> = {
+  in_city: "已通过市界核验",
+  outside_city: "位于慕尼黑市界外，不计入市域网格",
+  unresolved_no_upstream_coordinate: "上游未提供坐标，不计入市域网格",
+};
+const sourceStatusLabels: Record<string, string> = {
+  polizeikarte_complete_365_day_snapshot:
+    "POLIZEIKARTE 滚动 365 天完整快照；保留对应警方原文链接",
 };
 const sceneRelationLabels: Record<string, string> = {
   independent_case: "独立案件或事故",
@@ -61,7 +86,7 @@ const sceneColor: maplibregl.ExpressionSpecification = [
 ];
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
-app.innerHTML = `<header><div><span class="brand">CRIMEMAPSBERLIN</span><h1>${cityView.name} · 警情与城市场所</h1></div><div class="toolbar"><label class="city-switch">选择城市<select id="city-switch" aria-label="选择城市"></select></label><label>年份<select id="year" aria-label="年份"></select></label><label>月份<select id="month" aria-label="月份"></select></label><button id="overview">全市概览</button><button id="sources">警方来源</button></div></header>
+app.innerHTML = `<header><div><span class="brand">${currentCity === "berlin" ? "CRIMEMAPSBERLIN" : "CRIMEMAPS.DE"}</span><h1>${cityView.name} · 警情与城市场所</h1></div><div class="toolbar"><label class="city-switch">选择城市<select id="city-switch" aria-label="选择城市"></select></label><label>年份<select id="year" aria-label="年份"></select></label><label>月份<select id="month" aria-label="月份"></select></label><button id="overview">全市概览</button><button id="sources">警方来源</button></div></header>
 <main><aside class="controls"><p class="eyebrow">${cityView.latin} / PUBLIC REPORTS</p><h2>看事件，也看周边</h2><p id="coverage">读取本地数据…</p><nav id="external-maps" class="external-maps" aria-label="外部警情网站"></nav><label class="search-label">查找${cityView.name}场所<input id="search" placeholder="${cityView.example}" autocomplete="off"></label><div id="search-results"></div><label>事件类别<select id="category"><option value="all">全部警方公告</option></select></label><div class="rule"></div><h3>六边形 · 公告数量</h3><div class="ramp"></div><div class="ends"><span>少</span><span>多</span></div><p id="resolution"></p><label class="toggle"><input id="hex-toggle" type="checkbox" checked> 显示六边形</label><label class="toggle"><input id="candidate-roads-toggle" type="checkbox" checked> 显示待定位道路范围</label><p class="hint"><span class="road-swatch" aria-hidden="true"></span>橙色虚线仅表示原文提到的道路候选范围，具体案发位置未知；不计入六边形或 POI 关联。</p><div class="scene-legend" aria-label="公告场景颜色"><span><i class="scene-swatch incident"></i>案发/事故</span><span><i class="scene-swatch discovery"></i>发现</span><span><i class="scene-swatch operation"></i>警方行动</span><span><i class="scene-swatch context"></i>背景/待核</span></div><h3>周边 POI</h3><div id="poi-filters"></div><label class="toggle"><input id="highlight" type="checkbox" checked> 报告提及类型 + 附近匹配时加深</label><p class="hint">小型场所：50 米圆。车站：已有面状范围；空心点表示范围缺失。加深表示关联记录数。</p><div class="rule"></div><button id="kbo">查看柏林 kbO 官方区域</button><p class="hint">警方划定区域与事件网格分别展示。</p><p id="freshness" class="hint"></p></aside>
 <section class="map-wrap"><div id="map" aria-label="${cityView.name}警情交互地图"></div><div class="map-label"><span class="dot"></span><span id="map-status">正在准备地图</span></div><div class="basemap-picker"><label>底图<select id="basemap" aria-label="底图" disabled><option value="street">标准街道</option><option value="aerial">航空影像（2026）</option><option value="local">本地简图</option></select></label><div id="basemap-error" role="status" hidden><span></span><button id="basemap-fallback">使用本地简图</button></div></div><div class="map-note">浅色 POI 是城市设施，不代表被警方认定为高发场所</div></section>
 <aside class="details"><div id="stats"></div><div id="selection"><h2>选择一个六边形或 POI</h2><p>查看该区域的事件、类别，以及可以追溯的警方原文。</p></div></aside></main>
@@ -77,12 +102,12 @@ for (const group of cityGroups) {
       city.name + (city.href ? "" : " · 制作中"),
       city.id,
     );
-    option.disabled = !city.href && city.id !== (isHamburg ? "hamburg" : "berlin");
+    option.disabled = !city.href && city.id !== currentCity;
     section.append(option);
   }
   citySelect.append(section);
 }
-citySelect.value = isHamburg ? "hamburg" : "berlin";
+citySelect.value = currentCity;
 citySelect.onchange = () => {
   const destination = cityGroups.flatMap((group) => group.cities).find(
     (city) => city.id === citySelect.value,
@@ -180,17 +205,19 @@ function listReports(parent: HTMLElement, ids: string[]) {
     parent.append(card);
     text(
       "small",
-      `${e.event_date ?? `${e.month}（公布月份）`} · ${e.category} · ${precisionLabels[e.location_precision] ?? "位置待核验"}`,
+      `${e.event_date ?? `${e.month}（公布月份）`} · ${categoryLabel(e.category)} · ${precisionLabels[e.location_precision] ?? "位置待核验"}`,
       card,
     );
-    if (e.source_status && e.source_status !== "available")
+    if (e.source_status && e.source_status !== "available") {
+      const status = sourceStatusLabels[e.source_status];
       text(
         "small",
-        e.source_status === "unavailable"
+        status ?? (e.source_status === "unavailable"
           ? "原文目前不可用；保留先前采集记录"
-          : "原文刷新失败，正在使用先前记录",
+          : "原文刷新失败，正在使用先前记录"),
         card,
       );
+    }
     text("h4", e.title, card);
     for (const tag of e.reviewed_tags ?? []) {
       const label = reviewedTagLabels[tag.tag];
@@ -198,6 +225,8 @@ function listReports(parent: HTMLElement, ids: string[]) {
         text("small", `${label}（AI 线索，非警方定性）· 原文依据：“${tag.evidence_quote}”`, card);
     }
     text("p", e.location_label, card);
+    if (e.location_scope && locationScopeLabels[e.location_scope])
+      text("small", locationScopeLabels[e.location_scope], card);
     if (e.scene_locations?.length) {
       const heading = text("small", "公告中的地点场景：", card);
       heading.className = "scene-heading";
@@ -357,7 +386,7 @@ function showSelection() {
     const counts: Record<string, number> = {};
     for (const e of rows) counts[e.category] = (counts[e.category] ?? 0) + 1;
     for (const [key, n] of Object.entries(counts))
-      text("p", `${key}　${n}`, panel);
+      text("p", `${categoryLabel(key)}　${n}`, panel);
     text("p", "办案结果：数据未提供。街道级坐标是近似位置。", panel).className =
       "hint";
   } else {
@@ -501,7 +530,13 @@ function refresh() {
     );
     btn.onclick = () => {
       const p = openDialog("位置不足的警情");
-      text("p", "道路候选范围不确定具体案发位置，公告保留在未定位列表。", p);
+      text(
+        "p",
+        data.metadata.upstream_provider === "POLIZEIKARTE"
+          ? "上游没有提供可计入慕尼黑市域网格的街道点，或坐标位于市界外；记录及来源仍完整保留。"
+          : "道路候选范围不确定具体案发位置，公告保留在未定位列表。",
+        p,
+      );
       listReports(
         p,
         unmapped.map((e) => e.id),
@@ -531,7 +566,19 @@ function externalMapsDialog() {
   link(p, "查看全部城市 ↗", externalMapsDirectory);
 }
 function sourcesDialog() {
-  const p = openDialog("欧洲警方场所来源目录");
+  const p = openDialog(
+    data.metadata.upstream_provider === "POLIZEIKARTE"
+      ? "慕尼黑数据与场所来源"
+      : "欧洲警方场所来源目录",
+  );
+  if (data.metadata.upstream_provider === "POLIZEIKARTE") {
+    text(
+      "p",
+      "慕尼黑地图直接采用所有者接受的 POLIZEIKARTE 分类与地点成果。POLIZEIKARTE 是独立项目；每条记录仍链接警方原文，市界外及非点位记录不进入六边形。",
+      p,
+    );
+    link(p, "POLIZEIKARTE 慕尼黑数据页 ↗", cityView.policeUrl);
+  }
   const n = data.catalog.coverage.filter(
     (c) => c.status === "sources_verified_partial",
   ).length;
@@ -648,7 +695,7 @@ async function start() {
     if (!response.ok)
       throw Error("未找到有效的本地警情数据，请运行数据构建命令。");
     manifest = (await response.json()) as Manifest;
-    if (manifest.city !== (isHamburg ? "Hamburg" : "Berlin"))
+    if (manifest.city !== cityView.manifestCity)
       throw Error("城市数据清单与所选城市不匹配。");
     client = new DataClient(manifest, cityView.dataRoot);
     data = {
@@ -673,7 +720,7 @@ async function start() {
     el<HTMLSelectElement>("year").value = latest.slice(0, 4);
     el<HTMLSelectElement>("month").value = latest.slice(5, 7);
     for (const c of manifest.categories)
-      el<HTMLSelectElement>("category").add(new Option(c, c));
+      el<HTMLSelectElement>("category").add(new Option(categoryLabel(c), c));
     for (const [key, value] of Object.entries(data.catalog.poi_types)) {
       const label = document.createElement("label");
       label.className = "toggle";
@@ -688,8 +735,11 @@ async function start() {
       label.append(swatch, document.createTextNode(value.label));
       el("poi-filters").append(label);
     }
-    el("coverage").textContent =
-      `警方档案发现 ${manifest.coverage.discovered} 条，已获取 ${manifest.coverage.fetched} 条，待获取 ${manifest.coverage.pending} 条。按公布月份筛选；并非全部报案记录。`;
+    const outside = Number(manifest.metadata.known_outside_municipality ?? 0);
+    const cityPoints = Number(manifest.metadata.point_entries_in_city ?? 0);
+    el("coverage").textContent = manifest.metadata.upstream_provider === "POLIZEIKARTE"
+      ? `POLIZEIKARTE 收录 ${manifest.coverage.fetched} 条；${cityPoints} 条街道点通过慕尼黑市界核验。${outside} 条已知市外记录及其他非点记录保留来源，但不计入市域六边形。`
+      : `来源数据发现 ${manifest.coverage.discovered} 条，已获取 ${manifest.coverage.fetched} 条，待获取 ${manifest.coverage.pending} 条。按月份筛选；并非全部报案记录。`;
     el("freshness").textContent =
       `快照：${new Date(data.retrieved_at).toLocaleString("zh-CN")}。更新流程由本地采集任务维护。`;
     map = new maplibregl.Map({

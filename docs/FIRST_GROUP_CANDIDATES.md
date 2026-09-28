@@ -29,8 +29,9 @@ snapshot with the independently validated Munich POI product, checks every
 upstream coordinate against the OSM municipality boundary, and writes a
 browser-shaped 13-month map candidate under `.runtime/`. It retains all rows
 but removes outside-city and nonpoint representatives from hex counts. It does
-not infer POI offence associations. `build.py --city munich` still stops before
-publication.
+not infer POI offence associations. The browser recognizes `?city=munich` for
+local inspection, but the normal city menu retains its in-progress label and no
+candidate files are committed. `build.py --city munich` still stops before publication.
 Cologne and Frankfurt can be staged once their checked OSM indexes are
 available locally with Geofabrik source provenance. `fetch_osm.py` uses the
 Regierungsbezirk Köln extract for Cologne and the Hessen extract for Frankfurt;

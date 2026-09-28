@@ -8,6 +8,7 @@ export interface City {
 /** Map settings may exist before a city has an approved public manifest. */
 export const mapViews = {
   berlin: {
+    id: "berlin", manifestCity: "Berlin",
     name: "柏林", latin: "BERLIN", center: [13.411, 52.508] as [number, number],
     manifestPath: "/safety/manifest.json", dataRoot: "/safety",
     example: "如 Kottbusser Tor、酒吧名称", aerial: true, kbo: true,
@@ -15,17 +16,29 @@ export const mapViews = {
     policeName: "Polizei Berlin", externalUrl: "https://polizeikarte.de/berlin",
   },
   hamburg: {
+    id: "hamburg", manifestCity: "Hamburg",
     name: "汉堡", latin: "HAMBURG", center: [9.9937, 53.5511] as [number, number],
     manifestPath: "/safety/cities/hamburg/manifest.json", dataRoot: "/safety/cities/hamburg",
     example: "如 Jungfernstieg、酒吧名称", aerial: false, kbo: false,
     policeUrl: "https://www.presseportal.de/blaulicht/nr/6337",
     policeName: "Polizei Hamburg", externalUrl: "https://polizeikarte.de/hamburg",
   },
+  munich: {
+    id: "munich", manifestCity: "München",
+    name: "慕尼黑", latin: "MÜNCHEN", center: [11.5755, 48.1374] as [number, number],
+    manifestPath: "/safety/cities/munich/manifest.json", dataRoot: "/safety/cities/munich",
+    example: "如 Marienplatz、酒吧名称", aerial: false, kbo: false,
+    policeUrl: "https://polizeikarte.de/muenchen",
+    policeName: "POLIZEIKARTE / Polizei München 原文",
+    externalUrl: "https://polizeikarte.de/muenchen",
+  },
 } as const;
 
 export function requestedMapView(search: string) {
-  return new URLSearchParams(search).get("city") === "hamburg"
-    ? mapViews.hamburg : mapViews.berlin;
+  const requested = new URLSearchParams(search).get("city");
+  return requested && Object.hasOwn(mapViews, requested)
+    ? mapViews[requested as keyof typeof mapViews]
+    : mapViews.berlin;
 }
 
 export const cityGroups: readonly { label: string; cities: readonly City[] }[] = [

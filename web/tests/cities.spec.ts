@@ -63,3 +63,74 @@ test("Hamburg preview reads only Hamburg data and shows city-specific sources", 
   expect(requested.some((url) => url.includes("/safety/manifest.json"))).toBe(false);
   expect(requested.every((url) => url.includes("/safety/cities/hamburg/"))).toBe(true);
 });
+
+test("Munich candidate preview stays on its city data and upstream attribution", async ({ page }) => {
+  const requested: string[] = [];
+  const empty = { type: "FeatureCollection", features: [] };
+  await page.route("https://tile.openstreetmap.org/**", (route) =>
+    route.fulfill({
+      contentType: "image/png",
+      headers: { "access-control-allow-origin": "*" },
+      body: Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGN4+fYlAAWCAsAGiqfBAAAAAElFTkSuQmCC",
+        "base64",
+      ),
+    }),
+  );
+  await page.route("http://127.0.0.1:4173/safety/**", (route) => {
+    const url = route.request().url();
+    requested.push(url);
+    if (url.endsWith("/cities/munich/manifest.json"))
+      return route.fulfill({
+        json: {
+          schema_version: 2,
+          city: "München",
+          generation: "0123456789abcdef-20260928T184246",
+          retrieved_at: "2026-09-28T18:42:46Z",
+          coverage: { discovered: 1, fetched: 1, pending: 0, failed: 0 },
+          months: { "2026-09": { count: 1 } },
+          categories: ["raub"],
+          tile_index: { pois: [], roads: [] },
+          tile_size: [0.04, 0.025],
+          catalog: { poi_types: {}, sources: [], coverage: [], exhaustive: false },
+          zones: { places: [], features: [], geometry_status: "not_applicable" },
+          metadata: {
+            zoom_threshold: 13,
+            semantic_basis: "owner_accepted_polizeikarte_upstream",
+            upstream_provider: "POLIZEIKARTE",
+            point_entries_in_city: 1,
+            known_outside_municipality: 0,
+          },
+        },
+      });
+    if (url.includes("/months/"))
+      return route.fulfill({
+        json: {
+          event_ids: ["polizeikarte:1"],
+          events: [{
+            id: "polizeikarte:1", title: "Test", category: "raub", month: "2026-09",
+            event_date: "2026-09-20", coordinates: [11.5755, 48.1374],
+            location_precision: "street", location_label: "München · Teststraße",
+            geocode_method: "polizeikarte_supplied_street_coordinate", poi_mentions: [],
+            source_url: "https://www.polizei.bayern.de/aktuelles/pressemitteilungen/1/index.html",
+          }],
+          hex: { overview: empty, detail: empty },
+          links: [],
+        },
+      });
+    if (url.endsWith("/roads-overview.json")) return route.fulfill({ json: empty });
+    return route.fulfill({ status: 404 });
+  });
+
+  await page.goto("/?city=munich");
+  await expect(page).toHaveTitle("CrimeMapsDE · 慕尼黑警情地图");
+  await expect(page.locator("h1")).toContainText("慕尼黑");
+  await expect(page.locator("#city-switch")).toHaveValue("munich");
+  await expect(page.locator("#stats .big")).toHaveText("1");
+  await expect(page.locator("#kbo")).toBeHidden();
+  await expect(page.locator("#basemap option[value='aerial']")).toHaveAttribute("disabled", "");
+  await expect(page.locator(".maplibregl-ctrl-attrib")).toContainText("POLIZEIKARTE");
+  await expect(page.locator("#coverage")).toContainText("1 条街道点通过慕尼黑市界核验");
+  expect(requested.some((url) => url.includes("/safety/manifest.json"))).toBe(false);
+  expect(requested.every((url) => url.includes("/safety/cities/munich/"))).toBe(true);
+});
