@@ -5,7 +5,7 @@ from shapely.geometry import LineString, Point, Polygon, mapping
 from shapely.ops import transform
 
 from crimemapsberlin.geocode import Gazetteer
-from crimemapsberlin.spatial import TO_METRIC, TO_WGS, associate, hexagons
+from crimemapsberlin.spatial import TO_METRIC, TO_WGS, associate, hexagons, metric_transforms
 
 X, Y = TO_METRIC(13.4, 52.5)
 
@@ -42,6 +42,86 @@ def place(name, kind="park", ident="osm/way/1", dx=0):
 def test_grammatical_and_typographic_variants(name, text):
     result = Gazetteer([road(name, [(0, 0), (100, 0)])]).locate(text)
     assert result["location_precision"] == "street" and result["coordinates"]
+
+
+def test_city_specific_projection_keeps_hamburg_street_in_hamburg():
+    to_metric, to_wgs = metric_transforms(25832)
+    gaz = Gazetteer(
+        [{"name": "Teststraße", "geometry": mapping(LineString([(10.0, 53.55), (10.001, 53.55)]))}],
+        to_metric=to_metric, to_wgs=to_wgs,
+    )
+    result = gaz.locate("In der Teststraße ereignete sich ein Raub.")
+    assert result["location_precision"] == "street"
+    assert 9.99 < result["coordinates"][0] < 10.01
+    assert 53.54 < result["coordinates"][1] < 53.56
+
+
+def test_singular_hamburg_tatort_heading_scopes_a_road_without_inventing_missing_person_scene():
+    to_metric, to_wgs = metric_transforms(25832)
+    x, y = to_metric(10.0, 53.55)
+    first = LineString([(x - 100, y), (x + 100, y)])
+    second = LineString([(x + 3000, y), (x + 3100, y)])
+    area = Polygon([(x - 250, y - 250), (x + 250, y - 250),
+                    (x + 250, y + 250), (x - 250, y + 250)])
+    gaz = Gazetteer(
+        [{"name": "Baumkamp", "geometry": mapping(transform(to_wgs, line))}
+         for line in (first, second)],
+        localities=[{"id": "winterhude", "name": "Winterhude", "admin_level": "10",
+                     "geometry": mapping(transform(to_wgs, area))}],
+        to_metric=to_metric, to_wgs=to_wgs,
+    )
+    body = "Tatzeit: 04.01.2026, 03:34 Uhr; Tatort: Hamburg-Winterhude, Baumkamp Am Haus wurde eingebrochen."
+    result = gaz.locate(body, title="Versuchter Wohnungseinbruch", district="Winterhude")
+    assert result["location_precision"] == "street"
+    assert result["location_selection"] == "official_tatort_heading"
+    assert transform(to_metric, Point(result["coordinates"])).distance(first) < 1
+    missing = gaz.locate(
+        "Ort: Hamburg-Winterhude, Baumkamp Eine Person wird vermisst.",
+        title="Vermisstenfahndung nach einer Person", district="Winterhude",
+    )
+    assert missing["coordinates"] is None
+    assert missing["geocode_method"] == "non_incident_report"
+    plural = gaz.locate("Tatorte: Hamburg-Winterhude, Baumkamp; Hamburg-Harburg, Nebenstraße")
+    assert plural["coordinates"] is None
+    assert plural["geocode_method"] == "multiple_official_scenes"
+    mixed = gaz.locate(
+        "Tatorte: Hamburg-St. Georg, Norderstraße; Hamburg-HafenCity, Überseeallee. "
+        "Der Verdächtige wurde am Neuer Wall festgenommen.",
+        title="Tataufklärung zweier Raube",
+    )
+    assert mixed["coordinates"] is None
+    assert mixed["geocode_method"] == "multiple_official_scenes"
+    assert "Neuer Wall" not in mixed["location_label"]
+    collision = gaz.locate(
+        body.replace("Tatort:", "Unfallort:"),
+        title="Unfall in Hamburg-Winterhude", district="Winterhude",
+    )
+    assert collision["location_selection"] == "official_tatort_heading"
+    assert collision["location_precision"] == "street"
+    invitation = gaz.locate(body, title="Einladung zum Fototermin", district="Winterhude")
+    assert invitation["geocode_method"] == "non_incident_report"
+    summary = gaz.locate(body, title="Bilanz der Silvesternacht", district="Winterhude")
+    assert summary["coordinates"] is None
+    assert summary["geocode_method"] == "multi_event_summary"
+    safety_balance = gaz.locate(body, title="Verkehrssicherheitsbilanz 2025", district="Winterhude")
+    assert safety_balance["coordinates"] is None
+    assert safety_balance["geocode_method"] == "multi_event_summary"
+
+
+def test_official_scene_heading_survives_later_arrest_in_same_sentence():
+    to_metric, to_wgs = metric_transforms(25832)
+    x, y = to_metric(10.0, 53.55)
+    street = LineString([(x - 80, y), (x + 80, y)])
+    gaz = Gazetteer(
+        [{"name": "Raboisen", "geometry": mapping(transform(to_wgs, street))}],
+        to_metric=to_metric, to_wgs=to_wgs,
+    )
+    result = gaz.locate(
+        "Tatzeit: 02.01.2026, 16:00 Uhr Tatort: Hamburg-Altstadt, Raboisen "
+        "Am Nachmittag wurde ein Verdächtiger festgenommen."
+    )
+    assert result["location_precision"] == "street"
+    assert result["location_selection"] == "official_tatort_heading"
 
 
 def test_full_narrative_and_contact_destination_roles():

@@ -73,13 +73,13 @@ export class DataClient {
   private months = new LRU<MonthData>(3);
   private available: { pois: Set<string>; roads: Set<string> };
   readonly base: string;
-  constructor(readonly manifest: Manifest) {
+  constructor(readonly manifest: Manifest, dataRoot = "/safety") {
     if (
       manifest.schema_version !== 2 ||
       !/^[a-f0-9]{16}-\d{8}T\d{6}$/.test(manifest.generation)
     )
       throw Error("不支持的数据清单");
-    this.base = `/safety/${manifest.generation}`;
+    this.base = `${dataRoot}/${manifest.generation}`;
     this.available = {
       pois: new Set(manifest.tile_index.pois),
       roads: new Set(manifest.tile_index.roads),

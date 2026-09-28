@@ -164,6 +164,10 @@ test("overview loads no POI geometry, month switching clears missing months", as
               },
               poi_mentions: ["park"],
               source_url: "https://www.berlin.de/",
+              reviewed_tags: [{
+                tag: "property_offence",
+                evidence_quote: "Das Fahrzeug wurde beschädigt.",
+              }],
             },
           ],
           hex: { overview: hex, detail: hex },
@@ -173,6 +177,10 @@ test("overview loads no POI geometry, month switching clears missing months", as
     return route.fulfill({ json: empty });
   });
   await page.goto("/");
+  await expect(page.locator("#city-switch optgroup")).toHaveCount(3);
+  await expect(page.locator("#city-switch option")).toHaveCount(14);
+  await expect(page.locator("#city-switch")).toHaveValue("berlin");
+  await expect(page.locator("#city-switch option[value='hamburg']")).toHaveAttribute("disabled", "");
   await expect(page.locator("#stats .big")).toHaveText("2");
   await expect(page.locator("#stats button")).toContainText("1 条位置不足");
   expect(requests.filter((url) => url.includes("/pois/"))).toHaveLength(0);
@@ -193,6 +201,8 @@ test("overview loads no POI geometry, month switching clears missing months", as
   await expect(page.locator("#selection")).toContainText(
     "本公告在网格中只计一条",
   );
+  await expect(page.locator("#selection")).toContainText("财产相关事件线索");
+  await expect(page.locator("#selection")).toContainText("Das Fahrzeug wurde beschädigt.");
   expect(errors).toEqual([]);
   expect(requests.filter((url) => url.includes("/months/"))).toHaveLength(1);
   await page.locator("#month").selectOption("08");

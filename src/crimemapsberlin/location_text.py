@@ -156,6 +156,10 @@ def location_clause(sentence, start, end):
 def mention_role(sentence, start, end):
     clause, offset, _ = location_clause(sentence, start, end)
     before = clause[max(0, offset - 100) : offset]
+    # A police scene heading can share a sentence with later arrest or response
+    # language; those later verbs must not demote the labelled incident scene.
+    if official_scene_heading(sentence, start):
+        return "primary"
     if re.search(
         r"hinweise\s+(?:nimmt|nehmen|erbitt|bitte)|(?:rufnummer|telefonnummer)|"
         r"(?:telefonisch|telefon)\s+unter|(?:kontakt|erreichbar)\s+unter",
@@ -228,6 +232,8 @@ def mention_role(sentence, start, end):
 
 def locative(sentence, start):
     before = sentence[max(0, start - 180) : start]
+    if official_scene_heading(sentence, start):
+        return True
     return bool(
         re.search(
             r"\b(?:befuhr|befuhren|überquerte|überquerten|lief|ging)\b.{0,160}?\b(?:die|den)\s+$",
@@ -251,10 +257,18 @@ def locative(sentence, start):
 def contextual_locality(sentence, start):
     return bool(
         re.search(
-            r"(?:\bin|\bortsteil|\bbezirk|\bstadtteil|\bstadtteilen|\bortsteilen)\s+(?:berlin-)?$",
+            r"(?:\bin|\bortsteil|\bbezirk|\bstadtteil|\bstadtteilen|\bortsteilen)\s+(?:(?:berlin|hamburg)-)?$",
             sentence[:start],
         )
     )
+
+
+def official_scene_heading(sentence, start):
+    """A singular police `Tatort:` or `Unfallort:` heading names a scene."""
+    return bool(re.search(
+        r"\b(?:tatort|unfallort):\s*(?:(?:hamburg|berlin)-[^,;]+,\s*)?$",
+        sentence[max(0, start - 180) : start],
+    ))
 
 
 def station_context(sentence, start, end, name):
@@ -301,6 +315,8 @@ INCIDENT_ACTIONS = re.compile(
 
 
 def incident_at_location(sentence, match):
+    if official_scene_heading(sentence, match["start"]):
+        return True
     clause, _, _ = location_clause(sentence, match["start"], match["end"])
     return bool(INCIDENT_ACTIONS.search(clause))
 

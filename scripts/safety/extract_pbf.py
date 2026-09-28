@@ -1,5 +1,6 @@
 """Local OSM extraction: POI geometry, named streets, compact road context."""
 
+import argparse
 import hashlib
 import json
 from pathlib import Path
@@ -126,10 +127,14 @@ class Places(osmium.SimpleHandler):
 
 
 if __name__ == "__main__":
-    src = ROOT / "berlin.osm.pbf"
+    p = argparse.ArgumentParser()
+    p.add_argument("--city", choices=("berlin", "hamburg"), default="berlin")
+    args = p.parse_args()
+    city_root = ROOT if args.city == "berlin" else ROOT / "cities" / args.city
+    src = city_root / f"{args.city}.osm.pbf"
     if not src.exists():
-        raise SystemExit("Run scripts/safety/fetch_osm.py first")
-    provenance = ROOT / "berlin.osm.source.json"
+        raise SystemExit(f"Run scripts/safety/fetch_osm.py --city {args.city} first")
+    provenance = city_root / f"{args.city}.osm.source.json"
     if not provenance.exists():
         raise SystemExit("Missing source manifest; fetch_osm.py records provenance")
     meta = json.loads(provenance.read_text())
@@ -137,12 +142,12 @@ if __name__ == "__main__":
         raise SystemExit("OSM input hash differs from provenance")
     places = Places()
     places.apply_file(str(src), locations=True)
-    dest = ROOT / "berlin-pois.json"
+    dest = city_root / f"{args.city}-pois.json"
     dest.write_text(json.dumps({"elements": places.elements}))
-    (ROOT / "streets.json").write_text(json.dumps(places.streets))
-    (ROOT / "localities.json").write_text(json.dumps(places.localities))
-    (ROOT / "addresses.json").write_text(json.dumps(places.addresses))
-    (ROOT / "roads.json").write_text(
+    (city_root / "streets.json").write_text(json.dumps(places.streets))
+    (city_root / "localities.json").write_text(json.dumps(places.localities))
+    (city_root / "addresses.json").write_text(json.dumps(places.addresses))
+    (city_root / "roads.json").write_text(
         json.dumps({"type": "FeatureCollection", "features": places.roads}, separators=(",", ":"))
     )
     meta.update(

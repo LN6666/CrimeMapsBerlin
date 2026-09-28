@@ -15,8 +15,15 @@ from shapely.geometry import Point, Polygon, mapping, shape
 from shapely.ops import transform
 from shapely.strtree import STRtree
 
-TO_METRIC = Transformer.from_crs(4326, 25833, always_xy=True).transform
-TO_WGS = Transformer.from_crs(25833, 4326, always_xy=True).transform
+def metric_transforms(epsg: int):
+    """Use each city's metric CRS; Berlin defaults below remain stable."""
+    return (
+        Transformer.from_crs(4326, epsg, always_xy=True).transform,
+        Transformer.from_crs(epsg, 4326, always_xy=True).transform,
+    )
+
+
+TO_METRIC, TO_WGS = metric_transforms(25833)
 HEX_SIZES = {"overview": 1100, "detail": 275}
 POI_RADIUS_M = 50
 MAPPABLE_PRECISIONS = {"point", "street", "place", "address"}
@@ -30,10 +37,10 @@ def collection(features):
     return {"type": "FeatureCollection", "features": features}
 
 
-def cell_for(lon: float, lat: float, size: float):
+def cell_for(lon: float, lat: float, size: float, *, to_metric=TO_METRIC, to_wgs=TO_WGS):
     if size <= 0 or not (-180 <= lon <= 180 and -90 < lat < 90):
         raise ValueError("Invalid point or hexagon size")
-    x, y = TO_METRIC(lon, lat)
+    x, y = to_metric(lon, lat)
     col = round(x / (1.5 * size))
     candidates = []
     height = math.sqrt(3) * size
@@ -46,16 +53,16 @@ def cell_for(lon: float, lat: float, size: float):
     polygon = Polygon(
         [(cx + size * math.cos(k * math.pi / 3), cy + size * math.sin(k * math.pi / 3)) for k in range(6)]
     )
-    return f"{size}:{i}:{j}", transform(TO_WGS, polygon)
+    return f"{size}:{i}:{j}", transform(to_wgs, polygon)
 
 
-def hexagons(events: list[dict], size: float):
+def hexagons(events: list[dict], size: float, *, to_metric=TO_METRIC, to_wgs=TO_WGS):
     groups = defaultdict(list)
     geometries = {}
     for e in events:
         if e["location_precision"] not in MAPPABLE_PRECISIONS or not e.get("coordinates"):
             continue
-        key, geometry = cell_for(*e["coordinates"], size)
+        key, geometry = cell_for(*e["coordinates"], size, to_metric=to_metric, to_wgs=to_wgs)
         groups[key].append(e)
         geometries[key] = geometry
     return collection(
@@ -116,7 +123,7 @@ def osm_geometry(element: dict):
     return None
 
 
-def pois_from_osm(payload: dict):
+def pois_from_osm(payload: dict, *, to_metric=TO_METRIC, to_wgs=TO_WGS):
     features = []
     rejected = Counter()
     for item in payload["elements"]:
@@ -147,7 +154,7 @@ def pois_from_osm(payload: dict):
         elif footprint_kind and geometry.geom_type != "Point":
             display, mode = geometry, "osm_footprint"
         else:
-            display = transform(TO_WGS, transform(TO_METRIC, center).buffer(POI_RADIUS_M, quad_segs=8))
+            display = transform(to_wgs, transform(to_metric, center).buffer(POI_RADIUS_M, quad_segs=8))
             mode = "50m_circle"
         place = feature(
             display,
@@ -190,7 +197,7 @@ def pois_from_osm(payload: dict):
     return collection(deduped), dict(rejected)
 
 
-def associate(events: list[dict], pois: dict, matching_types_only: bool = True):
+def associate(events: list[dict], pois: dict, matching_types_only: bool = True, *, to_metric=TO_METRIC):
     """Match to 50m circles or station footprint. Count each report once per POI.
 
     Street-level geocodes generate candidates, not confirmed venue attribution.
@@ -198,7 +205,7 @@ def associate(events: list[dict], pois: dict, matching_types_only: bool = True):
     """
     places = pois["features"]
     place_by_id = {f["properties"]["id"]: f for f in places}
-    metric = [transform(TO_METRIC, shape(f["geometry"])) for f in places]
+    metric = [transform(to_metric, shape(f["geometry"])) for f in places]
     tree = STRtree(metric)
     links = []
     seen = set()
@@ -225,7 +232,7 @@ def associate(events: list[dict], pois: dict, matching_types_only: bool = True):
                         )
                     )
             continue
-        point = transform(TO_METRIC, Point(event["coordinates"]))
+        point = transform(to_metric, Point(event["coordinates"]))
         for idx in tree.query(point, predicate="intersects"):
             p = places[int(idx)]["properties"]
             if p["geometry_mode"] == "footprint_missing":
@@ -250,7 +257,7 @@ def associate(events: list[dict], pois: dict, matching_types_only: bool = True):
     return links
 
 
-def build_months(events: list[dict], pois: dict):
+def build_months(events: list[dict], pois: dict, *, to_metric=TO_METRIC, to_wgs=TO_WGS):
     months = {}
     seen = set()
     for e in events:
@@ -264,8 +271,11 @@ def build_months(events: list[dict], pois: dict):
     return {
         month: {
             "event_ids": [e["id"] for e in rows],
-            "hex": {name: hexagons(rows, size) for name, size in HEX_SIZES.items()},
-            "links": associate(rows, pois),
+            "hex": {
+                name: hexagons(rows, size, to_metric=to_metric, to_wgs=to_wgs)
+                for name, size in HEX_SIZES.items()
+            },
+            "links": associate(rows, pois, to_metric=to_metric),
         }
         for month, rows in sorted(months.items())
     }

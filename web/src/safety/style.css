@@ -49,6 +49,9 @@ h4 {
   gap: 12px;
   align-items: end;
 }
+.city-switch select {
+  min-width: 150px;
+}
 label {
   display: block;
   font-size: 12px;

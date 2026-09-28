@@ -2,7 +2,7 @@
 
 柏林警方公开公告地图：按公布月份筛选、两级六边形统计、分类 POI、50 米小型场所圆，以及可以追溯到原文的附近类型匹配。
 
-CrimeMapsBerlin 是当前产品，替代原 CiviFlux 插件工程；不需要 Qwen、Jev、LLM、SUMO 或 QGIS。代码迁移见[PR #8](https://github.com/LN6666/CrimeMapsBerlin/pull/8)，默认分支状态以该 PR 的合并记录和 `main` 文件树为准。旧实现保留在 Git 历史，不属于当前产品。
+CrimeMapsBerlin 是当前产品，替代原 CiviFlux 插件工程；不需要 Qwen、Jev、SUMO 或 QGIS。官方来源抓取和地理计算仍是确定性程序；所有公告的抽取结果将逐条接受有原文证据的 AI 复核，并交由项目所有者检查、质问和确认，才允许新地图发布。代码迁移见[PR #8](https://github.com/LN6666/CrimeMapsBerlin/pull/8)。旧实现保留在 Git 历史，不属于当前产品。
 
 ## 运行
 
@@ -17,11 +17,33 @@ uv run python scripts/safety/fetch_osm.py
 uv run python scripts/safety/extract_pbf.py
 # 原文逐篇保存进度；首次补采可能需要数十分钟
 uv run python -m crimemapsberlin.collector --year 2026 --full
+# 抽取候选并进入逐条复核队列；首次运行会拦截尚未复核的发布
 uv run python scripts/safety/build.py
+uv run python scripts/safety/review_queue.py status
 npm --prefix web run dev
 ```
 
-打开 http://127.0.0.1:5173 。默认标准街道底图，可切换柏林 2026 年航空影像或本地简图；放大后按视野请求 POI。日常执行 `uv run python scripts/safety/update.py`；定时配置见 [更新维护](docs/UPDATES.md)。
+打开 http://127.0.0.1:5173 。目前公开地图只有柏林；顶部城市选择器按已确定的 14 城、三个仓库 5/5/4 顺序列出，其余城市标为“制作中”，尚无可用地图时不会跳到错误页面。默认标准街道底图，可切换柏林 2026 年航空影像或本地简图；放大后按视野请求 POI。日常执行 `uv run python scripts/safety/update.py`；定时配置和复核门禁见 [更新维护](docs/UPDATES.md)。
+
+汉堡可独立建立**本地候选**，不会生成公开地图：
+
+```sh
+uv run python -m crimemapsberlin.hamburg --year 2026 --full
+uv run python scripts/safety/fetch_osm.py --city hamburg
+uv run python scripts/safety/extract_pbf.py --city hamburg
+uv run python scripts/safety/city_candidates.py --city hamburg
+uv run python scripts/safety/review_queue.py --city hamburg status
+```
+
+仓库按已选城市顺序分为三组，名称保留产品前缀及清晰的城市序号：
+
+| GitHub 仓库名 | 城市 | 当前状态 |
+| --- | --- | --- |
+| `CrimeMapsBerlin` | 柏林、汉堡、慕尼黑、科隆、法兰克福 | 现有默认入口；目前只公开柏林地图 |
+| [CrimeMapsDE-Cities-06-10](https://github.com/LN6666/CrimeMapsDE-Cities-06-10) | 杜塞尔多夫、斯图加特、莱比锡、多特蒙德、不来梅 | 已建仓；前两城只有来源采集代码 |
+| [CrimeMapsDE-Cities-11-14](https://github.com/LN6666/CrimeMapsDE-Cities-11-14) | 埃森、德累斯顿、汉诺威、纽伦堡 | 已建仓；只有埃森来源采集代码 |
+
+两仓库的描述和首页列出准确城市、数据来源与未发布状态。代码及数据路径使用稳定英文小写城市 slug；已批准的派生地图数据才使用城市路径和带版本的 generation，原文、采集缓存、复核账本及未批准的候选数据不上传。
 
 ## 功能和当前状态
 
@@ -36,6 +58,8 @@ npm --prefix web run dev
 - 原文确定性关键词 + 空间匹配，同类型附近 POI 加深；具名场所只关联对应对象。近似位置产生的是候选关联，不是店内案发证明。
 - 柏林 kbO 七个区域有官方说明和边界图链接；精确矢量边界仍待导入，页面不会伪造法定边界。
 - 欧洲警方来源目录已有部分国家材料；覆盖清单明确标记未完成的国家，不能视作全欧洲穷尽检索。
+- 汉堡已完成官方新闻室公告与 OSM 道路／场所的本地采集，并用独立米制坐标系做保守候选定位；部分公告已逐篇复核，存疑项目继续阻止发布。慕尼黑、科隆、法兰克福的来源适配留在本仓库；杜塞尔多夫、斯图加特和埃森的代码已分入对应城市组仓库。均未形成可发布地图；其余城市仍在来源核验或工程起步阶段。当前具体数量和障碍见[交接状态](docs/HANDOFF.md)。
+- AI 复核支持“可能仇恨犯罪”等有原文依据的多标签；该标签只是线索，不等于警方最终定性。当前地图尚无经过逐条复核和所有者确认的新发布批次，也没有犯罪／仇恨风险指数；定义和边界见[数据说明](docs/DATA.md)。
 
 警方公告是选择发布的事件，不是全量报案数据。月份是**公布月份**；没有办案结果时显示未知。没有可靠地点时保留在未定位列表，不填入“零案件”网格。自动类别识别有“未分类”出口，交通及其他公告也可以单独筛选。
 
@@ -54,4 +78,4 @@ npm test
 - [来源、许可和定位规则](docs/DATA.md)
 - [用户要求与交接清单](docs/HANDOFF.md)
 
-应用代码为 Apache-2.0；OSM 派生数据受 ODbL 约束。原文缓存、城市数据、生成的地图数据、账号信息均不提交 Git。公共仓库 CI 使用合成测试输入，不需要账号或付费 API。
+应用代码为 Apache-2.0；OSM 派生数据受 ODbL 约束。原文缓存、城市数据、生成的地图数据、账号信息均不提交 Git。公共仓库 CI 使用合成测试输入，不需要账号或付费 API。AI 复核队列及结果目前只保存在本机；Codex 桌面端已安排每三天继续有界批次的逐条复核，只提交结果供所有者质询，不自动批准或发布，也未使用付费模型接口。

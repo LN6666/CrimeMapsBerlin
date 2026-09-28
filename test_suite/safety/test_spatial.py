@@ -4,7 +4,9 @@ from shapely.geometry import Point, shape
 from shapely.ops import transform
 
 from crimemapsberlin.geocode import Gazetteer
-from crimemapsberlin.spatial import TO_METRIC, associate, cell_for, hexagons, pois_from_osm
+from crimemapsberlin.spatial import (
+    TO_METRIC, associate, cell_for, hexagons, metric_transforms, pois_from_osm,
+)
 from crimemapsberlin.tiles import tiles
 
 
@@ -27,6 +29,24 @@ def test_hex_metric_geometry_and_count():
     assert math.isclose(metric.area, 3 * math.sqrt(3) / 2 * 275**2, rel_tol=1e-7)
     assert hexagons([event(), event("district")], 275)["features"][0]["properties"]["count"] == 1
     assert key == cell_for(13.4, 52.5, 275)[0]
+
+
+def test_hamburg_geometry_uses_its_own_metric_crs():
+    to_metric, to_wgs = metric_transforms(25832)
+    _, polygon = cell_for(10.0, 53.55, 275, to_metric=to_metric, to_wgs=to_wgs)
+    assert polygon.covers(Point(10.0, 53.55))
+    assert math.isclose(
+        transform(to_metric, polygon).area,
+        3 * math.sqrt(3) / 2 * 275**2,
+        rel_tol=1e-7,
+    )
+    fc, _ = pois_from_osm(
+        {"elements": [{"type": "node", "id": 1, "lon": 10.0, "lat": 53.55,
+                       "tags": {"amenity": "bar"}}]},
+        to_metric=to_metric, to_wgs=to_wgs,
+    )
+    circle = transform(to_metric, shape(fc["features"][0]["geometry"]))
+    assert math.isclose(circle.bounds[2] - to_metric(10.0, 53.55)[0], 50, abs_tol=0.01)
 
 
 def test_circles_station_geometry_and_type_matching():

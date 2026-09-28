@@ -7,10 +7,12 @@ Polizei Berlin archive → collector → SQLite reports + revision hashes
 OSM extract → checksum + osmium extraction → local street index / POI geometry
 SQLite + street index → geocode / keyword rules → events + review queue
 Events + POIs → metric hexagons / associations → monthly JSON + spatial tiles
-Versioned files → atomic manifest swap → MapLibre browser
+Every candidate → source/body hash + extraction hash → evidence-backed AI review ledger
+Current review packet → owner inspection, questions and explicit approval
+Only approved versioned files → atomic manifest swap → MapLibre browser
 ```
 
-`collector.py` owns transport, canonical police article IDs, HTTP validators, retry scheduling and database checkpoints. `feed.py` contains official article-body/keyword extraction. `location_text.py` owns German name variants, prefix-factored matching and narrative roles. `geocode.py` resolves those mentions against street, place, locality and address indexes, with explicit review outcomes. `spatial.py` owns EPSG:25833 geometry, hexes, 50 m circles and typed candidate associations. `tiles.py` owns display partitioning. `build.py` composes modules into a static snapshot. `update.py` orchestrates jobs without importing browser concerns.
+`collector.py` owns Berlin transport, canonical police article IDs, HTTP validators, retry scheduling and database checkpoints. `hamburg.py` adapts the Hamburg police newsroom into the same local article schema. `munich.py`, `cologne.py` and `frankfurt.py` stage first-group source intake only. Munich accepts separately supplied copies because the official site's robots rules currently deny automated retrieval. The independent [group 2](https://github.com/LN6666/CrimeMapsDE-Cities-06-10) and [group 3](https://github.com/LN6666/CrimeMapsDE-Cities-11-14) repositories own Düsseldorf/Stuttgart and Essen intake, respectively; none of those adapters creates an approved city map. `feed.py` contains official article-body/keyword extraction. `location_text.py` owns German name variants, prefix-factored matching and narrative roles. `geocode.py` resolves those mentions against street, place, locality and address indexes, with explicit review outcomes. `spatial.py` owns city-selected metric geometry, hexes, 50 m circles and typed candidate associations (Berlin EPSG:25833, Hamburg EPSG:25832). `tiles.py` owns display partitioning. `city_candidates.py` stages Hamburg extraction only in ignored local storage. `build.py` supports city-selected Berlin/Hamburg snapshots but stops before publication without all-current source-backed reviews and owner approval. `update.py` orchestrates Berlin jobs without importing browser concerns.
 
 ## Contracts
 
@@ -21,6 +23,8 @@ Unresolved long/disconnected roads may additionally carry `candidate_road_geomet
 The verified PBF extraction also produces local-only neighbourhood boundaries and address lookup rows. Real POI location geometry is kept separate from display circles; it is removed from published tiles to avoid duplicating heavy geometry. The browser never downloads the full address/locality index. `audit_geocodes.py` compares frozen previous events with current rules on identical article hashes, records gained/lost mappings and large moves, and refuses changed sources. These mapping counts measure coverage, not accuracy.
 
 Publication v2: `manifest.json` references a unique generation directory. Its month index contains counts, with detailed reports, hexes and associations in one file per month. Roads and POIs use fixed geographic tiles (0.04° × 0.025°), for transport only; metric calculations never use degree distances. Files are written before the manifest is atomically replaced. Readers can finish fetching the previous generation. The database is read inside one transaction so counts and records are consistent even while the crawler runs.
+
+The owner selected a review of **every** announcement, then inspection and questioning of the results before publication. `build.py` writes a local candidate file and checks `review.sqlite` before the manifest swap. A review is keyed to city, official source ID, normalized original-body SHA-256, extraction SHA-256 and review-rule version. A changed original or extraction invalidates the old verdict. `supported` requires a verbatim source excerpt and an explanation; `uncertain` and `needs_correction` remain blocked. A separate owner approval binds the complete current candidate set and AI decisions. The review packet also displays changes from the previous published locations so the owner can question them. These checks confirm provenance and completeness, but a model can still agree with an incorrect coordinate. The source and extracted text are untrusted inputs, not instructions to the reviewing agent. The previous publication stays available while backlog remains. An identical approved candidate does not create another generation.
 
 ## Browser budget controls
 
@@ -37,4 +41,4 @@ These are implemented resource bounds, not a blanket frame-rate guarantee on all
 
 ## Extension rules
 
-New sources implement an adapter returning canonical IDs and provenance. Do not place scraping logic in UI code. Add new categories in the source registry and deterministic rules; keep uncertainty visible. A later geocoder can replace the gazetteer behind the same event contract. Machine learning is optional and must justify improved measured quality over the deterministic baseline.
+New sources implement an adapter returning canonical IDs and provenance. Do not place scraping logic in UI code. Add new categories in the source registry and deterministic rules; keep uncertainty visible. A later geocoder can replace the gazetteer behind the same event contract. Model-assisted review must be tested against hand-labeled cases before claiming a measured accuracy gain over the deterministic baseline.

@@ -28,6 +28,11 @@ export interface PoliceEvent {
   poi_mentions: string[];
   mention_basis: string;
   outcome: string;
+  reviewed_tags?: {
+    tag: string;
+    basis?: string;
+    evidence_quote: string;
+  }[];
 }
 export interface Link {
   event_id: string;

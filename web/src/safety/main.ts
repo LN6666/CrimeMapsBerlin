@@ -20,15 +20,49 @@ import type { Manifest } from "./data";
 import { Basemaps, basemapLabels } from "./basemaps";
 import type { BasemapId } from "./basemaps";
 import { externalMaps, externalMapsDirectory } from "./external-maps";
+import { cityGroups, mapViews, requestedMapView } from "./cities";
+
+const cityView = requestedMapView(window.location.search);
+const isHamburg = cityView === mapViews.hamburg;
+
+const reviewedTagLabels: Record<string, string> = {
+  violent_assault: "暴力袭击线索",
+  robbery: "抢劫线索",
+  threat: "威胁线索",
+  sexual_offence: "性犯罪线索",
+  property_offence: "财产相关事件线索",
+  possible_hate_crime: "可能仇恨犯罪",
+};
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
-app.innerHTML = `<header><div><span class="brand">CRIMEMAPSBERLIN</span><h1>柏林 · 警情与城市场所</h1></div><div class="toolbar"><label>年份<select id="year" aria-label="年份"></select></label><label>月份<select id="month" aria-label="月份"></select></label><button id="overview">全市概览</button><button id="sources">警方来源</button></div></header>
-<main><aside class="controls"><p class="eyebrow">BERLIN / PUBLIC REPORTS</p><h2>看事件，也看周边</h2><p id="coverage">读取本地数据…</p><nav id="external-maps" class="external-maps" aria-label="外部警情网站"></nav><label class="search-label">查找柏林场所<input id="search" placeholder="如 Kottbusser Tor、酒吧名称" autocomplete="off"></label><div id="search-results"></div><label>事件类别<select id="category"><option value="all">全部警方公告</option></select></label><div class="rule"></div><h3>六边形 · 公告数量</h3><div class="ramp"></div><div class="ends"><span>少</span><span>多</span></div><p id="resolution"></p><label class="toggle"><input id="hex-toggle" type="checkbox" checked> 显示六边形</label><label class="toggle"><input id="candidate-roads-toggle" type="checkbox" checked> 显示待定位道路范围</label><p class="hint"><span class="road-swatch" aria-hidden="true"></span>橙色虚线仅表示原文提到的道路候选范围，具体案发位置未知；不计入六边形或 POI 关联。</p><h3>周边 POI</h3><div id="poi-filters"></div><label class="toggle"><input id="highlight" type="checkbox" checked> 报告提及类型 + 附近匹配时加深</label><p class="hint">小型场所：50 米圆。车站：已有面状范围；空心点表示范围缺失。加深表示关联记录数。</p><div class="rule"></div><button id="kbo">查看柏林 kbO 官方区域</button><p class="hint">警方划定区域与事件网格分别展示。</p><p id="freshness" class="hint"></p></aside>
-<section class="map-wrap"><div id="map" aria-label="柏林警情交互地图"></div><div class="map-label"><span class="dot"></span><span id="map-status">正在准备地图</span></div><div class="basemap-picker"><label>底图<select id="basemap" aria-label="底图" disabled><option value="street">标准街道</option><option value="aerial">航空影像（2026）</option><option value="local">本地简图</option></select></label><div id="basemap-error" role="status" hidden><span></span><button id="basemap-fallback">使用本地简图</button></div></div><div class="map-note">浅色 POI 是城市设施，不代表被警方认定为高发场所</div></section>
+app.innerHTML = `<header><div><span class="brand">CRIMEMAPSBERLIN</span><h1>${cityView.name} · 警情与城市场所</h1></div><div class="toolbar"><label class="city-switch">选择城市<select id="city-switch" aria-label="选择城市"></select></label><label>年份<select id="year" aria-label="年份"></select></label><label>月份<select id="month" aria-label="月份"></select></label><button id="overview">全市概览</button><button id="sources">警方来源</button></div></header>
+<main><aside class="controls"><p class="eyebrow">${cityView.latin} / PUBLIC REPORTS</p><h2>看事件，也看周边</h2><p id="coverage">读取本地数据…</p><nav id="external-maps" class="external-maps" aria-label="外部警情网站"></nav><label class="search-label">查找${cityView.name}场所<input id="search" placeholder="${cityView.example}" autocomplete="off"></label><div id="search-results"></div><label>事件类别<select id="category"><option value="all">全部警方公告</option></select></label><div class="rule"></div><h3>六边形 · 公告数量</h3><div class="ramp"></div><div class="ends"><span>少</span><span>多</span></div><p id="resolution"></p><label class="toggle"><input id="hex-toggle" type="checkbox" checked> 显示六边形</label><label class="toggle"><input id="candidate-roads-toggle" type="checkbox" checked> 显示待定位道路范围</label><p class="hint"><span class="road-swatch" aria-hidden="true"></span>橙色虚线仅表示原文提到的道路候选范围，具体案发位置未知；不计入六边形或 POI 关联。</p><h3>周边 POI</h3><div id="poi-filters"></div><label class="toggle"><input id="highlight" type="checkbox" checked> 报告提及类型 + 附近匹配时加深</label><p class="hint">小型场所：50 米圆。车站：已有面状范围；空心点表示范围缺失。加深表示关联记录数。</p><div class="rule"></div><button id="kbo">查看柏林 kbO 官方区域</button><p class="hint">警方划定区域与事件网格分别展示。</p><p id="freshness" class="hint"></p></aside>
+<section class="map-wrap"><div id="map" aria-label="${cityView.name}警情交互地图"></div><div class="map-label"><span class="dot"></span><span id="map-status">正在准备地图</span></div><div class="basemap-picker"><label>底图<select id="basemap" aria-label="底图" disabled><option value="street">标准街道</option><option value="aerial">航空影像（2026）</option><option value="local">本地简图</option></select></label><div id="basemap-error" role="status" hidden><span></span><button id="basemap-fallback">使用本地简图</button></div></div><div class="map-note">浅色 POI 是城市设施，不代表被警方认定为高发场所</div></section>
 <aside class="details"><div id="stats"></div><div id="selection"><h2>选择一个六边形或 POI</h2><p>查看该区域的事件、类别，以及可以追溯的警方原文。</p></div></aside></main>
 <dialog id="drawer"><button id="close-dialog" class="close">关闭</button><div id="drawer-content"></div></dialog>`;
 const el = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
+const citySelect = el<HTMLSelectElement>("city-switch");
+for (const group of cityGroups) {
+  const section = document.createElement("optgroup");
+  section.label = group.label;
+  for (const city of group.cities) {
+    const option = new Option(
+      city.name + (city.href ? "" : " · 制作中"),
+      city.id,
+    );
+    option.disabled = !city.href && city.id !== (isHamburg ? "hamburg" : "berlin");
+    section.append(option);
+  }
+  citySelect.append(section);
+}
+citySelect.value = isHamburg ? "hamburg" : "berlin";
+citySelect.onchange = () => {
+  const destination = cityGroups.flatMap((group) => group.cities).find(
+    (city) => city.id === citySelect.value,
+  );
+  if (destination?.href) window.location.assign(destination.href);
+};
 const text = (tag: string, value: string, parent: HTMLElement) => {
   const n = document.createElement(tag);
   n.textContent = value;
@@ -43,7 +77,13 @@ function link(parent: HTMLElement, label: string, url: string) {
   a.target = "_blank";
   a.rel = "noopener noreferrer";
 }
-link(el("external-maps"), "POLIZEIKARTE 柏林 ↗", externalMaps[0].url);
+link(el("external-maps"), `POLIZEIKARTE ${cityView.name} ↗`, cityView.externalUrl);
+if (!cityView.kbo) {
+  el("kbo").hidden = true;
+  el("kbo").nextElementSibling?.remove();
+}
+if (!cityView.aerial)
+  el<HTMLSelectElement>("basemap").querySelector<HTMLOptionElement>("option[value='aerial']")!.disabled = true;
 text("button", "德国其他城市", el("external-maps")).onclick =
   externalMapsDialog;
 let data: Bundle;
@@ -124,7 +164,16 @@ function listReports(parent: HTMLElement, ids: string[]) {
         card,
       );
     text("h4", e.title, card);
+    for (const tag of e.reviewed_tags ?? []) {
+      const label = reviewedTagLabels[tag.tag];
+      if (label)
+        text("small", `${label}（AI 线索，非警方定性）· 原文依据：“${tag.evidence_quote}”`, card);
+    }
     text("p", e.location_label, card);
+    if (e.geocode_method === "multiple_official_scenes")
+      text("small", "原文列出多个案发地点；本站不为整篇公告指定单一点位。", card);
+    if (e.geocode_method === "multi_event_summary")
+      text("small", "多起事件汇总公告；没有可归属整篇公告的单一点位。", card);
     if (e.location_selection === "first_explicit_incident_scene")
       text(
         "small",
@@ -418,7 +467,7 @@ function sourcesDialog() {
   );
   text(
     "p",
-    "一般预防建议用于场所分类；它不把柏林同类商户自动标记为犯罪高发。",
+    `一般预防建议用于场所分类；它不把${cityView.name}同类商户自动标记为犯罪高发。`,
     p,
   );
   for (const s of data.catalog.sources) {
@@ -518,13 +567,15 @@ async function loadViewport() {
 }
 async function start() {
   try {
-    const response = await fetch("/safety/manifest.json", {
+    const response = await fetch(cityView.manifestPath, {
       cache: "no-store",
     });
     if (!response.ok)
       throw Error("未找到有效的本地警情数据，请运行数据构建命令。");
     manifest = (await response.json()) as Manifest;
-    client = new DataClient(manifest);
+    if (manifest.city !== (isHamburg ? "Hamburg" : "Berlin"))
+      throw Error("城市数据清单与所选城市不匹配。");
+    client = new DataClient(manifest, cityView.dataRoot);
     data = {
       ...manifest,
       schema_version: 1,
@@ -568,7 +619,7 @@ async function start() {
       `快照：${new Date(data.retrieved_at).toLocaleString("zh-CN")}。更新流程由本地采集任务维护。`;
     map = new maplibregl.Map({
       container: "map",
-      center: [13.411, 52.508],
+      center: cityView.center,
       zoom: 12.1,
       attributionControl: false,
       maxTileCacheSize: 64,
@@ -595,7 +646,7 @@ async function start() {
       new maplibregl.AttributionControl({
         compact: false,
         customAttribution:
-          '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">场所/道路：© OpenStreetMap contributors</a> / <a href="https://www.geofabrik.de/" target="_blank" rel="noopener noreferrer">Geofabrik</a> · <a href="https://www.berlin.de/polizei/polizeimeldungen/" target="_blank" rel="noopener noreferrer">警情：Polizei Berlin</a>',
+          `<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">场所/道路：© OpenStreetMap contributors</a> / <a href="https://www.geofabrik.de/" target="_blank" rel="noopener noreferrer">Geofabrik</a> · <a href="${cityView.policeUrl}" target="_blank" rel="noopener noreferrer">警情：${cityView.policeName}</a>`,
       }),
     );
     map.once("load", async () => {
@@ -764,13 +815,13 @@ async function start() {
     for (const id of ["year", "month"])
       el(id).onchange = () => void loadMonth();
     el("overview").onclick = () =>
-      map.flyTo({ center: [13.411, 52.508], zoom: 10.5 });
+      map.flyTo({ center: cityView.center, zoom: 10.5 });
     el("sources").onclick = sourcesDialog;
-    el("kbo").onclick = kboDialog;
+    if (cityView.kbo) el("kbo").onclick = kboDialog;
     freshnessTimer = setInterval(async () => {
       if (document.hidden) return;
       try {
-        const r = await fetch("/safety/manifest.json", { cache: "no-store" });
+        const r = await fetch(cityView.manifestPath, { cache: "no-store" });
         if (!r.ok) return;
         const latest = (await r.json()) as Manifest;
         if (latest.generation !== manifest.generation) {

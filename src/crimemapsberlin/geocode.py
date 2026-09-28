@@ -23,21 +23,29 @@ from .location_text import (
     name_aliases,
     narrative_sentences,
     normalize,
+    official_scene_heading,
     preparatory_location,
     station_context,
     venue_context,
 )
 from .spatial import TO_METRIC, TO_WGS
 
-GEOCODE_VERSION = "4"
+GEOCODE_VERSION = "5"
+MULTI_EVENT_SUMMARY = re.compile(r"bilanz")
+MULTIPLE_OFFICIAL_SCENES = re.compile(r"\b(?:tatorte|unfallorte)\s*:", re.I)
 NON_INCIDENT = re.compile(
-    r"bilanz|allgemeinverfügung|aktionstag|videoschutz|präventions|speedweek|"
-    r"gemeinsam für mehr sicherheit|stadtweite durchsuchungs|koordinierte internationale kontroll"
+    r"allgemeinverfügung|aktionstag|videoschutz|präventions|speedweek|"
+    r"gemeinsam für mehr sicherheit|stadtweite durchsuchungs|koordinierte internationale kontroll|"
+    r"vermisstenfahndung|einladung|kriminalstatistik|verkehrshinweis|pressekonferenz|fototermin|"
+    r"bilanz einer aktionswoche"
 )
 
 
 class Gazetteer:
-    def __init__(self, streets, places=None, localities=None, addresses=None):
+    def __init__(self, streets, places=None, localities=None, addresses=None,
+                 *, to_metric=TO_METRIC, to_wgs=TO_WGS):
+        self.to_metric = to_metric
+        self.to_wgs = to_wgs
         groups = defaultdict(list)
         for row in streets:
             name = normalize(row.get("name", ""))
@@ -56,7 +64,7 @@ class Gazetteer:
         )
         self.street_cache = {}
         self.localities = {
-            str(row.get("id", i)): dict(row, metric=transform(TO_METRIC, shape(row["geometry"])))
+            str(row.get("id", i)): dict(row, metric=transform(self.to_metric, shape(row["geometry"])))
             for i, row in enumerate(localities or [])
         }
         self.locality_matcher = NameMatcher(
@@ -73,7 +81,7 @@ class Gazetteer:
                 variants = name_aliases(name)
                 if p["kind"] == "station":
                     variants |= {
-                        re.sub(r"^(?:berlin[- ]|[us](?:\+u)?[- ](?:bahnhof\s+)?|bahnhof\s+)", "", v)
+                        re.sub(r"^(?:(?:berlin|hamburg)[- ]|[us](?:\+u)?[- ](?:bahnhof\s+)?|bahnhof\s+)", "", v)
                         for v in variants
                     }
                 for alias in variants:
@@ -84,9 +92,14 @@ class Gazetteer:
             self.addresses[(normalize(row["street"]), normalize(row["number"]).replace(" ", ""))].append(row)
 
     def _scope(self, district, intro):
+        heading = normalize(district)
+        heading_neighbourhoods = [
+            row for row in self.localities.values()
+            if row.get("admin_level") == "10" and normalize(row["name"]) == heading
+        ]
         districts = [
             self.localities[i]
-            for _, ids in self.locality_matcher.matches(normalize(district))
+            for _, ids in self.locality_matcher.matches(heading)
             for i in sorted(ids)
             if self.localities[i].get("admin_level") == "9"
         ]
@@ -114,7 +127,7 @@ class Gazetteer:
                 row = self.localities[ident]
                 # "In Mitte/Spandau/Pankow" can mean the district, rather than its namesake Ortsteil.
                 explicit_neighbourhood = re.search(
-                    r"\b(?:ortsteil|stadtteil)\s+(?:berlin-)?$", intro[: match.start()]
+                    r"\b(?:ortsteil|stadtteil)\s+(?:(?:berlin|hamburg)-)?$", intro[: match.start()]
                 )
                 if not explicit_neighbourhood and any(
                     normalize(d["name"]) == normalize(row["name"]) for d in districts
@@ -127,7 +140,9 @@ class Gazetteer:
         # A district heading with the same name as a neighbourhood must not select that neighbourhood.
         if neighbourhoods:
             return neighbourhoods[0]
-        return min(districts, key=lambda r: r["metric"].area) if districts else None
+        if districts:
+            return min(districts, key=lambda r: r["metric"].area)
+        return heading_neighbourhoods[0] if len(heading_neighbourhoods) == 1 else None
 
     def _scene_scope(self, district, sentences, selected_index, selected):
         # A journey may cross neighbourhoods: retain explicit context consistent with the scene.
@@ -154,7 +169,7 @@ class Gazetteer:
         if match["kind"] == "street":
             return not self._road(match["key"], scope).is_empty
         feature = self.places[match["key"]]
-        geometry = transform(TO_METRIC, shape(feature.get("location_geometry", feature["geometry"])))
+        geometry = transform(self.to_metric, shape(feature.get("location_geometry", feature["geometry"])))
         return scope["metric"].buffer(30).intersects(geometry)
 
     def _junction_anchors(self, linked, matches, sentence, previous, previous_index):
@@ -188,7 +203,7 @@ class Gazetteer:
     def _road(self, name, scope):
         key = name, scope["id"] if scope else None
         if key not in self.street_cache:
-            road = transform(TO_METRIC, self.names[name])
+            road = transform(self.to_metric, self.names[name])
             if scope:
                 # Street centre lines can fall just outside an administrative street-side boundary.
                 road = road.intersection(scope["metric"].buffer(30))
@@ -281,8 +296,17 @@ class Gazetteer:
             location_object_ids=[],
             geocode_evidence=[],
         )
-        if NON_INCIDENT.search(normalize(title)):
+        normalized_title = normalize(title)
+        if NON_INCIDENT.search(normalized_title):
             result["geocode_method"] = "non_incident_report"
+            return result
+        if MULTI_EVENT_SUMMARY.search(normalized_title):
+            result["geocode_method"] = "multi_event_summary"
+            return result
+        if MULTIPLE_OFFICIAL_SCENES.search(body):
+            # A plural official scene heading names more than one possible map
+            # location. Later arrests or recovered property cannot select one.
+            result["geocode_method"] = "multiple_official_scenes"
             return result
         selected = []
         selected_index = 0
@@ -358,7 +382,11 @@ class Gazetteer:
         result["excluded_location_context"] = ignored
         if scene_options:
             selected_index, selected = scene_options[0]
-            result["location_selection"] = "first_explicit_incident_scene"
+            result["location_selection"] = (
+                "official_tatort_heading"
+                if any(official_scene_heading(sentences[selected_index], m["start"]) for m in selected)
+                else "first_explicit_incident_scene"
+            )
             keys = {(m["kind"], m["key"]) for m in selected}
             result["other_scene_candidates"] = [
                 dict(name=m["alias"], sentence_index=i)
@@ -433,7 +461,7 @@ class Gazetteer:
             number = re.match(r"\s+(?:hausnummer\s+|nr\.?\s+)?(\d+[a-z]?)\b", sentence[match["end"] :])
             if number:
                 addresses = self.addresses.get((road_names[0], number[1]), [])
-                points = [transform(TO_METRIC, Point(a["coordinates"])) for a in addresses]
+                points = [transform(self.to_metric, Point(a["coordinates"])) for a in addresses]
                 points = [p for p in points if not scope or scope["metric"].covers(p)]
                 if points and self._span(unary_union(points)) <= 50:
                     point = min(points, key=lambda p: (p.x, p.y))
@@ -471,8 +499,7 @@ class Gazetteer:
         point = nearest_points(connected.representative_point(), road)[1]
         return self._located(result, point, "street_representative", "street", self._span(road))
 
-    @staticmethod
-    def _candidate_road(result, road):
+    def _candidate_road(self, result, road):
         """Display matched road parts without inventing an incident point or filling gaps.
 
         The input has already passed scene selection and locality clipping. Display-only
@@ -487,7 +514,7 @@ class Gazetteer:
         parts = lines(road)
         if parts:
             geometry = line_merge(unary_union(parts)).simplify(5, preserve_topology=True)
-            result["candidate_road_geometry"] = mapping(transform(TO_WGS, geometry))
+            result["candidate_road_geometry"] = mapping(transform(self.to_wgs, geometry))
         return result
 
     @staticmethod
@@ -565,13 +592,12 @@ class Gazetteer:
             result["geocode_method"] = "street_section_review"
             return result
         point = max(sections, key=lambda line: line.length).interpolate(0.5, normalized=True)
-        result["reported_location_geometry"] = mapping(transform(TO_WGS, geometry))
+        result["reported_location_geometry"] = mapping(transform(self.to_wgs, geometry))
         result["location_label"] = f"{main} (zwischen {' / '.join(boundaries)})"
         return self._located(result, point, "reported_street_section", "street", self._span(geometry))
 
-    @staticmethod
-    def _located(result, point, method, precision, extent):
-        point = transform(TO_WGS, point)
+    def _located(self, result, point, method, precision, extent):
+        point = transform(self.to_wgs, point)
         result.update(
             coordinates=[round(point.x, 7), round(point.y, 7)],
             location_precision=precision,
@@ -586,7 +612,7 @@ class Gazetteer:
             f = self.places[ident]
             # Use the original footprint/point, never the synthetic 50m display circle.
             geometry = shape(f.get("location_geometry", f["geometry"]))
-            metric = transform(TO_METRIC, geometry)
+            metric = transform(self.to_metric, geometry)
             if scope and not scope["metric"].buffer(30).intersects(metric):
                 continue
             if road_names and not any(self._road(n, scope).distance(metric) <= 100 for n in road_names):
@@ -616,16 +642,17 @@ class Gazetteer:
 
 CATEGORY_RULES = [
     ("Raub", r"raub|ausgeraub|überfall"),
-    ("Diebstahl", r"diebstahl|diebe|gestohlen|einbruch|einbrecher"),
+    ("Diebstahl", r"diebstahl|diebe|gestohlen|einbruch|einbrecher|aufbrecher"),
     (
         "Gewalt",
-        r"angriff|angegriffen|angreif|greift|verletz|attack|messer|schuss|schüsse|körperverletz|getötet|tötungs|mord|geschlagen",
+        r"angriff|angegriffen|angreif|greift|verletz|attack|messer|schuss|schüsse|körperverletz|getötet|tötungs|mord|geschlagen|polizist.*mitgeschleift",
     ),
-    ("Sachbeschädigung", r"sachbeschädig|beschädigt|vandal|brandstift"),
+    ("Sachbeschädigung", r"sachbeschädig|beschädigt|vandal|brandstift|in brand gesetzt"),
     ("Bedrohung", r"bedroht|bedrohung|erpress"),
     ("Sexualdelikt", r"sexual|vergewaltig"),
     ("Betäubungsmittel", r"drogen|betäubungsmittel|dealer"),
     ("Betrug", r"betrug|betrüger"),
+    ("Eigentumsdelikt", r"geldausgabeautomat|geldautomat"),
 ]
 
 
