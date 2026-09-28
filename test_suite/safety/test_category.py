@@ -21,3 +21,10 @@ from crimemapsberlin.geocode import category
 )
 def test_official_headline_category_candidates(title, expected):
     assert category(title) == expected
+
+
+def test_body_can_recover_explicit_robbery_when_title_is_euphemistic():
+    assert category(
+        "Angeblicher Polizeibeamter entwendet Wertsachen",
+        "Tatort: Hamburg-Poppenbüttel, Langenstücken. Die Frau wurde in ihrer Wohnung beraubt.",
+    ) == ("Raub", True)

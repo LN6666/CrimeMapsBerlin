@@ -141,6 +141,19 @@ def test_singular_hamburg_tatort_heading_scopes_a_road_without_inventing_missing
     )
     assert summit["coordinates"] is None
     assert summit["geocode_method"] == "non_incident_report"
+    match_summary = gaz.locate(
+        "Ort: Hamburger Stadtgebiet. Die Polizei zieht eine positive Bilanz. "
+        "Zwei Fanmärsche verliefen durch verschiedene Stadtteile.",
+        title="Polizeieinsatz anlässlich einer Bundesligabegegnung",
+    )
+    assert match_summary["coordinates"] is None
+    assert match_summary["geocode_method"] == "multi_event_summary"
+    reading = gaz.locate(
+        "Eine Lesung findet im Polizeimuseum statt.",
+        title='"Krimisalon" im Polizeimuseum Hamburg',
+    )
+    assert reading["coordinates"] is None
+    assert reading["geocode_method"] == "non_incident_report"
 
 
 def test_official_scene_heading_survives_later_arrest_in_same_sentence():
@@ -444,6 +457,13 @@ def test_official_height_and_later_junction_refine_a_long_road():
     assert official_height["geocode_method"] == "named_street_intersection"
     assert official_height["location_label"] == "mainstrasse / querweg"
 
+    official_slash = gaz.locate(
+        "Unfallort: Berlin-Mitte, Mainstraße / Querweg. Dort kollidierten zwei Fahrzeuge.",
+        title="Zeugenaufruf nach Verkehrsunfall",
+    )
+    assert official_slash["geocode_method"] == "named_street_intersection"
+    assert official_slash["location_label"] == "mainstrasse / querweg"
+
     later_detail = gaz.locate(
         "Unfallort: Berlin-Mitte, Mainstraße. Eine Autofahrerin wurde abgedrängt. "
         "Kurz hinter der Einmündung Querweg/Mainstraße wechselte ein Lkw auf ihren Fahrstreifen. "
@@ -469,6 +489,21 @@ def test_road_race_route_is_not_reduced_to_first_named_street():
     )
     assert fixed_scene["coordinates"] is not None
     assert fixed_scene["geocode_method"] == "street_representative"
+
+
+def test_generic_official_ort_and_unnamed_venue_on_long_road():
+    short = Gazetteer([road("Testweg", [(0, 0), (400, 0)])]).locate(
+        "Ort: Hamburg-Mitte, Testweg. In einer Wohnung kam es zu einem Brand.",
+        title="Person nach Wohnungsbrand verstorben",
+    )
+    assert short["geocode_method"] == "street_representative"
+
+    long = Gazetteer([road("Hauptstraße", [(0, 0), (1800, 0)])]).locate(
+        "Tatort: Hamburg-Mitte, Hauptstraße. Eine unbekannte Spielhalle wurde überfallen.",
+        title="Zeugenaufruf nach Überfall auf eine Spielhalle",
+    )
+    assert long["coordinates"] is None
+    assert long["geocode_method"] == "long_or_ambiguous_street_review"
 
 
 def test_section_without_identified_main_road_is_not_end_point():

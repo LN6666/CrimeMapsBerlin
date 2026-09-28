@@ -36,12 +36,15 @@ MULTIPLE_OFFICIAL_SCENES = re.compile(r"\b(?:tatorte|unfallorte|orte)\s*:", re.I
 OFFICIAL_LOCATION_HEADING = re.compile(r"\b(?:tatort|unfallort|ort)\s*:", re.I)
 SINGULAR_OFFICIAL_SCENE = re.compile(r"\b(?:tatort|unfallort)\s*:", re.I)
 MOVING_ROAD_EVENT = re.compile(r"kraftfahrzeugrennen|straßenrennen|strassenrennen")
+UNNAMED_VENUE = re.compile(
+    r"\b(?:spielhalle|tankstelle|supermarkt|kiosk|apotheke|restaurant|hotel|bar|geschäft)\b"
+)
 NON_INCIDENT = re.compile(
     r"allgemeinverfügung|aktionstag|videoschutz|präventions|speedweek|"
     r"gemeinsam für mehr sicherheit|stadtweite durchsuchungs|koordinierte internationale kontroll|"
     r"vermisstenfahndung|einladung|kriminalstatistik|verkehrshinweis|pressekonferenz|fototermin|"
     r"bilanz einer aktionswoche|neue streifenboote|in hamburg ist man plietsch|"
-    r"sendehinweis|nordseegipfel"
+    r"sendehinweis|nordseegipfel|krimisalon"
 )
 
 
@@ -304,7 +307,10 @@ class Gazetteer:
         if NON_INCIDENT.search(normalized_title):
             result["geocode_method"] = "non_incident_report"
             return result
-        if MULTI_EVENT_SUMMARY.search(normalized_title):
+        if MULTI_EVENT_SUMMARY.search(normalized_title) or re.search(
+            r"\bpolizei zieht (?:eine )?(?:positive )?bilanz\b",
+            normalize(body),
+        ):
             result["geocode_method"] = "multi_event_summary"
             return result
         if len(OFFICIAL_LOCATION_HEADING.findall(body)) > 1:
@@ -342,16 +348,16 @@ class Gazetteer:
                 if any(locative(sentence, m["start"]) or m["kind"] == "place" for m in primary):
                     linked = [m for m in primary if incident_at_location(sentence, m)]
                     streets = [m for m in primary if m["kind"] == "street"]
-                    official_height = (
+                    official_junction = (
                         len(streets) >= 2
                         and any(official_scene_heading(sentence, m["start"]) for m in primary)
-                        and re.search(r"\(\s*höhe\b", sentence)
+                        and re.search(r"\(\s*höhe\b|/", sentence)
                     )
                     near_junction = (
                         len(streets) >= 2
                         and re.search(r"\bkurz (?:hinter|vor) der einmündung\b", sentence)
                     )
-                    if official_height or near_junction:
+                    if official_junction or near_junction:
                         linked = primary
                     if linked and self._section_reference(sentence, primary):
                         linked = primary
@@ -530,6 +536,9 @@ class Gazetteer:
             return result
         road = roads[0]
         # Measure geographic extent, not the summed lengths of parallel OSM fragments.
+        if self._span(road) > 1000 and UNNAMED_VENUE.search(normalize(body)):
+            result["geocode_method"] = "long_or_ambiguous_street_review"
+            return self._candidate_road(result, road)
         connected = road.buffer(15)
         if self._span(road) > 3000:
             result["geocode_method"] = "long_or_ambiguous_street_review"
@@ -697,7 +706,7 @@ CATEGORY_RULES = [
 ]
 
 
-def category(title):
+def category(title, body=""):
     low = title.casefold()
     if re.search(
         r"\b\w*unfall\w*\b|angefahren|fährt[^.]{0,80}\ban\b|"
@@ -708,13 +717,19 @@ def category(title):
     for label, pattern in CATEGORY_RULES:
         if re.search(pattern, low):
             return label, True
+    if re.search(r"\btatort\s*:", body, re.I) and re.search(
+        r"\b(?:beraubt|raubte|raubten)\b",
+        body,
+        re.I,
+    ):
+        return "Raub", True
     return "Unklassifiziert", False
 
 
 def events_from_db(db, gazetteer):
     rows = []
     for r in db.execute("SELECT * FROM reports WHERE body IS NOT NULL ORDER BY published,id"):
-        label, crime = category(r["title"])
+        label, crime = category(r["title"], r["body"])
         location = gazetteer.locate(r["body"], title=r["title"], district=r["district"])
         poi_kinds = mentions(r["body"])
         if location["location_precision"] == "place":

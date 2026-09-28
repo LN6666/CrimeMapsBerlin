@@ -264,9 +264,9 @@ def contextual_locality(sentence, start):
 
 
 def official_scene_heading(sentence, start):
-    """A singular police `Tatort:` or `Unfallort:` heading names a scene."""
+    """A singular police `Tatort:`, `Unfallort:` or `Ort:` heading names a scene."""
     return bool(re.search(
-        r"\b(?:tatort|unfallort):\s*(?:(?:hamburg|berlin)-[^,;]+,\s*)?$",
+        r"\b(?:tatort|unfallort|ort):\s*(?:(?:hamburg|berlin)-[^,;]+,\s*)?$",
         sentence[max(0, start - 180) : start],
     ))
 
