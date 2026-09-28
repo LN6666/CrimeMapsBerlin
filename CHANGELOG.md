@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add a tracked, local-only 14-city POI pipeline with resumable Geofabrik acquisition, MD5 and SHA-256 verification, unique OSM municipal-boundary selection, metric 50 metre venue geometry, station footprint/point handling, category tiles and independent read-back validation. Generated extracts and city products remain ignored and unpublished.
 - Add a local-only source review pack builder that reads one SQLite snapshot, rechecks every stored body hash, records incomplete channel coverage, batches raw originals for source-first LLM review and keeps its default output under the Git-ignored runtime directory.
 - Move narrative meaning to source-first LLM review: remove the fixed scene extractor from the build, let rules only flag review, and use deterministic code solely to validate source hashes, verbatim evidence, OSM geometry and publication gates. Missing or stale scene decisions block publication.
 - Preserve all reviewed locations from multi-location announcements as batched point, road, area or district scene geometry with explicit roles. Enforce at most one primary hex point per announcement and require scene-specific evidence for POI association.
