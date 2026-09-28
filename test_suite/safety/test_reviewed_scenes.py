@@ -143,6 +143,12 @@ def test_supported_decisions_become_explicit_geometry_work_without_publication(t
         "review_point_requires_boundary_check": 1,
     }
     assert result["geometry_requests"][1]["incident_ids"] == ["source-1:incident:2"]
+    assert result["geometry_requests"][1]["source_url"] == "https://example.invalid/source-1"
+    assert result["geometry_requests"][1]["city_scope"] == "in_city"
+    assert result["geometry_requests"][1]["evidence_quotes"] == [
+        "An der Münsterstraße beschädigte eine zweite Person ein Fahrzeug."
+    ]
+    assert len(result["geometry_requests"][1]["geometry_request_sha256"]) == 64
     assert result["geometry_complete"] is False
     assert result["owner_approved"] is False
     assert result["publication_ready"] is False

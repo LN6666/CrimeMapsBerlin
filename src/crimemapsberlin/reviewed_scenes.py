@@ -155,19 +155,23 @@ def build_inventory(*, city: str, db_path: Path) -> dict:
                     article_scope in {"in_city", "mixed"}
                     and location["city_scope"] == "in_city"
                 ):
-                    geometry_requests.append(
-                        {
-                            "source_id": source_id,
-                            "source_sha256": source["sha256"],
-                            "location_id": location["location_id"],
-                            "incident_ids": location_incidents[location["location_id"]],
-                            "label": location["label"],
-                            "role": location["role"],
-                            "precision": location["precision"],
-                            "coordinates": location["coordinates"],
-                            "geometry_task": _geometry_task(location),
-                        }
-                    )
+                    request = {
+                        "source_id": source_id,
+                        "source_url": source["url"],
+                        "source_sha256": source["sha256"],
+                        "decision_sha256": row["decision_sha256"],
+                        "location_id": location["location_id"],
+                        "incident_ids": location_incidents[location["location_id"]],
+                        "label": location["label"],
+                        "role": location["role"],
+                        "precision": location["precision"],
+                        "city_scope": location["city_scope"],
+                        "evidence_quotes": location["evidence_quotes"],
+                        "coordinates": location["coordinates"],
+                        "geometry_task": _geometry_task(location),
+                    }
+                    request["geometry_request_sha256"] = _digest(request)
+                    geometry_requests.append(request)
             articles.append(
                 {
                     "source_id": source_id,

@@ -94,13 +94,44 @@ scene 文件必须明确声明案件和地点清单完整，允许零案、一�
 
 导入后可生成只读的本地几何工作清单。它会再次核对当前来源 URL、正文哈希、决定哈希
 及逐字证据，保留每篇公告的全部案件和正式地点，并把点、道路、区域及行政区分别交给
-对应的受检几何步骤；它不自行理解正文、不选择代表点，也不生成公开地图：
+对应的受检几何步骤。每个请求还会绑定来源 URL、地点逐字证据、语义决定哈希和独立的
+请求哈希；它不自行理解正文、不选择代表点，也不生成公开地图：
 
 ```sh
 uv run python -m crimemapsberlin.reviewed_scenes \
   --city cologne \
   --db .runtime/safety/cities/cologne/police.sqlite \
   --out .runtime/safety/cities/cologne/reviewed-scene-inventory.json
+```
+
+对应的 OSM 几何索引从已经做过 MD5/SHA-256 校验的 Geofabrik PBF 读取，在选定市界内
+保存所有具名 OSM 对象、道路、地址及行政区，记录稳定 OSM ID 和几何哈希。它只提供
+几何来源，不会把任何警方地点文本自动匹配到某个 OSM 对象；该选择仍由 LLM 复核，
+后续由 `geometry_decisions.py` 将选择绑定到当前语义清单和 OSM 索引哈希，再核对几何
+类型、市界及对象 ID。无法解析的地点可以明确保存为 `unresolved`；`needs_correction`
+继续阻断地图。任何一种结果都不会自动批准发布：
+
+```sh
+uv run python -m crimemapsberlin.city_geometry_index \
+  --city dusseldorf \
+  --project-root . \
+  --runtime-root .runtime/safety/poi-cities \
+  --out .runtime/safety/cities/dusseldorf/osm-geometry-index.json
+```
+
+LLM 几何决定采用一个 JSON envelope，逐地点保存当前 `geometry_request_sha256`、
+`verdict`、`method`、分组后的 `osm_object_groups`、复核说明、复核者和带时区时间。
+道路交叉口由 LLM 先指定各道路对象组，程序只计算交点簇并在 150 米门限内选实际交点
+medoid；道路、建筑轮廓和行政区几何也都只从所选受检对象派生。导入命令会再次读回并
+校验完整 OSM 索引：
+
+```sh
+uv run python -m crimemapsberlin.geometry_decisions \
+  --inventory .runtime/safety/cities/dusseldorf/reviewed-scene-inventory.json \
+  --geometry-index .runtime/safety/cities/dusseldorf/osm-geometry-index.json \
+  --decisions .runtime/safety/cities/dusseldorf/geometry-decisions-part-0001.json \
+  --boundary .runtime/safety/poi-cities/cities/dusseldorf/boundary.geojson \
+  --out .runtime/safety/cities/dusseldorf/geometry-ledger-part-0001.json
 ```
 
 慕尼黑采用所有者指定的 [POLIZEIKARTE 慕尼黑页](https://polizeikarte.de/muenchen)
