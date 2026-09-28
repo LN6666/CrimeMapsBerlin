@@ -39,6 +39,20 @@ uv run python scripts/safety/review_queue.py --city hamburg status
 `city_candidates.py --city cologne|frankfurt`。区域文件包含目标城市以外地区，
 来源范围与行政区核验仍是发布前门禁；这两个命令不会生成公开地图。
 
+已校验正文可打包给另一个 LLM 窗口逐篇复核。命令从只读 SQLite 快照重新核对
+每篇正文 SHA-256，并把正文写入本地 ZIP；默认输出到 Git 忽略的 `.runtime/`，
+不能把 ZIP、正文或复核账本提交到仓库：
+
+```sh
+uv run python -m crimemapsberlin.source_review_pack \
+  --city bremen \
+  --db /absolute/path/to/police.sqlite \
+  --channel https://www.presseportal.de/blaulicht/nr/35235
+```
+
+生成包只代表来源输入。每篇公告的城市范围、案件数量、全部场景以及所有者确认
+仍需完成，才能进入发布流程。
+
 仓库按已选城市顺序分为三组，名称保留产品前缀及清晰的城市序号：
 
 | GitHub 仓库名 | 城市 | 当前状态 |
