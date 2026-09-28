@@ -195,3 +195,31 @@ def test_geometry_decisions_keep_selected_footprint_and_derive_a_named_count_poi
     assert derived["type"] == "Polygon"
     assert derived["count_point"]["type"] == "Point"
     assert derived["count_point_method"] == "selected_osm_footprint_representative_point"
+
+
+@pytest.mark.parametrize(
+    ("precision", "geometry_task"),
+    [
+        ("area", "checked_area_geometry_required"),
+        ("place", "checked_point_geocode_required"),
+    ],
+)
+def test_geometry_decisions_allow_llm_selected_lines_for_named_linear_areas(
+    precision, geometry_task
+):
+    inventory, index, decisions, border = _inputs()
+    request = inventory["geometry_requests"][1]
+    request["precision"] = precision
+    request["geometry_task"] = geometry_task
+    decisions["decisions"][1].update(
+        verdict="resolved",
+        method="osm_line",
+        osm_object_groups=[["osm/way/1"]],
+    )
+    result = compile_geometry_decisions(
+        inventory=inventory,
+        geometry_index=index,
+        decision_envelope=decisions,
+        border=border,
+    )
+    assert result["decisions"][1]["derived_geometry"]["type"] == "LineString"

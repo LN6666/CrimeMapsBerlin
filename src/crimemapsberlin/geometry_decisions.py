@@ -165,7 +165,12 @@ def _derived_geometry(
                 raise ValueError("osm_footprint selections must be polygon objects")
             geometry = unary_union(geometries)
         elif method == "osm_line":
-            if task != "checked_road_geometry_required" or precision != "street":
+            line_matches_review = (
+                (task == "checked_road_geometry_required" and precision == "street")
+                or (task == "checked_area_geometry_required" and precision == "area")
+                or (task == "checked_point_geocode_required" and precision == "place")
+            )
+            if not line_matches_review:
                 raise ValueError("osm_line differs from the reviewed precision")
             if len(object_groups) != 1 or any(
                 geometry.geom_type not in {"LineString", "MultiLineString"}
