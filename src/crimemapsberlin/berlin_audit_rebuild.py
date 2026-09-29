@@ -1,10 +1,9 @@
-"""Rebuild an unapproved Berlin candidate from the completed source-first audit.
+"""Legacy Berlin audit-migration diagnostic.
 
-This is a migration adapter, not a semantic classifier.  It verifies the frozen
-audit and current source bodies, preserves every audited scene and uncertainty,
-uses the old candidate only as an OSM lookup hint, and writes only ignored local
-artifacts.  Ambiguous geometry remains unresolved.  The formal review ledger and
-the last-good public generation are never modified.
+This adapter predates the owner's six-rule per-article re-review.  It cannot
+prove explicit event-time, transit and POI review for all 1,100 articles and its
+output must not be presented as the corrected candidate or completion evidence.
+It remains available only to reproduce the invalidated migration diagnostic.
 """
 
 from __future__ import annotations
@@ -1219,7 +1218,18 @@ def main() -> None:
     parser.add_argument("--poi-root", type=Path, required=True)
     parser.add_argument("--catalog", type=Path, default=Path("data/safety/europe_sources.json"))
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--acknowledge-incomplete-migration",
+        action="store_true",
+        help="Reproduce the invalidated diagnostic; never use it as review completion.",
+    )
     args = parser.parse_args()
+    if not args.acknowledge_incomplete_migration:
+        parser.error(
+            "This legacy migration is incomplete under the owner's six-rule review. "
+            "Use berlin_semantic_review; pass --acknowledge-incomplete-migration "
+            "only to reproduce the invalidated diagnostic."
+        )
     runtime = (Path.cwd() / ".runtime").resolve()
     if not args.output.resolve().is_relative_to(runtime):
         parser.error("Berlin audit rebuild output must remain under .runtime/")

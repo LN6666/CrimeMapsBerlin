@@ -119,6 +119,29 @@ uv run python -m crimemapsberlin.city_geometry_index \
   --out .runtime/safety/cities/dusseldorf/osm-geometry-index.json
 ```
 
+柏林冻结的 1,100 篇所有者批次另有六条纠正规则的强制复核入口。它先把当前官方正文、
+原文哈希和旧 source-first 审计组成 Git 忽略的可恢复小批次；复核结果必须逐篇显式确认
+发现地角色、移动公共交通、全部独立事件、原始时间、全部地点角色和仅作上下文的 POI。
+每个事件和地点都必须保存来源时间或“已复核但未知”，每个地点都必须保存交通和 POI
+决定（包括明确的“不适用”和空列表），因此不能再以字段缺失冒充完成：
+
+```sh
+PYTHONPATH=src uv run python -m crimemapsberlin.berlin_semantic_review prepare \
+  --db .runtime/safety/police.sqlite \
+  --audit-root .runtime/safety/berlin-source-first-audit \
+  --out .runtime/safety/berlin-semantic-review-20260929/source-packets
+
+PYTHONPATH=src uv run python -m crimemapsberlin.berlin_semantic_review validate \
+  --db .runtime/safety/police.sqlite \
+  --audit-root .runtime/safety/berlin-source-first-audit \
+  --reviews-dir .runtime/safety/berlin-semantic-review-20260929/reviews \
+  --status-out .runtime/safety/berlin-semantic-review-20260929/checkpoint.json
+```
+
+`complete: true` 只表示 1,100 篇当前正文的新语义决定全部通过；它本身仍不代表几何、
+地图候选、所有者批准或发布完成。旧 `berlin_audit_rebuild.py` 自动迁移缺少逐篇时间、
+交通和 POI 空决定，已作废为完成证据，只保留为显式确认后的历史诊断复现入口。
+
 LLM 几何决定采用一个 JSON envelope，逐地点保存当前 `geometry_request_sha256`、
 `verdict`、`method`、分组后的 `osm_object_groups`、复核说明、复核者和带时区时间。
 道路交叉口由 LLM 先指定各道路对象组，程序只计算交点簇并在 150 米门限内选实际交点
