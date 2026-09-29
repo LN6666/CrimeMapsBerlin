@@ -1,0 +1,528 @@
+"""Build an ignored city-map candidate from completed LLM review ledgers.
+
+The source, scene, category, primary-count and geometry choices are all
+supplied by hash-bound LLM decisions. This module performs deterministic
+identity checks, GIS assembly, monthly hex aggregation and browser packaging.
+It never assigns a category or location, grants owner approval, or publishes
+the generated data.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import shutil
+from collections import Counter
+from datetime import UTC, datetime
+from pathlib import Path
+
+from shapely.geometry import shape
+
+from .map_decisions import MAPPABLE_SCOPES, _count_point, _validate_inputs
+from .payload import canonical_events, compact
+from .poi_cities import POI_CITY_SPECS
+from .source_review_pack import read_checkpoint
+from .spatial import build_months, metric_transforms
+
+LOCAL_STATUS = "local_map_candidate_unapproved"
+SOURCE_STATUS = "complete_official_archive_source_and_geometry_reviewed"
+
+
+def _json_bytes(value: object) -> bytes:
+    return json.dumps(compact(value), ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode(
+        "utf-8"
+    )
+
+
+def _digest(value: object) -> str:
+    return hashlib.sha256(_json_bytes(value)).hexdigest()
+
+
+def _load(path: Path, label: str) -> dict:
+    if not path.is_file():
+        raise ValueError(f"{label} does not exist: {path}")
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{label} is invalid JSON: {path}") from exc
+    if not isinstance(value, dict):
+        raise TypeError(f"{label} must be an object")
+    return value
+
+
+def _write_json(path: Path, value: object) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(_json_bytes(value) + b"\n")
+
+
+def _link_or_copy(source: str, destination: str) -> None:
+    try:
+        os.link(source, destination)
+    except OSError:
+        shutil.copy2(source, destination)
+
+
+def _replace_directory(staging: Path, target: Path) -> None:
+    backup = target.with_name(f".{target.name}.previous")
+    shutil.rmtree(backup, ignore_errors=True)
+    if target.exists():
+        target.replace(backup)
+    try:
+        staging.replace(target)
+    except Exception:
+        if backup.exists() and not target.exists():
+            backup.replace(target)
+        raise
+    shutil.rmtree(backup, ignore_errors=True)
+
+
+def _verify_poi_product(*, city: str, poi_root: Path, catalog_path: Path) -> tuple[dict, dict, dict, dict]:
+    contract = _load(poi_root / "poi-contract.json", "POI contract")
+    validation = _load(poi_root / "validation.json", "POI validation")
+    boundary = _load(poi_root / "boundary.geojson", "municipal boundary")
+    index = _load(poi_root / "poi-index.json", "POI index")
+    search = json.loads((poi_root / "search.json").read_text(encoding="utf-8"))
+    catalog = _load(catalog_path, "POI category catalog")
+    spec = POI_CITY_SPECS.get(city)
+    if spec is None:
+        raise ValueError(f"Unsupported city: {city}")
+    features = index.get("features")
+    if index.get("type") != "FeatureCollection" or not isinstance(features, list):
+        raise ValueError("POI index is not a FeatureCollection")
+    if not isinstance(search, list) or not isinstance(catalog.get("poi_types"), dict):
+        raise TypeError("POI search or category catalog is invalid")
+    if (
+        contract.get("schema_version") != 2
+        or contract.get("city") != city
+        or contract.get("epsg") != spec.epsg
+        or contract.get("status") != "local_poi_only_unpublished"
+        or contract.get("publication_ready", False) is not False
+    ):
+        raise ValueError("POI contract does not match the local-only city contract")
+    if validation.get("passed") is not True or validation.get("errors") != []:
+        raise ValueError("POI read-back validation has not passed")
+    if (
+        validation.get("poi_count") != len(features)
+        or contract.get("poi_count") != len(features)
+        or validation.get("epsg") != spec.epsg
+        or validation.get("source_sha256") != contract.get("source_pbf_sha256")
+        or boundary.get("source_pbf_sha256") != contract.get("source_pbf_sha256")
+        or validation.get("boundary_source_id") != contract.get("boundary_source_id")
+        or boundary.get("id") != contract.get("boundary_source_id")
+        or contract.get("catalog_sha256") != hashlib.sha256(catalog_path.read_bytes()).hexdigest()
+    ):
+        raise ValueError("POI product files disagree")
+    border = shape(boundary.get("geometry"))
+    if border.is_empty or not border.is_valid:
+        raise ValueError("Municipal boundary is empty or invalid")
+    tile_keys = contract.get("tile_index", {}).get("pois")
+    if not isinstance(tile_keys, list) or tile_keys != sorted(set(tile_keys)):
+        raise ValueError("POI tile contract is invalid")
+    for key in tile_keys:
+        if not isinstance(key, str) or not (poi_root / "pois" / f"{key}.json").is_file():
+            raise ValueError(f"POI tile is missing: {key}")
+    actual_tiles = {f"{path.parent.name}/{path.stem}" for path in (poi_root / "pois").glob("*/*.json")}
+    if actual_tiles != set(tile_keys):
+        raise ValueError("POI tile files differ from the validated contract")
+    return contract, validation, boundary, catalog
+
+
+def _published(value: object) -> datetime:
+    if not isinstance(value, str):
+        raise TypeError("Official publication timestamp must be a string")
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(f"Invalid official publication timestamp: {value}") from exc
+    if parsed.tzinfo is None:
+        raise ValueError("Official publication timestamp needs a timezone")
+    return parsed
+
+
+def _geometry_rows(geometry_ledger: dict) -> dict[str, dict]:
+    result = {}
+    for row in geometry_ledger.get("decisions", []):
+        location_id = row.get("request", {}).get("location_id") if isinstance(row, dict) else None
+        if not isinstance(location_id, str) or location_id in result:
+            raise ValueError("Geometry ledger has a missing or duplicate location ID")
+        result[location_id] = row
+    if len(result) != geometry_ledger.get("request_count"):
+        raise ValueError("Geometry ledger request count is inconsistent")
+    return result
+
+
+def _map_rows(map_ledger: dict) -> dict[str, dict]:
+    result = {}
+    for row in map_ledger.get("decisions", []):
+        decision = row.get("decision") if isinstance(row, dict) else None
+        source_id = decision.get("source_id") if isinstance(decision, dict) else None
+        if not isinstance(source_id, str) or source_id in result:
+            raise ValueError("Map ledger has a missing or duplicate source ID")
+        if row.get("map_decision_sha256") != _digest(decision):
+            raise ValueError(f"Map decision hash mismatch: {source_id}")
+        result[source_id] = decision
+    return result
+
+
+def _verify_map_ledger(map_ledger: dict) -> None:
+    core = {
+        key: map_ledger.get(key)
+        for key in (
+            "schema_version",
+            "city",
+            "inventory_digest",
+            "geometry_ledger_sha256",
+            "decisions",
+        )
+    }
+    if map_ledger.get("ledger_sha256") != _digest(core):
+        raise ValueError("Map decision ledger digest does not match its current contents")
+
+
+def _scene(
+    location: dict,
+    geometry_row: dict | None,
+    incident_categories: dict[str, str],
+    primary_location_id: str | None,
+) -> dict:
+    location_id = location["location_id"]
+    derived = geometry_row.get("derived_geometry") if geometry_row else None
+    decision = geometry_row.get("decision", {}) if geometry_row else {}
+    geometry = derived.get("geometry") if isinstance(derived, dict) else None
+    primary = location_id == primary_location_id
+    coordinates = None
+    if isinstance(derived, dict) and derived.get("type") == "Point":
+        coordinates = list(derived["geometry"]["coordinates"][:2])
+    elif primary:
+        coordinates = _count_point(geometry_row)
+    incident_ids = geometry_row.get("request", {}).get("incident_ids", []) if geometry_row else []
+    if not incident_ids:
+        incident_ids = location.get("incident_ids", [])
+    method = decision.get("method") if decision.get("verdict") == "resolved" else "none"
+    return {
+        "scene_id": location_id,
+        "label": location["label"],
+        "role": location["role"],
+        "location_precision": location["precision"],
+        "geocode_method": method,
+        "coordinates": coordinates,
+        "geometry": geometry,
+        "primary_for_count": primary,
+        "evidence_quote": location["evidence_quotes"][0],
+        "incident_ids": incident_ids,
+        "incident_categories": sorted(
+            {incident_categories[ident] for ident in incident_ids if ident in incident_categories}
+        ),
+        "location_scope": location["city_scope"],
+        "location_object_ids": (derived.get("source_object_ids", []) if isinstance(derived, dict) else []),
+        "geometry_sha256": (derived.get("geometry_sha256") if isinstance(derived, dict) else None),
+    }
+
+
+def _prepare_events(
+    *,
+    city: str,
+    source_rows: list[dict],
+    inventory: dict,
+    geometry_ledger: dict,
+    map_ledger: dict,
+) -> tuple[list[dict], Counter, datetime]:
+    _validate_inputs(inventory, geometry_ledger, city)
+    if (
+        inventory.get("city") != city
+        or not inventory.get("all_current_reviews_supported")
+        or geometry_ledger.get("city") != city
+        or geometry_ledger.get("inventory_digest") != inventory.get("inventory_digest")
+        or geometry_ledger.get("geometry_review_complete") is not True
+        or map_ledger.get("city") != city
+        or map_ledger.get("inventory_digest") != inventory.get("inventory_digest")
+        or map_ledger.get("geometry_ledger_sha256") != geometry_ledger.get("ledger_sha256")
+        or map_ledger.get("map_review_complete") is not True
+        or map_ledger.get("pending_count") != 0
+    ):
+        raise ValueError("Reviewed map inputs are stale or incomplete")
+    _verify_map_ledger(map_ledger)
+    sources = {row["source_id"]: row for row in source_rows}
+    if len(sources) != len(source_rows):
+        raise ValueError("Source checkpoint has duplicate IDs")
+    _geometry_rows(geometry_ledger)
+    map_decisions = _map_rows(map_ledger)
+    expected = {
+        article["source_id"]
+        for article in inventory.get("articles", [])
+        if article.get("scope_verdict") in MAPPABLE_SCOPES
+    }
+    if set(map_decisions) != expected:
+        raise ValueError("Map ledger does not cover every current mappable article")
+
+    events = []
+    audit: Counter = Counter()
+    latest = None
+    for article in inventory.get("articles", []):
+        scope = article.get("scope_verdict")
+        if scope not in MAPPABLE_SCOPES:
+            audit[f"excluded_scope:{scope}"] += 1
+            continue
+        source_id = article["source_id"]
+        source = sources.get(source_id)
+        decision = map_decisions[source_id]
+        if (
+            source is None
+            or source["source_sha256"] != article["source_sha256"]
+            or source["source_sha256"] != decision["source_sha256"]
+            or article["decision_sha256"] != decision["source_review_sha256"]
+        ):
+            raise ValueError(f"Map inputs disagree for source {source_id}")
+        published = _published(source["published"])
+        latest = published if latest is None or published > latest else latest
+        incident_categories = {row["incident_id"]: row["category"] for row in decision["incident_categories"]}
+        geometry_locations = {
+            row["request"]["location_id"]: row
+            for row in geometry_ledger.get("decisions", [])
+            if row.get("request", {}).get("source_id") == source_id
+        }
+        scenes = [
+            _scene(
+                location,
+                geometry_locations.get(location["location_id"]),
+                incident_categories,
+                decision["primary_count_location_id"],
+            )
+            for location in article.get("formal_locations", [])
+        ]
+        primaries = [scene for scene in scenes if scene["primary_for_count"]]
+        if len(primaries) > 1:
+            raise ValueError(f"Multiple primary scenes survived validation: {source_id}")
+        primary = primaries[0] if primaries else None
+        coordinates = primary["coordinates"] if primary else None
+        if primary and coordinates is None:
+            raise ValueError(f"Primary scene lost its checked count point: {source_id}")
+        event = {
+            "id": source_id,
+            "title": source["title"],
+            "category": decision["article_category"],
+            "is_crime_report": decision["is_crime_report"],
+            "published_at": published.isoformat(),
+            "event_date": published.date().isoformat(),
+            "month": published.strftime("%Y-%m"),
+            "time_basis": "official_publication_timestamp",
+            "source_url": source["source_url"],
+            "feed_url": source["source_url"],
+            "source_status": SOURCE_STATUS,
+            "source_sha256": source["source_sha256"],
+            "source_revision": source["revision"],
+            "source_review_sha256": article["decision_sha256"],
+            "map_decision_sha256": _digest(decision),
+            "coordinates": coordinates,
+            "location_precision": primary["location_precision"] if primary else "unknown",
+            "location_label": primary["label"] if primary else "",
+            "location_scope": "in_city" if primary else "no_countable_primary_scene",
+            "geocode_method": primary["geocode_method"] if primary else "none",
+            "geocode_candidates": [],
+            "geocode_version": "source-bound-llm-geometry-ledger-1",
+            "location_object_ids": primary["location_object_ids"] if primary else [],
+            "geocode_evidence": [primary["evidence_quote"]] if primary else [],
+            "poi_mentions": [],
+            "mention_basis": "none_without_source_verified_venue_object",
+            "outcome": "unknown",
+            "scene_locations": scenes,
+            "incident_count": article["incident_count"],
+            "incident_categories": decision["incident_categories"],
+            "classification_evidence_quotes": decision["classification_evidence_quotes"],
+            "map_review_note": decision["review_note"],
+        }
+        events.append(event)
+        audit["events"] += 1
+        audit["incidents"] += article["incident_count"]
+        audit["formal_locations"] += len(scenes)
+        audit["primary_count_points"] += int(primary is not None)
+        audit["resolved_display_geometries"] += sum(scene["geometry"] is not None for scene in scenes)
+        audit["unresolved_display_locations"] += sum(scene["geometry"] is None for scene in scenes)
+    if latest is None:
+        raise ValueError("Reviewed city map has no mappable articles")
+    return canonical_events(events), audit, latest
+
+
+def build_candidate(
+    *,
+    city: str,
+    source_db: Path,
+    inventory_path: Path,
+    geometry_ledger_path: Path,
+    map_ledger_path: Path,
+    poi_root: Path,
+    catalog_path: Path,
+    output: Path,
+) -> dict:
+    """Build a complete local browser candidate while publication stays blocked."""
+    inventory = _load(inventory_path, "scene inventory")
+    geometry_ledger = _load(geometry_ledger_path, "geometry ledger")
+    map_ledger = _load(map_ledger_path, "map decision ledger")
+    source_rows, source_coverage = read_checkpoint(source_db)
+    if (
+        not source_coverage.get("channel_scan_complete")
+        or source_coverage.get("missing_bodies") != 0
+        or source_coverage.get("source_errors") != 0
+    ):
+        raise ValueError("Official source checkpoint is incomplete")
+    contract, validation, boundary, catalog = _verify_poi_product(
+        city=city, poi_root=poi_root, catalog_path=catalog_path
+    )
+    events, counts, latest = _prepare_events(
+        city=city,
+        source_rows=source_rows,
+        inventory=inventory,
+        geometry_ledger=geometry_ledger,
+        map_ledger=map_ledger,
+    )
+    spec = POI_CITY_SPECS[city]
+    to_metric, to_wgs = metric_transforms(spec.epsg)
+    months = build_months(
+        events,
+        {"type": "FeatureCollection", "features": []},
+        to_metric=to_metric,
+        to_wgs=to_wgs,
+    )
+    if sum(len(value["event_ids"]) for value in months.values()) != len(events):
+        raise ValueError("Monthly candidate files do not cover every mappable article")
+    if any(value["links"] for value in months.values()):
+        raise ValueError("Reviewed candidate unexpectedly inferred a POI association")
+
+    poi_contract_digest = hashlib.sha256((poi_root / "poi-contract.json").read_bytes()).hexdigest()
+    boundary_digest = hashlib.sha256((poi_root / "boundary.geojson").read_bytes()).hexdigest()
+    signature = hashlib.sha256(
+        (
+            f"{inventory['inventory_digest']}:{geometry_ledger['ledger_sha256']}:"
+            f"{map_ledger['ledger_sha256']}:{poi_contract_digest}:{boundary_digest}"
+        ).encode()
+    ).hexdigest()[:16]
+    generation_timestamp = latest.astimezone(UTC).strftime("%Y%m%dT%H%M%S")
+    generation = f"{signature}-{generation_timestamp}"
+    excluded_scope = {
+        key.split(":", 1)[1]: value
+        for key, value in sorted(counts.items())
+        if key.startswith("excluded_scope:")
+    }
+    manifest = {
+        "schema_version": 2,
+        "city": spec.name,
+        "retrieved_at": latest.astimezone(UTC).isoformat(),
+        "generation": generation,
+        "status": LOCAL_STATUS,
+        "coverage": {
+            "discovered": source_coverage["discovered"],
+            "fetched": source_coverage["bodies_in_pack"],
+            "failed": source_coverage["source_errors"],
+            "pending": source_coverage["missing_bodies"],
+        },
+        "months": {month: {"count": len(value["event_ids"])} for month, value in months.items()},
+        "categories": sorted({event["category"] for event in events}),
+        "tile_index": {"pois": contract["tile_index"]["pois"], "roads": []},
+        "tile_size": contract["tile_size"],
+        "catalog": catalog,
+        "zones": {"places": [], "features": [], "geometry_status": "not_applicable"},
+        "metadata": {
+            "source": "official police announcement archive",
+            "semantic_basis": "source_first_hash_bound_llm_review",
+            "time_basis": "official_publication_timestamp",
+            "count_unit": "at_most_one_reviewed_announcement_primary",
+            "hex_crs": f"EPSG:{spec.epsg}",
+            "hex_edge_m": [1100, 275],
+            "zoom_threshold": 13,
+            "attribution": "© OpenStreetMap contributors / Geofabrik (ODbL); source police publishers",
+            "boundary_source_id": boundary["id"],
+            "boundary_sha256": boundary_digest,
+            "poi_count": validation["poi_count"],
+            "poi_contract_sha256": poi_contract_digest,
+            "source_inventory_sha256": inventory["inventory_digest"],
+            "geometry_ledger_sha256": geometry_ledger["ledger_sha256"],
+            "map_decision_ledger_sha256": map_ledger["ledger_sha256"],
+            "mappable_articles": len(events),
+            "excluded_scope_counts": excluded_scope,
+            "primary_count_points": counts["primary_count_points"],
+            "poi_association_basis": "none_without_source_verified_venue_object",
+            "review_status": "SOURCE_GEOMETRY_AND_MAP_REVIEW_COMPLETE_AWAITING_OWNER_APPROVAL",
+        },
+        "owner_approved": False,
+        "publication_ready": False,
+        "publication_blocks": ["owner_map_inspection_and_approval_missing"],
+    }
+    audit = {
+        "city": city,
+        "status": LOCAL_STATUS,
+        "generation": generation,
+        "source_coverage": source_coverage,
+        "inventory_digest": inventory["inventory_digest"],
+        "geometry_ledger_sha256": geometry_ledger["ledger_sha256"],
+        "map_decision_ledger_sha256": map_ledger["ledger_sha256"],
+        "mappable_articles": len(events),
+        "excluded_scope_counts": excluded_scope,
+        "incidents": counts["incidents"],
+        "formal_locations": counts["formal_locations"],
+        "resolved_display_geometries": counts["resolved_display_geometries"],
+        "unresolved_display_locations": counts["unresolved_display_locations"],
+        "primary_count_points": counts["primary_count_points"],
+        "categories": dict(sorted(Counter(event["category"] for event in events).items())),
+        "months": len(months),
+        "poi_count": validation["poi_count"],
+        "poi_tiles": len(contract["tile_index"]["pois"]),
+        "poi_associations": 0,
+        "owner_approved": False,
+        "publication_ready": False,
+        "publication_blocks": manifest["publication_blocks"],
+    }
+    audit["candidate_digest"] = _digest({"manifest": manifest, "audit": audit})
+
+    output = output.resolve()
+    staging = output.with_name(f".{output.name}.building")
+    shutil.rmtree(staging, ignore_errors=True)
+    generation_root = staging / generation
+    for month, value in months.items():
+        _write_json(
+            generation_root / "months" / f"{month}.json",
+            {**value, "events": [event for event in events if event["month"] == month]},
+        )
+    shutil.copytree(poi_root / "pois", generation_root / "pois", copy_function=_link_or_copy)
+    shutil.copy2(poi_root / "search.json", generation_root / "search.json")
+    shutil.copy2(poi_root / "boundary.geojson", generation_root / "boundary.geojson")
+    _write_json(
+        generation_root / "roads-overview.json",
+        {"type": "FeatureCollection", "features": []},
+    )
+    _write_json(staging / "manifest.json", manifest)
+    _write_json(staging / "build-audit.json", audit)
+    _replace_directory(staging, output)
+    return audit
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--city", choices=sorted(POI_CITY_SPECS), required=True)
+    parser.add_argument("--db", type=Path, required=True)
+    parser.add_argument("--inventory", type=Path, required=True)
+    parser.add_argument("--geometry-ledger", type=Path, required=True)
+    parser.add_argument("--map-ledger", type=Path, required=True)
+    parser.add_argument("--poi-root", type=Path, required=True)
+    parser.add_argument("--catalog", type=Path, default=Path("data/safety/europe_sources.json"))
+    parser.add_argument("--out", type=Path, required=True)
+    args = parser.parse_args()
+    runtime = (Path.cwd() / ".runtime").resolve()
+    if not args.out.resolve().is_relative_to(runtime):
+        parser.error("Reviewed city map candidates must remain under .runtime/")
+    result = build_candidate(
+        city=args.city,
+        source_db=args.db,
+        inventory_path=args.inventory,
+        geometry_ledger_path=args.geometry_ledger,
+        map_ledger_path=args.map_ledger,
+        poi_root=args.poi_root,
+        catalog_path=args.catalog,
+        output=args.out,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

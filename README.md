@@ -134,6 +134,41 @@ uv run python -m crimemapsberlin.geometry_decisions \
   --out .runtime/safety/cities/dusseldorf/geometry-ledger-part-0001.json
 ```
 
+来源与几何复核全部完成后，还需要由 LLM 从完整原文明确给每个已确认案件分类，并为
+每篇公告选择零个或一个可计数的市内案件/事故地点。程序不会用关键词代替该判断；
+`map_decisions` 只制作复核包并校验原文证据、来源/复核/几何哈希和主地点资格，
+`reviewed_city_map` 只组装 Git 忽略的浏览器候选。所有点、道路、区域、行政区和未定位
+场景都会保留，只有显式选中的一个主地点进入六边形计数；POI 不会因邻近而自动关联。
+
+```sh
+uv run python -m crimemapsberlin.map_decisions pack \
+  --city dusseldorf \
+  --db .runtime/safety/cities/dusseldorf/police.sqlite \
+  --inventory .runtime/safety/cities/dusseldorf/reviewed-scene-inventory.json \
+  --geometry-ledger .runtime/safety/cities/dusseldorf/geometry-ledger-current.json \
+  --out .runtime/safety/cities/dusseldorf/map-review-pack.json
+
+uv run python -m crimemapsberlin.map_decisions compile \
+  --city dusseldorf \
+  --db .runtime/safety/cities/dusseldorf/police.sqlite \
+  --inventory .runtime/safety/cities/dusseldorf/reviewed-scene-inventory.json \
+  --geometry-ledger .runtime/safety/cities/dusseldorf/geometry-ledger-current.json \
+  --decisions .runtime/safety/cities/dusseldorf/map-decisions.json \
+  --out .runtime/safety/cities/dusseldorf/map-decision-ledger.json
+
+uv run python -m crimemapsberlin.reviewed_city_map \
+  --city dusseldorf \
+  --db .runtime/safety/cities/dusseldorf/police.sqlite \
+  --inventory .runtime/safety/cities/dusseldorf/reviewed-scene-inventory.json \
+  --geometry-ledger .runtime/safety/cities/dusseldorf/geometry-ledger-current.json \
+  --map-ledger .runtime/safety/cities/dusseldorf/map-decision-ledger.json \
+  --poi-root .runtime/safety/poi-cities/cities/dusseldorf \
+  --out .runtime/safety/cities/dusseldorf/map-candidate
+```
+
+这两个输出仍保持 `owner_approved: false`、`publication_ready: false`，所有者质询和批准
+仍是最后门禁。
+
 慕尼黑采用所有者指定的 [POLIZEIKARTE 慕尼黑页](https://polizeikarte.de/muenchen)
 作为滚动 365 天主数据入口。POLIZEIKARTE 是独立项目；每条记录均保留其
 POLIZEIKARTE ID、详情页、分类、摘要、位置精度、上游坐标和对应的警方原文链接。
