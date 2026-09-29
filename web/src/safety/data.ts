@@ -3,6 +3,10 @@ import { empty } from "./model";
 export interface Manifest {
   schema_version: 2;
   city: string;
+  status?: string;
+  owner_approved?: boolean;
+  publication_ready?: boolean;
+  publication_blocks?: string[];
   retrieved_at: string;
   generation: string;
   coverage: {

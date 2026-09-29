@@ -32,6 +32,14 @@ export const mapViews = {
     policeName: "POLIZEIKARTE / Polizei München 原文",
     externalUrl: "https://polizeikarte.de/muenchen",
   },
+  cologne: {
+    id: "cologne", manifestCity: "Köln",
+    name: "科隆", latin: "KÖLN", center: [6.9603, 50.9375] as [number, number],
+    manifestPath: "/safety/cities/cologne/manifest.json", dataRoot: "/safety/cities/cologne",
+    example: "如 Neumarkt、公园或街道名称", aerial: false, kbo: false,
+    policeUrl: "https://koeln.polizei.nrw/presse/pressemitteilungen",
+    policeName: "Polizei Köln", externalUrl: "https://polizeikarte.de/koeln",
+  },
 } as const;
 
 export function requestedMapView(search: string) {

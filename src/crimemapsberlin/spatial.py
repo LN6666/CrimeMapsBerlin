@@ -267,11 +267,19 @@ def pois_from_osm(payload: dict, *, to_metric=TO_METRIC, to_wgs=TO_WGS):
     return collection(deduped), dict(rejected)
 
 
-def associate(events: list[dict], pois: dict, matching_types_only: bool = True, *, to_metric=TO_METRIC):
+def associate(
+    events: list[dict],
+    pois: dict,
+    matching_types_only: bool = True,
+    *,
+    to_metric=TO_METRIC,
+    include_legacy_links: bool = True,
+):
     """Match to 50m circles or station footprint. Count each report once per POI.
 
     Street-level geocodes generate candidates, not confirmed venue attribution.
     District geocodes never cause 50m association or polygon containment.
+    Reviewed candidates disable legacy links so only explicit scene POI contexts survive.
     """
     places = pois["features"]
     place_by_id = {f["properties"]["id"]: f for f in places}
@@ -280,70 +288,79 @@ def associate(events: list[dict], pois: dict, matching_types_only: bool = True, 
     tree = STRtree(metric)
     links = []
     seen = set()
-    for event in events:
-        location = count_location(event)
-        if location is None:
-            continue
-        scene_aware = "scene_locations" in event
-        mentions = location.get("poi_mentions", []) if scene_aware else event.get("poi_mentions", [])
-        object_ids = (
-            location.get("location_object_ids", []) if scene_aware
-            else event.get("location_object_ids", [])
-        )
-        if (not scene_aware and not mentions) or (scene_aware and not mentions and not object_ids):
-            continue
-        if scene_aware and not (location.get("evidence_quote") or location.get("geocode_evidence")):
-            continue
-        mention_basis = (
-            location.get("mention_basis", "scene_specific_source_match") if scene_aware
-            else event["mention_basis"]
-        )
-        if location["location_precision"] == "place":
-            # A park/station representative must not accidentally darken unrelated neighbours.
-            for ident in dict.fromkeys(object_ids):
-                f = place_by_id.get(ident)
-                if f is None:
+    if include_legacy_links:
+        for event in events:
+            location = count_location(event)
+            if location is None:
+                continue
+            scene_aware = "scene_locations" in event
+            mentions = (
+                location.get("poi_mentions", []) if scene_aware else event.get("poi_mentions", [])
+            )
+            object_ids = (
+                location.get("location_object_ids", [])
+                if scene_aware
+                else event.get("location_object_ids", [])
+            )
+            if (not scene_aware and not mentions) or (
+                scene_aware and not mentions and not object_ids
+            ):
+                continue
+            if scene_aware and not (
+                location.get("evidence_quote") or location.get("geocode_evidence")
+            ):
+                continue
+            mention_basis = (
+                location.get("mention_basis", "scene_specific_source_match")
+                if scene_aware
+                else event["mention_basis"]
+            )
+            if location["location_precision"] == "place":
+                # A park/station representative must not accidentally darken unrelated neighbours.
+                for ident in dict.fromkeys(object_ids):
+                    f = place_by_id.get(ident)
+                    if f is None:
+                        continue
+                    p = f["properties"]
+                    pair = event["id"], p["id"]
+                    if pair in seen:
+                        continue
+                    if not matching_types_only or not mentions or p["kind"] in mentions:
+                        seen.add(pair)
+                        links.append(
+                            dict(
+                                event_id=event["id"],
+                                poi_id=p["id"],
+                                status="named_place_candidate",
+                                source_url=event["source_url"],
+                                mention_basis=mention_basis,
+                            )
+                        )
+                continue
+            if not mentions:
+                continue
+            point = transform(to_metric, Point(location["coordinates"]))
+            for idx in tree.query(point, predicate="intersects"):
+                p = places[int(idx)]["properties"]
+                if p["geometry_mode"] == "footprint_missing":
                     continue
-                p = f["properties"]
+                if matching_types_only and p["kind"] not in mentions:
+                    continue
                 pair = event["id"], p["id"]
                 if pair in seen:
                     continue
-                if not matching_types_only or not mentions or p["kind"] in mentions:
-                    seen.add(pair)
-                    links.append(
-                        dict(
-                            event_id=event["id"],
-                            poi_id=p["id"],
-                            status="named_place_candidate",
-                            source_url=event["source_url"],
-                            mention_basis=mention_basis,
-                        )
-                    )
-            continue
-        if not mentions:
-            continue
-        point = transform(to_metric, Point(location["coordinates"]))
-        for idx in tree.query(point, predicate="intersects"):
-            p = places[int(idx)]["properties"]
-            if p["geometry_mode"] == "footprint_missing":
-                continue
-            if matching_types_only and p["kind"] not in mentions:
-                continue
-            pair = event["id"], p["id"]
-            if pair in seen:
-                continue
-            seen.add(pair)
-            links.append(
-                {
-                    "event_id": event["id"],
-                    "poi_id": p["id"],
-                    "status": "nearby_type_match"
-                    if location["location_precision"] == "point"
-                    else "approximate_candidate",
-                    "source_url": event["source_url"],
-                    "mention_basis": mention_basis,
-                }
-            )
+                seen.add(pair)
+                links.append(
+                    {
+                        "event_id": event["id"],
+                        "poi_id": p["id"],
+                        "status": "nearby_type_match"
+                        if location["location_precision"] == "point"
+                        else "approximate_candidate",
+                        "source_url": event["source_url"],
+                        "mention_basis": mention_basis,
+                    }
+                )
     for event in events:
         for scene in event.get("scene_locations", []):
             contexts = scene.get("poi_contexts", [])
@@ -399,7 +416,14 @@ def associate(events: list[dict], pois: dict, matching_types_only: bool = True, 
     return links
 
 
-def build_months(events: list[dict], pois: dict, *, to_metric=TO_METRIC, to_wgs=TO_WGS):
+def build_months(
+    events: list[dict],
+    pois: dict,
+    *,
+    to_metric=TO_METRIC,
+    to_wgs=TO_WGS,
+    include_legacy_links: bool = True,
+):
     months = {}
     seen = set()
     for e in events:
@@ -417,7 +441,12 @@ def build_months(events: list[dict], pois: dict, *, to_metric=TO_METRIC, to_wgs=
                 name: hexagons(rows, size, to_metric=to_metric, to_wgs=to_wgs)
                 for name, size in HEX_SIZES.items()
             },
-            "links": associate(rows, pois, to_metric=to_metric),
+            "links": associate(
+                rows,
+                pois,
+                to_metric=to_metric,
+                include_legacy_links=include_legacy_links,
+            ),
         }
         for month, rows in sorted(months.items())
     }

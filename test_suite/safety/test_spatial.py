@@ -195,6 +195,18 @@ def test_named_place_link_uses_only_primary_scene_object_id():
     ]
 
 
+def test_reviewed_context_only_mode_suppresses_implicit_named_place_link():
+    pois, _ = pois_from_osm({"elements": [
+        dict(type="node", id=1, lon=13.4, lat=52.5, tags={"amenity": "bar"}),
+    ]})
+    report = scene_event()
+    report["location_precision"] = "place"
+    report["scene_locations"][0]["location_precision"] = "place"
+    report["scene_locations"][0]["location_object_ids"] = ["osm/node/1"]
+
+    assert associate([report], pois, include_legacy_links=False) == []
+
+
 @pytest.mark.parametrize("change", [
     lambda report: report["scene_locations"][1].update(primary_for_count=True),
     lambda report: report["scene_locations"][0].update(location_precision="district"),

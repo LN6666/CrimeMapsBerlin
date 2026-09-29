@@ -174,6 +174,17 @@ def _inputs():
 
 def _write_poi_product(root, catalog_path):
     source_hash = "9" * 64
+    poi = {
+        "type": "Feature",
+        "geometry": mapping(Point(6.77, 51.23)),
+        "properties": {
+            "id": "osm/node/1",
+            "name": "Nordmarkt",
+            "kind": "park",
+            "geometry_mode": "footprint_missing",
+            "center": [6.77, 51.23],
+        },
+    }
     boundary = {
         "id": "osm/relation/1",
         "source_pbf_sha256": source_hash,
@@ -188,28 +199,33 @@ def _write_poi_product(root, catalog_path):
             "city": "dusseldorf",
             "status": "local_poi_only_unpublished",
             "epsg": 25832,
-            "poi_count": 0,
+            "poi_count": 1,
             "source_pbf_sha256": source_hash,
             "boundary_source_id": "osm/relation/1",
             "catalog_sha256": hashlib.sha256(catalog_path.read_bytes()).hexdigest(),
             "tile_size": [0.04, 0.025],
-            "tile_index": {"pois": []},
+            "tile_index": {"pois": ["park/1_1"]},
         },
         "validation.json": {
             "passed": True,
             "errors": [],
-            "poi_count": 0,
+            "poi_count": 1,
             "epsg": 25832,
             "source_sha256": source_hash,
             "boundary_source_id": "osm/relation/1",
         },
         "boundary.geojson": boundary,
-        "poi-index.json": {"type": "FeatureCollection", "features": []},
+        "poi-index.json": {"type": "FeatureCollection", "features": [poi]},
         "search.json": [],
     }
     for name, value in values.items():
         (root / name).write_text(json.dumps(value), encoding="utf-8")
-    (root / "pois").mkdir()
+    tile = root / "pois" / "park" / "1_1.json"
+    tile.parent.mkdir(parents=True)
+    tile.write_text(
+        json.dumps({"type": "FeatureCollection", "features": [poi]}),
+        encoding="utf-8",
+    )
 
 
 def test_prepare_events_keeps_all_scenes_but_counts_only_explicit_primary():

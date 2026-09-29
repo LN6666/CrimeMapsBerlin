@@ -427,6 +427,7 @@ def build_candidate(
         poi_index,
         to_metric=to_metric,
         to_wgs=to_wgs,
+        include_legacy_links=False,
     )
     if sum(len(value["event_ids"]) for value in months.values()) != len(events):
         raise ValueError("Monthly candidate files do not cover every mappable article")
