@@ -85,10 +85,13 @@ selected Presseportal newsroom. Exact URL matching therefore finds only 13 of
 849 local reports. That low number measures incompatible source URLs, not an
 absence of upstream structuring.
 
-POLIZEIKARTE supplies 398 street-precision entries and 547 coordinates. The
-remaining 200 city and 56 district entries must stay non-point geometry; the
-149 coordinates attached to those coarse precision levels are representatives
-and must be withheld from incident counts.
+POLIZEIKARTE supplies 398 street-precision entries, of which 397 have
+coordinates. The remaining 200 city and 56 district entries must stay
+non-point geometry. Of those coarse entries, 150 carry representative
+coordinates (147 city and 3 district), while 106 carry no coordinate; all 150
+representatives must be withheld from incident counts. In particular, 147
+coarse entries repeat the same Nuremberg centre coordinate rather than an
+incident site.
 
 A representative row is entry 135621. It supplies category `gewalt`, street
 precision, a coordinate and a detailed summary for the Spittlertorzwinger /
