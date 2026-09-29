@@ -106,7 +106,11 @@ def _inputs():
         "decisions": [
             {
                 "request": request,
-                "decision": {"verdict": "resolved", "method": "osm_point"},
+                "decision": {
+                    "verdict": "resolved",
+                    "method": "osm_point",
+                    "review_note": "The source explicitly names this checked place.",
+                },
                 "derived_geometry": {
                     "type": "Point",
                     "geometry": mapping(Point(6.77, 51.23)),
@@ -254,3 +258,7 @@ def test_review_pack_excludes_nonmappable_scope_and_never_selects_semantics(monk
     article = result["articles"][0]
     assert "article_category" not in article
     assert article["formal_locations"][0]["count_point_available"] is True
+    assert article["formal_locations"][0]["count_point_basis"] == "selected_osm_point"
+    assert article["formal_locations"][0]["geometry_review_note"] == (
+        "The source explicitly names this checked place."
+    )

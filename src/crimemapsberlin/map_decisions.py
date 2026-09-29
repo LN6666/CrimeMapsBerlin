@@ -217,6 +217,10 @@ def build_review_pack(*, city: str, source_db: Path, inventory: dict, geometry_l
         locations = []
         for location in article.get("formal_locations", []):
             geometry_row = geometry.get(location["location_id"])
+            derived_geometry = (
+                geometry_row.get("derived_geometry") if geometry_row is not None else None
+            )
+            count_point_available = _count_point(geometry_row) is not None
             locations.append(
                 {
                     **location,
@@ -234,11 +238,22 @@ def build_review_pack(*, city: str, source_db: Path, inventory: dict, geometry_l
                         geometry_row.get("decision", {}).get("method") if geometry_row is not None else "none"
                     ),
                     "geometry_type": (
-                        geometry_row.get("derived_geometry", {}).get("type")
-                        if isinstance(geometry_row and geometry_row.get("derived_geometry"), dict)
+                        derived_geometry.get("type") if isinstance(derived_geometry, dict) else None
+                    ),
+                    "geometry_review_note": (
+                        geometry_row.get("decision", {}).get("review_note")
+                        if geometry_row is not None
                         else None
                     ),
-                    "count_point_available": _count_point(geometry_row) is not None,
+                    "count_point_available": count_point_available,
+                    "count_point_basis": (
+                        derived_geometry.get("count_point_method")
+                        if isinstance(derived_geometry, dict)
+                        and derived_geometry.get("count_point_method")
+                        else "selected_osm_point"
+                        if count_point_available
+                        else None
+                    ),
                 }
             )
         articles.append(
@@ -275,7 +290,9 @@ def build_review_pack(*, city: str, source_db: Path, inventory: dict, geometry_l
             "primary_count": (
                 "Choose zero or one incident/location pair. A primary location must be an in-city "
                 "incident or accident location linked to that incident and must have an available "
-                "checked count point. Other formal locations remain displayed without another count."
+                "checked count point. Read the geometry review note: a reference anchor or broad "
+                "named-place representative is not automatically a defensible incident count point. "
+                "Other formal locations remain displayed without another count."
             ),
             "non_inference": (
                 "Do not infer a venue, offence, location, motive or incident from nearby POIs or identity."
