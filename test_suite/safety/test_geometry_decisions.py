@@ -202,9 +202,10 @@ def test_geometry_decisions_keep_selected_footprint_and_derive_a_named_count_poi
     [
         ("area", "checked_area_geometry_required"),
         ("place", "checked_point_geocode_required"),
+        ("point", "checked_point_geocode_required"),
     ],
 )
-def test_geometry_decisions_allow_llm_selected_lines_for_named_linear_areas(
+def test_geometry_decisions_allow_llm_selected_lines_for_disclosed_named_roads(
     precision, geometry_task
 ):
     inventory, index, decisions, border = _inputs()
@@ -223,3 +224,21 @@ def test_geometry_decisions_allow_llm_selected_lines_for_named_linear_areas(
         border=border,
     )
     assert result["decisions"][1]["derived_geometry"]["type"] == "LineString"
+
+
+def test_geometry_decisions_do_not_replace_a_reviewed_address_with_a_whole_road():
+    inventory, index, decisions, border = _inputs()
+    request = inventory["geometry_requests"][1]
+    request["precision"] = "address"
+    decisions["decisions"][1].update(
+        verdict="resolved",
+        method="osm_line",
+        osm_object_groups=[["osm/way/1"]],
+    )
+    with pytest.raises(ValueError, match="differs from the reviewed precision"):
+        compile_geometry_decisions(
+            inventory=inventory,
+            geometry_index=index,
+            decision_envelope=decisions,
+            border=border,
+        )

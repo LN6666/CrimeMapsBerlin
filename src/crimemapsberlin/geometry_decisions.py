@@ -168,7 +168,10 @@ def _derived_geometry(
             line_matches_review = (
                 (task == "checked_road_geometry_required" and precision == "street")
                 or (task == "checked_area_geometry_required" and precision == "area")
-                or (task == "checked_point_geocode_required" and precision == "place")
+                or (
+                    task == "checked_point_geocode_required"
+                    and precision in {"point", "place"}
+                )
             )
             if not line_matches_review:
                 raise ValueError("osm_line differs from the reviewed precision")
