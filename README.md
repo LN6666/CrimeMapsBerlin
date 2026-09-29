@@ -66,6 +66,12 @@ uv run python -m crimemapsberlin.source_review_pack \
 生成包只代表来源输入。每篇公告的城市范围、案件数量、全部场景以及所有者确认
 仍需完成，才能进入发布流程。
 
+POLIZEIKARTE 对全部选定城市都提供部分上游分类与位置，但页面存在不表示时间覆盖完整，
+也不表示可以替代当前官方语料。`polizeikarte_coverage.py` 以十个互斥分类核验其 365 天
+结构化载荷，并只用规范 URL 或精确 Presseportal 文章编号与当前官方 SQLite 配对；它不
+用标题、日期或坐标猜测同案，不接受上游语义，也不生成复核决定。法兰克福和纽伦堡的
+覆盖、速度与慕尼黑差异见[专项审计](docs/POLIZEIKARTE-FRANKFURT-NUREMBERG-AUDIT.md)。
+
 Berlin、Hamburg、Cologne 和 Frankfurt 的复核结果可通过统一的来源哈希门禁导入：
 
 ```sh
