@@ -198,6 +198,61 @@ def test_compile_map_decisions_rejects_nonincident_or_nonpoint_primary():
         )
 
 
+def test_compile_map_decisions_counts_identical_articles_only_once():
+    sources, inventory, geometry, envelope = _inputs()
+    second = copy.deepcopy(sources[0])
+    second["source_id"] = "source-2"
+    second["source_url"] = "https://example.invalid/source-2"
+    sources.append(second)
+
+    article = copy.deepcopy(inventory["articles"][0])
+    article["source_id"] = second["source_id"]
+    article["source_url"] = second["source_url"]
+    for incident in article["incidents"]:
+        incident["incident_id"] = incident["incident_id"].replace("source-1", "source-2")
+        incident["formal_location_ids"] = [
+            value.replace("source-1", "source-2") for value in incident["formal_location_ids"]
+        ]
+    for location in article["formal_locations"]:
+        location["location_id"] = location["location_id"].replace("source-1", "source-2")
+    inventory["articles"].append(article)
+
+    geometry_row = copy.deepcopy(geometry["decisions"][0])
+    geometry_row["request"]["source_id"] = "source-2"
+    geometry_row["request"]["location_id"] = "source-2:location:1"
+    geometry["decisions"].append(geometry_row)
+    geometry["request_count"] = 2
+    _rehash_geometry(geometry)
+
+    decision = copy.deepcopy(envelope["decisions"][0])
+    decision["source_id"] = "source-2"
+    decision["primary_count_incident_id"] = "source-2:incident:1"
+    decision["primary_count_location_id"] = "source-2:location:1"
+    decision["incident_categories"][0]["incident_id"] = "source-2:incident:1"
+    envelope["decisions"].append(decision)
+    envelope["geometry_ledger_sha256"] = geometry["ledger_sha256"]
+
+    with pytest.raises(ValueError, match="identical source articles twice"):
+        compile_map_decisions(
+            city="dusseldorf",
+            source_rows=sources,
+            inventory=inventory,
+            geometry_ledger=geometry,
+            decision_envelope=envelope,
+        )
+
+    decision["primary_count_incident_id"] = None
+    decision["primary_count_location_id"] = None
+    result = compile_map_decisions(
+        city="dusseldorf",
+        source_rows=sources,
+        inventory=inventory,
+        geometry_ledger=geometry,
+        decision_envelope=envelope,
+    )
+    assert result["primary_count"] == 1
+
+
 def test_compile_map_decisions_requires_every_incident_and_current_evidence():
     sources, inventory, geometry, envelope = _inputs()
     missing = copy.deepcopy(envelope)

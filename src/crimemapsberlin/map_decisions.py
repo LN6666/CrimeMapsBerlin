@@ -359,6 +359,7 @@ def compile_map_decisions(
     category_counts: Counter = Counter()
     incident_category_counts: Counter = Counter()
     primary_count = 0
+    counted_article_fingerprints: dict[tuple[str, str], str] = {}
     for number, raw in enumerate(raw_decisions, start=1):
         label = f"map decision {number}"
         decision = _exact_keys(raw, DECISION_KEYS, label)
@@ -430,6 +431,14 @@ def compile_map_decisions(
                 or _count_point(geometry.get(primary_location)) is None
             ):
                 raise ValueError(f"{label} selects a non-countable primary incident/location pair")
+            fingerprint = (source["source_sha256"], _normalized(source["title"]))
+            earlier_source_id = counted_article_fingerprints.get(fingerprint)
+            if earlier_source_id is not None:
+                raise ValueError(
+                    f"{label} would count identical source articles twice: "
+                    f"{earlier_source_id} and {source_id}"
+                )
+            counted_article_fingerprints[fingerprint] = source_id
             primary_count += 1
 
         note = _normalized(decision["review_note"]) if isinstance(decision["review_note"], str) else ""
