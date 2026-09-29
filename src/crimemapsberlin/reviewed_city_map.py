@@ -255,8 +255,12 @@ def _event_time_basis(incidents: dict[str, dict], published: datetime) -> tuple[
         event_date = known[0]
         return event_date, event_date[:7], "reviewed_incident_time"
     if known:
-        return None, published.strftime("%Y-%m"), "mixed_or_incomplete_reviewed_incident_times"
-    return None, published.strftime("%Y-%m"), "official_publication_month"
+        return (
+            None,
+            published.strftime("%Y-%m"),
+            "mixed_reviewed_event_times_publication_month_filter",
+        )
+    return None, published.strftime("%Y-%m"), "event_time_unknown_publication_month_filter"
 
 
 def _prepare_events(

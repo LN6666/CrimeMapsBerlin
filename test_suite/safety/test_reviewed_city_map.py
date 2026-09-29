@@ -244,7 +244,7 @@ def test_prepare_events_keeps_all_scenes_but_counts_only_explicit_primary():
     event = events[0]
     assert event["coordinates"] == [6.77, 51.23]
     assert event["event_date"] is None
-    assert event["time_basis"] == "official_publication_month"
+    assert event["time_basis"] == "event_time_unknown_publication_month_filter"
     assert [scene["primary_for_count"] for scene in event["scene_locations"]] == [True, False]
     assert event["scene_locations"][1]["geometry"]["type"] == "LineString"
 
