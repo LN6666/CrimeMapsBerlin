@@ -32,6 +32,7 @@ title="Zur nächsten Seite">mehr Ergebnisse anzeigen</a></nav>'''
 ARTICLE = '''<link rel="canonical" href="https://koeln.polizei.nrw/presse/polizei-sucht-nach-mutmasslichem-brandstifter" />
 <article about="/presse/polizei-sucht-nach-mutmasslichem-brandstifter" class="node node--type--press-release node--view-mode-full">
 <div class="field field--name-field-press-release-author">Polizei Köln</div>
+<div class="field field--name-field-base-teaser-text">Am Dienstag begann der Einsatz in Köln.</div>
 <div class="field field--name-body"><p>In Leverkusen-Schlebusch versuchte ein Unbekannter,
 den Eingangsbereich eines Hauses anzuzünden.</p><p>Die Polizei sucht Zeugen.</p></div></article>
 <aside>In Köln befindet sich die Pressestelle, nicht der Tatort.</aside>
@@ -80,6 +81,7 @@ def test_native_article_uses_stable_id_and_excludes_sidebar():
     url = "https://koeln.polizei.nrw/presse/polizei-sucht-nach-mutmasslichem-brandstifter"
     record = article_record(ARTICLE, url)
     assert record["source_id"] == "217132"
+    assert record["body"].startswith("Am Dienstag begann der Einsatz in Köln.\n")
     assert "Leverkusen-Schlebusch" in record["body"]
     assert "Pressestelle" not in record["body"]
     with pytest.raises(ValueError, match="publisher"):
@@ -90,12 +92,15 @@ def test_native_article_with_nested_media_keeps_later_author_and_body():
     url = "https://koeln.polizei.nrw/presse/polizei-sucht-nach-mutmasslichem-brandstifter"
     nested = ARTICLE.replace(
         '<div class="field field--name-field-press-release-author">',
-        '<article about="/medien/illustration" class="node node--type-image">Bild</article>'
+        '<article about="/medien/illustration" class="node node--type-image">'
+        '<div class="field field--name-body"><p>Bildbeschreibung außerhalb des Meldungstextes.</p></div>'
+        '</article>'
         '<div class="field field--name-field-press-release-author">',
     )
     record = article_record(nested, url)
     assert record["source_id"] == "217132"
     assert "Leverkusen-Schlebusch" in record["body"]
+    assert "Bildbeschreibung" not in record["body"]
     assert "Pressestelle" not in record["body"]
 
 

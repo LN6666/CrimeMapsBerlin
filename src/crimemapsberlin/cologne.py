@@ -165,38 +165,58 @@ class NativeArticleParser(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.depth = 0
+        self.article_nesting = 0
+        self.teaser_depth = None
         self.body_depth = None
         self.author_depth = None
         self.author = []
+        self.teaser = []
         self.parts = []
 
     def handle_starttag(self, tag, attrs):
+        if tag == "article":
+            self.article_nesting += 1
+            return
         if tag != "div":
             return
         self.depth += 1
         classes = dict(attrs).get("class", "").split()
-        if "field--name-body" in classes:
+        if self.article_nesting != 1:
+            return
+        if "field--name-field-base-teaser-text" in classes:
+            self.teaser_depth = self.depth
+        elif "field--name-body" in classes:
             self.body_depth = self.depth
         elif "field--name-field-press-release-author" in classes:
             self.author_depth = self.depth
 
     def handle_data(self, data):
+        if self.teaser_depth is not None:
+            self.teaser.append(" " + data)
         if self.body_depth is not None:
             self.parts.append(" " + data)
         if self.author_depth is not None:
             self.author.append(data)
 
     def handle_endtag(self, tag):
+        if self.teaser_depth is not None and tag in {"p", "li", "br"}:
+            self.teaser.append("\n")
         if self.body_depth is not None and tag in {"p", "li", "br"}:
             self.parts.append("\n")
         if tag == "div":
+            if self.depth == self.teaser_depth:
+                self.teaser_depth = None
             if self.depth == self.body_depth:
                 self.body_depth = None
             if self.depth == self.author_depth:
                 self.author_depth = None
             self.depth -= 1
+        elif tag == "article" and self.article_nesting:
+            self.article_nesting -= 1
 
     def handle_startendtag(self, tag, attrs):
+        if self.teaser_depth is not None and tag == "br":
+            self.teaser.append("\n")
         if self.body_depth is not None and tag == "br":
             self.parts.append("\n")
 
@@ -231,8 +251,17 @@ def article_record(page: str, requested_url: str) -> dict:
     parser = NativeArticleParser()
     parser.feed(page[opening.start():end])
     author = _text("".join(parser.author))
-    body = "\n".join(_text(part) for part in "".join(parser.parts).splitlines() if _text(part))
-    if author != "Polizei Köln" or len(body) < 30:
+    teaser = "\n".join(
+        _text(part) for part in "".join(parser.teaser).splitlines() if _text(part)
+    )
+    main_body = "\n".join(
+        _text(part) for part in "".join(parser.parts).splitlines() if _text(part)
+    )
+    sections = [part for part in (teaser, main_body) if part]
+    if len(sections) == 2 and sections[0] == sections[1]:
+        sections.pop()
+    body = "\n".join(sections)
+    if author != "Polizei Köln" or len(main_body) < 30 or len(body) < 30:
         raise ValueError("Native Köln publisher or body check failed")
     return {"source_id": match[1], "source_url": url, "body": body}
 
