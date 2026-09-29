@@ -150,6 +150,7 @@ def _scene_summary(scene: dict) -> dict:
         "coordinates", "primary_for_count", "evidence_quote", "source_time",
         "case_relation", "minimum_incidents", "duplicate_of_source_id",
         "duplicate_source_sha256", "poi_mentions", "location_object_ids",
+        "details", "event_time", "incidents", "transit_route", "poi_contexts",
     ) if key in scene}
     for key in ("geometry", "candidate_road_geometry"):
         geometry = scene.get(key)

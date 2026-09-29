@@ -57,6 +57,7 @@ const precisionLabels: Record<string, string> = {
   place: "场所近似位置",
   address: "地址近似位置",
   point: "点位",
+  route: "移动公共交通路线",
   district: "仅区域信息",
   city: "仅城市级位置",
   unknown: "位置待核验",
@@ -87,7 +88,7 @@ const sceneColor: maplibregl.ExpressionSpecification = [
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `<header><div><span class="brand">${currentCity === "berlin" ? "CRIMEMAPSBERLIN" : "CRIMEMAPS.DE"}</span><h1>${cityView.name} · 警情与城市场所</h1></div><div class="toolbar"><label class="city-switch">选择城市<select id="city-switch" aria-label="选择城市"></select></label><label>年份<select id="year" aria-label="年份"></select></label><label>月份<select id="month" aria-label="月份"></select></label><button id="overview">全市概览</button><button id="sources">警方来源</button></div></header>
-<main><aside class="controls"><p class="eyebrow">${cityView.latin} / PUBLIC REPORTS</p><h2>看事件，也看周边</h2><p id="coverage">读取本地数据…</p><nav id="external-maps" class="external-maps" aria-label="外部警情网站"></nav><label class="search-label">查找${cityView.name}场所<input id="search" placeholder="${cityView.example}" autocomplete="off"></label><div id="search-results"></div><label>事件类别<select id="category"><option value="all">全部警方公告</option></select></label><div class="rule"></div><h3>六边形 · 公告数量</h3><div class="ramp"></div><div class="ends"><span>少</span><span>多</span></div><p id="resolution"></p><label class="toggle"><input id="hex-toggle" type="checkbox" checked> 显示六边形</label><label class="toggle"><input id="candidate-roads-toggle" type="checkbox" checked> 显示待定位道路范围</label><p class="hint"><span class="road-swatch" aria-hidden="true"></span>橙色虚线仅表示原文提到的道路候选范围，具体案发位置未知；不计入六边形或 POI 关联。</p><div class="scene-legend" aria-label="公告场景颜色"><span><i class="scene-swatch incident"></i>案发/事故</span><span><i class="scene-swatch discovery"></i>发现</span><span><i class="scene-swatch operation"></i>警方行动</span><span><i class="scene-swatch context"></i>背景/待核</span></div><h3>周边 POI</h3><div id="poi-filters"></div><label class="toggle"><input id="highlight" type="checkbox" checked> 报告提及类型 + 附近匹配时加深</label><p class="hint">小型场所：50 米圆。车站：已有面状范围；空心点表示范围缺失。加深表示关联记录数。</p><div class="rule"></div><button id="kbo">查看柏林 kbO 官方区域</button><p class="hint">警方划定区域与事件网格分别展示。</p><p id="freshness" class="hint"></p></aside>
+<main><aside class="controls"><p class="eyebrow">${cityView.latin} / PUBLIC REPORTS</p><h2>看事件，也看周边</h2><p id="coverage">读取本地数据…</p><nav id="external-maps" class="external-maps" aria-label="外部警情网站"></nav><label class="search-label">查找${cityView.name}场所<input id="search" placeholder="${cityView.example}" autocomplete="off"></label><div id="search-results"></div><label>事件类别<select id="category"><option value="all">全部警方公告</option></select></label><div class="rule"></div><h3>六边形 · 公告数量</h3><div class="ramp"></div><div class="ends"><span>少</span><span>多</span></div><p id="resolution"></p><label class="toggle"><input id="hex-toggle" type="checkbox" checked> 显示六边形</label><label class="toggle"><input id="candidate-roads-toggle" type="checkbox" checked> 显示待定位道路范围</label><p class="hint"><span class="road-swatch" aria-hidden="true"></span>橙色虚线仅表示原文提到的道路候选范围，具体案发位置未知；不计入六边形或 POI 关联。</p><div class="scene-legend" aria-label="公告场景颜色"><span><i class="scene-swatch incident"></i>案发/事故</span><span><i class="scene-swatch discovery"></i>发现</span><span><i class="scene-swatch operation"></i>警方行动</span><span><i class="scene-swatch context"></i>背景/待核</span><span><i class="route-swatch"></i>移动公交路线</span></div><h3>周边 POI</h3><div id="poi-filters"></div><label class="toggle"><input id="highlight" type="checkbox" checked> 经复核的同类场所上下文加深</label><p class="hint">加深仅表示原文复核确认的整条街道、路线沿线或附近同类场所上下文，不表示事件发生在具体场所内。</p><div class="rule"></div><button id="kbo">查看柏林 kbO 官方区域</button><p class="hint">警方划定区域与事件网格分别展示。</p><p id="freshness" class="hint"></p></aside>
 <section class="map-wrap"><div id="map" aria-label="${cityView.name}警情交互地图"></div><div class="map-label"><span class="dot"></span><span id="map-status">正在准备地图</span></div><div class="basemap-picker"><label>底图<select id="basemap" aria-label="底图" disabled><option value="street">标准街道</option><option value="aerial">航空影像（2026）</option><option value="local">本地简图</option></select></label><div id="basemap-error" role="status" hidden><span></span><button id="basemap-fallback">使用本地简图</button></div></div><div class="map-note">浅色 POI 是城市设施，不代表被警方认定为高发场所</div></section>
 <aside class="details"><div id="stats"></div><div id="selection"><h2>选择一个六边形或 POI</h2><p>查看该区域的事件、类别，以及可以追溯的警方原文。</p></div></aside></main>
 <dialog id="drawer"><button id="close-dialog" class="close">关闭</button><div id="drawer-content"></div></dialog>`;
@@ -242,6 +243,33 @@ function listReports(parent: HTMLElement, ids: string[]) {
           `${scene.case_relation ? `${sceneRelationLabels[scene.case_relation]} · ` : ""}${precisionLabels[scene.location_precision] ?? "位置待核验"} · ${scene.primary_for_count ? "主场景" : "仅展示，不计入六边形"}${scene.candidate_road_geometry ? " · 道路范围待核验" : ""}`,
           item,
         );
+        const eventTimes = [
+          scene.event_time?.display,
+          ...(scene.incidents ?? []).map((incident) => incident.event_time?.display),
+        ].filter((value): value is string => Boolean(value));
+        const uniqueTimes = [...new Set(eventTimes)];
+        if (uniqueTimes.length)
+          text("small", `原始事件时间：${uniqueTimes.join("；")}`, item);
+        if (scene.transit_route)
+          text(
+            "small",
+            `${scene.transit_route.mode} ${scene.transit_route.line} · ${scene.transit_route.extent === "full_line" ? "整条线路展示" : "原文涉及路段"}`,
+            item,
+          );
+        const details = [
+          scene.details,
+          ...(scene.incidents ?? []).map((incident) => incident.details),
+        ].filter((value): value is string => Boolean(value));
+        for (const detail of [...new Set(details)]) text("small", detail, item);
+        if (scene.poi_contexts?.length) {
+          const kinds = [...new Set(scene.poi_contexts.map((context) =>
+            data.catalog.poi_types[context.kind]?.label ?? context.kind))];
+          text(
+            "small",
+            `经原文复核的场所上下文：${kinds.join("、")}；仅调高相关 POI 显示强度，不表示事件发生在该场所内。`,
+            item,
+          );
+        }
       }
       text(
         "small",
@@ -407,10 +435,10 @@ function showSelection() {
     );
     text(
       "p",
-      `附近同类提及 ${p.count} 条；街道近似坐标候选 ${p.candidate_count} 条`,
+      `附近同类提及 ${p.count} 条；街道近似坐标候选 ${p.candidate_count} 条；经复核上下文 ${p.context_count ?? 0} 条`,
       panel,
     );
-    text("p", "这些是附近匹配，不表示案件发生在这家店内。", panel).className =
+    text("p", "这些是经原文复核的场所上下文，不表示事件发生在这家店内。", panel).className =
       "hint";
     if (p.opening_hours) text("p", `OSM 营业时间：${p.opening_hours}`, panel);
     link(panel, "OSM 对象 ↗", p.source_url);
@@ -897,8 +925,20 @@ async function start() {
           "all",
           ["==", ["geometry-type"], "LineString"],
           ["!=", ["get", "geometry_kind"], "candidate_road"],
+          ["!=", ["get", "geometry_kind"], "transit_route"],
         ],
         paint: { "line-color": sceneColor, "line-width": 4 },
+      });
+      map.addLayer({
+        id: "scene-transit-route",
+        type: "line",
+        source: "scenes",
+        filter: ["==", ["get", "geometry_kind"], "transit_route"],
+        paint: {
+          "line-color": "#6d4bc3",
+          "line-width": 5,
+          "line-dasharray": [2, 1.2],
+        },
       });
       map.addLayer({
         id: "scene-candidate-road-line",
@@ -956,7 +996,7 @@ async function start() {
         if (expired) return;
         const fs = map.queryRenderedFeatures(e.point, {
           layers: [
-            "scene-point", "scene-candidate-road-hit", "scene-line",
+            "scene-point", "scene-candidate-road-hit", "scene-line", "scene-transit-route",
             "scene-area-fill", "scene-area-outline",
             "candidate-roads-hit", "poi-fill", "poi-point", "hex-fill",
           ],

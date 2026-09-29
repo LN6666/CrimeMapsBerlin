@@ -216,6 +216,14 @@ p {
 .scene-swatch.discovery { background: #2874a6; }
 .scene-swatch.operation { background: #986223; }
 .scene-swatch.context { background: #677785; }
+.route-swatch {
+  display: inline-block;
+  width: 18px;
+  height: 3px;
+  margin-right: 6px;
+  vertical-align: middle;
+  background: repeating-linear-gradient(90deg, #6d4bc3 0 7px, transparent 7px 11px);
+}
 .scene-heading {
   font-weight: 700;
   margin-top: 10px;

@@ -242,3 +242,43 @@ def test_geometry_decisions_do_not_replace_a_reviewed_address_with_a_whole_road(
             decision_envelope=decisions,
             border=border,
         )
+
+
+def test_geometry_decisions_require_every_checked_segment_for_full_transit_line():
+    inventory, index, decisions, border = _inputs()
+    request = inventory["geometry_requests"][1]
+    request.update(
+        precision="route",
+        geometry_task="checked_transit_route_geometry_required",
+        transit_route={
+            "mode": "subway", "line": "U8", "extent": "full_line",
+            "evidence_quote": "The incident occurred inside a train on line U8.",
+        },
+    )
+    index["objects"][0].update(names=["U8"], tags={"railway": "subway"})
+    index["objects"].append({
+        "id": "osm/way/5", "roles": ["named_object"], "names": ["U8"],
+        "tags": {"railway": "subway"},
+        "geometry": mapping(LineString([(6.78, 51.24), (6.79, 51.25)])),
+    })
+    decisions["decisions"][1].update(
+        verdict="resolved",
+        method="osm_transit_route",
+        osm_object_groups=[["osm/way/1", "osm/way/5"]],
+    )
+    result = compile_geometry_decisions(
+        inventory=inventory,
+        geometry_index=index,
+        decision_envelope=decisions,
+        border=border,
+    )
+    assert result["decisions"][1]["derived_geometry"]["type"] == "MultiLineString"
+    incomplete = copy.deepcopy(decisions)
+    incomplete["decisions"][1]["osm_object_groups"] = [["osm/way/1"]]
+    with pytest.raises(ValueError, match="every checked line segment"):
+        compile_geometry_decisions(
+            inventory=inventory,
+            geometry_index=index,
+            decision_envelope=incomplete,
+            border=border,
+        )

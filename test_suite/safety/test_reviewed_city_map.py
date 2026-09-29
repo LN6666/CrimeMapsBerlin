@@ -227,8 +227,34 @@ def test_prepare_events_keeps_all_scenes_but_counts_only_explicit_primary():
     assert audit["primary_count_points"] == 1
     event = events[0]
     assert event["coordinates"] == [6.77, 51.23]
+    assert event["event_date"] is None
+    assert event["time_basis"] == "official_publication_month"
     assert [scene["primary_for_count"] for scene in event["scene_locations"]] == [True, False]
     assert event["scene_locations"][1]["geometry"]["type"] == "LineString"
+
+
+def test_prepare_events_uses_reviewed_original_incident_date_instead_of_publication_date():
+    sources, inventory, geometry, map_ledger = _inputs()
+    inventory["articles"][0]["incidents"][0]["event_time"] = {
+        "display": "30. Januar 2023 gegen 16:10 Uhr",
+        "date": "2023-01-30",
+        "precision": "approximate",
+        "evidence_quote": "Am Nordmarkt wurde ein Mann beraubt.",
+    }
+    events, _, _ = reviewed_city_map._prepare_events(
+        city="dusseldorf",
+        source_rows=sources,
+        inventory=inventory,
+        geometry_ledger=geometry,
+        map_ledger=map_ledger,
+    )
+    event = events[0]
+    assert (event["event_date"], event["month"], event["time_basis"]) == (
+        "2023-01-30", "2023-01", "reviewed_incident_time",
+    )
+    assert event["scene_locations"][0]["incidents"][0]["event_time"]["display"] == (
+        "30. Januar 2023 gegen 16:10 Uhr"
+    )
 
 
 def test_prepare_events_rejects_a_stale_or_incomplete_map_ledger():

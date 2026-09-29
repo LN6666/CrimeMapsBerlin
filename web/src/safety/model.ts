@@ -21,6 +21,24 @@ export type SceneCaseRelation =
   | "search_arrest_operation"
   | "background_reference"
   | "unresolved_relation";
+export interface EventTime {
+  display: string;
+  date: string | null;
+  precision: "exact" | "approximate" | "date" | "range" | "unknown";
+  evidence_quote: string;
+}
+export interface TransitRoute {
+  mode: "bus" | "tram" | "subway" | "train" | "ferry" | "other";
+  line: string;
+  extent: "full_line" | "source_segment";
+  evidence_quote: string;
+}
+export interface PoiContext {
+  kind: string;
+  scope: "along_geometry" | "near_geometry" | "named_object";
+  radius_m: number;
+  evidence_quote: string;
+}
 export interface SceneLocation {
   label: string;
   role: SceneRole;
@@ -32,6 +50,16 @@ export interface SceneLocation {
   primary_for_count: boolean;
   case_relation?: SceneCaseRelation;
   minimum_incidents?: number;
+  details?: string;
+  event_time?: EventTime;
+  incidents?: {
+    incident_id: string;
+    category?: string;
+    event_time?: EventTime;
+    details?: string;
+  }[];
+  transit_route?: TransitRoute;
+  poi_contexts?: PoiContext[];
 }
 export interface PoliceEvent {
   id: string;
@@ -68,6 +96,8 @@ export interface Link {
   status: string;
   source_url: string;
   mention_basis: string;
+  scene_id?: string;
+  evidence_quote?: string;
 }
 export interface Month {
   event_ids: string[];
@@ -169,6 +199,7 @@ export function sceneFeatures(rows: PoliceEvent[]): FC {
           primary_for_count: scene.primary_for_count,
           location_precision: scene.location_precision,
           geocode_method: scene.geocode_method,
+          transit_line: scene.transit_route?.line,
         };
         const features: FC["features"] = [];
         if (scene.geometry && validGeometry(scene.geometry))
@@ -176,7 +207,12 @@ export function sceneFeatures(rows: PoliceEvent[]): FC {
             features.push({
               type: "Feature",
               geometry,
-              properties: { ...properties, geometry_kind: "reported", part },
+              properties: {
+                ...properties,
+                geometry_kind:
+                  scene.location_precision === "route" ? "transit_route" : "reported",
+                part,
+              },
             });
         if (
           scene.coordinates &&
@@ -328,13 +364,14 @@ export function styledPois(
 ): FC {
   const counts = new Map<string, Set<string>>();
   const candidate = new Map<string, Set<string>>();
+  const context = new Map<string, Set<string>>();
   for (const link of links) {
     if (!ids.has(link.event_id)) continue;
-    const target = ["approximate_candidate", "named_place_candidate"].includes(
-      link.status,
-    )
-      ? candidate
-      : counts;
+    const target = link.status.startsWith("context_")
+      ? context
+      : ["approximate_candidate", "named_place_candidate"].includes(link.status)
+        ? candidate
+        : counts;
     if (!target.has(link.poi_id)) target.set(link.poi_id, new Set());
     target.get(link.poi_id)!.add(link.event_id);
   }
@@ -345,7 +382,8 @@ export function styledPois(
       .map((f) => {
         const id = f.properties.id,
           n = counts.get(id)?.size ?? 0,
-          c = candidate.get(id)?.size ?? 0;
+          c = candidate.get(id)?.size ?? 0,
+          x = context.get(id)?.size ?? 0;
         return {
           ...f,
           properties: {
@@ -354,13 +392,15 @@ export function styledPois(
               data.catalog.poi_types[f.properties.kind]?.color ?? "#64748b",
             count: n,
             candidate_count: c,
-            association_count: n + c,
+            context_count: x,
+            association_count: n + c + x,
             opacity: highlight
-              ? Math.min(0.78, 0.12 + 0.16 * Math.log2(1 + n + c))
+              ? Math.min(0.78, 0.12 + 0.16 * Math.log2(1 + n + c + x))
               : 0.12,
             event_ids: [
               ...(counts.get(id) ?? []),
               ...(candidate.get(id) ?? []),
+              ...(context.get(id) ?? []),
             ],
           },
         };

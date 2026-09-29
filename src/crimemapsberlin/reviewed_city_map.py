@@ -78,7 +78,9 @@ def _replace_directory(staging: Path, target: Path) -> None:
     shutil.rmtree(backup, ignore_errors=True)
 
 
-def _verify_poi_product(*, city: str, poi_root: Path, catalog_path: Path) -> tuple[dict, dict, dict, dict]:
+def _verify_poi_product(
+    *, city: str, poi_root: Path, catalog_path: Path
+) -> tuple[dict, dict, dict, dict, dict]:
     contract = _load(poi_root / "poi-contract.json", "POI contract")
     validation = _load(poi_root / "validation.json", "POI validation")
     boundary = _load(poi_root / "boundary.geojson", "municipal boundary")
@@ -126,7 +128,7 @@ def _verify_poi_product(*, city: str, poi_root: Path, catalog_path: Path) -> tup
     actual_tiles = {f"{path.parent.name}/{path.stem}" for path in (poi_root / "pois").glob("*/*.json")}
     if actual_tiles != set(tile_keys):
         raise ValueError("POI tile files differ from the validated contract")
-    return contract, validation, boundary, catalog
+    return contract, validation, boundary, catalog, index
 
 
 def _published(value: object) -> datetime:
@@ -184,6 +186,7 @@ def _verify_map_ledger(map_ledger: dict) -> None:
 def _scene(
     location: dict,
     geometry_row: dict | None,
+    incidents: dict[str, dict],
     incident_categories: dict[str, str],
     primary_location_id: str | None,
 ) -> dict:
@@ -197,11 +200,13 @@ def _scene(
         coordinates = list(derived["geometry"]["coordinates"][:2])
     elif primary:
         coordinates = _count_point(geometry_row)
-    incident_ids = geometry_row.get("request", {}).get("incident_ids", []) if geometry_row else []
-    if not incident_ids:
-        incident_ids = location.get("incident_ids", [])
+    incident_ids = [
+        ident
+        for ident, incident in incidents.items()
+        if location_id in incident.get("formal_location_ids", [])
+    ]
     method = decision.get("method") if decision.get("verdict") == "resolved" else "none"
-    return {
+    scene = {
         "scene_id": location_id,
         "label": location["label"],
         "role": location["role"],
@@ -219,6 +224,39 @@ def _scene(
         "location_object_ids": (derived.get("source_object_ids", []) if isinstance(derived, dict) else []),
         "geometry_sha256": (derived.get("geometry_sha256") if isinstance(derived, dict) else None),
     }
+    scene["incidents"] = [
+        {
+            key: value
+            for key, value in {
+                "incident_id": ident,
+                "category": incident_categories.get(ident),
+                "event_time": incidents[ident].get("event_time"),
+                "details": incidents[ident].get("details"),
+            }.items()
+            if value is not None
+        }
+        for ident in incident_ids
+    ]
+    for key in ("transit_route", "poi_contexts"):
+        if key in location:
+            scene[key] = location[key]
+    return scene
+
+
+def _event_time_basis(incidents: dict[str, dict], published: datetime) -> tuple[str | None, str, str]:
+    dates = [
+        incident.get("event_time", {}).get("date")
+        for incident in incidents.values()
+        if isinstance(incident.get("event_time"), dict)
+    ]
+    known = [value for value in dates if isinstance(value, str)]
+    unique = set(known)
+    if incidents and len(known) == len(incidents) and len(unique) == 1:
+        event_date = known[0]
+        return event_date, event_date[:7], "reviewed_incident_time"
+    if known:
+        return None, published.strftime("%Y-%m"), "mixed_or_incomplete_reviewed_incident_times"
+    return None, published.strftime("%Y-%m"), "official_publication_month"
 
 
 def _prepare_events(
@@ -278,6 +316,9 @@ def _prepare_events(
         published = _published(source["published"])
         latest = published if latest is None or published > latest else latest
         incident_categories = {row["incident_id"]: row["category"] for row in decision["incident_categories"]}
+        incidents = {
+            row["incident_id"]: row for row in article.get("incidents", [])
+        }
         geometry_locations = {
             row["request"]["location_id"]: row
             for row in geometry_ledger.get("decisions", [])
@@ -287,6 +328,7 @@ def _prepare_events(
             _scene(
                 location,
                 geometry_locations.get(location["location_id"]),
+                incidents,
                 incident_categories,
                 decision["primary_count_location_id"],
             )
@@ -299,15 +341,16 @@ def _prepare_events(
         coordinates = primary["coordinates"] if primary else None
         if primary and coordinates is None:
             raise ValueError(f"Primary scene lost its checked count point: {source_id}")
+        event_date, month, time_basis = _event_time_basis(incidents, published)
         event = {
             "id": source_id,
             "title": source["title"],
             "category": decision["article_category"],
             "is_crime_report": decision["is_crime_report"],
             "published_at": published.isoformat(),
-            "event_date": published.date().isoformat(),
-            "month": published.strftime("%Y-%m"),
-            "time_basis": "official_publication_timestamp",
+            "event_date": event_date,
+            "month": month,
+            "time_basis": time_basis,
             "source_url": source["source_url"],
             "feed_url": source["source_url"],
             "source_status": SOURCE_STATUS,
@@ -367,7 +410,7 @@ def build_candidate(
         or source_coverage.get("source_errors") != 0
     ):
         raise ValueError("Official source checkpoint is incomplete")
-    contract, validation, boundary, catalog = _verify_poi_product(
+    contract, validation, boundary, catalog, poi_index = _verify_poi_product(
         city=city, poi_root=poi_root, catalog_path=catalog_path
     )
     events, counts, latest = _prepare_events(
@@ -381,14 +424,19 @@ def build_candidate(
     to_metric, to_wgs = metric_transforms(spec.epsg)
     months = build_months(
         events,
-        {"type": "FeatureCollection", "features": []},
+        poi_index,
         to_metric=to_metric,
         to_wgs=to_wgs,
     )
     if sum(len(value["event_ids"]) for value in months.values()) != len(events):
         raise ValueError("Monthly candidate files do not cover every mappable article")
-    if any(value["links"] for value in months.values()):
-        raise ValueError("Reviewed candidate unexpectedly inferred a POI association")
+    links = [link for value in months.values() for link in value["links"]]
+    if any(
+        not link.get("status", "").startswith("context_")
+        or link.get("mention_basis") != "source_reviewed_context_only"
+        for link in links
+    ):
+        raise ValueError("Reviewed candidate contains a non-contextual POI association")
 
     poi_contract_digest = hashlib.sha256((poi_root / "poi-contract.json").read_bytes()).hexdigest()
     boundary_digest = hashlib.sha256((poi_root / "boundary.geojson").read_bytes()).hexdigest()
@@ -442,7 +490,7 @@ def build_candidate(
             "mappable_articles": len(events),
             "excluded_scope_counts": excluded_scope,
             "primary_count_points": counts["primary_count_points"],
-            "poi_association_basis": "none_without_source_verified_venue_object",
+            "poi_association_basis": "source_reviewed_context_only",
             "review_status": "SOURCE_GEOMETRY_AND_MAP_REVIEW_COMPLETE_AWAITING_OWNER_APPROVAL",
         },
         "owner_approved": False,
@@ -468,7 +516,7 @@ def build_candidate(
         "months": len(months),
         "poi_count": validation["poi_count"],
         "poi_tiles": len(contract["tile_index"]["pois"]),
-        "poi_associations": 0,
+        "poi_associations": len(links),
         "owner_approved": False,
         "publication_ready": False,
         "publication_blocks": manifest["publication_blocks"],

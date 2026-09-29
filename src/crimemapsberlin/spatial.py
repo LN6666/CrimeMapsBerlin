@@ -15,6 +15,7 @@ from shapely.geometry import Point, Polygon, mapping, shape
 from shapely.ops import transform
 from shapely.strtree import STRtree
 
+
 def metric_transforms(epsg: int):
     """Use each city's metric CRS; Berlin defaults below remain stable."""
     return (
@@ -143,7 +144,9 @@ def hexagons(events: list[dict], size: float, *, to_metric=TO_METRIC, to_wgs=TO_
                     "event_ids": [e["id"] for e, _ in rows],
                     "categories": dict(Counter(e["category"] for e, _ in rows)),
                     "outcomes": dict(Counter(e.get("outcome", "unknown") for e, _ in rows)),
-                    "approximate_count": sum(location["location_precision"] != "point" for _, location in rows),
+                    "approximate_count": sum(
+                        location["location_precision"] != "point" for _, location in rows
+                    ),
                 },
             )
             for key, rows in sorted(groups.items())
@@ -272,6 +275,7 @@ def associate(events: list[dict], pois: dict, matching_types_only: bool = True, 
     """
     places = pois["features"]
     place_by_id = {f["properties"]["id"]: f for f in places}
+    place_index_by_id = {f["properties"]["id"]: index for index, f in enumerate(places)}
     metric = [transform(to_metric, shape(f["geometry"])) for f in places]
     tree = STRtree(metric)
     links = []
@@ -340,6 +344,58 @@ def associate(events: list[dict], pois: dict, matching_types_only: bool = True, 
                     "mention_basis": mention_basis,
                 }
             )
+    for event in events:
+        for scene in event.get("scene_locations", []):
+            contexts = scene.get("poi_contexts", [])
+            if not contexts:
+                continue
+            geometry_value = scene.get("geometry") or scene.get("candidate_road_geometry")
+            if geometry_value is not None:
+                try:
+                    scene_geometry = shape(geometry_value)
+                except (KeyError, TypeError, ValueError) as exc:
+                    raise ValueError(f"Invalid POI context geometry for {event.get('id')}") from exc
+            elif _valid_coordinates(scene.get("coordinates")):
+                scene_geometry = Point(scene["coordinates"])
+            else:
+                continue
+            if scene_geometry.is_empty or not scene_geometry.is_valid:
+                raise ValueError(f"Invalid POI context geometry for {event.get('id')}")
+            scene_metric = transform(to_metric, scene_geometry)
+            for context in contexts:
+                kind = context.get("kind")
+                scope = context.get("scope")
+                radius = context.get("radius_m")
+                if scope == "named_object":
+                    candidate_indexes = [
+                        place_index_by_id[ident]
+                        for ident in scene.get("location_object_ids", [])
+                        if ident in place_index_by_id
+                    ]
+                elif scope in {"along_geometry", "near_geometry"}:
+                    query = scene_metric.buffer(radius) if scope == "near_geometry" else scene_metric
+                    candidate_indexes = [int(index) for index in tree.query(query, predicate="intersects")]
+                else:
+                    raise ValueError(f"Invalid POI context scope for {event.get('id')}")
+                for index in candidate_indexes:
+                    place = places[index]["properties"]
+                    if place.get("kind") != kind:
+                        continue
+                    pair = event["id"], place["id"]
+                    if pair in seen:
+                        continue
+                    seen.add(pair)
+                    links.append(
+                        {
+                            "event_id": event["id"],
+                            "scene_id": scene.get("scene_id"),
+                            "poi_id": place["id"],
+                            "status": f"context_{scope}",
+                            "source_url": event["source_url"],
+                            "mention_basis": "source_reviewed_context_only",
+                            "evidence_quote": context.get("evidence_quote"),
+                        }
+                    )
     return links
 
 

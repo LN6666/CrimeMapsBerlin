@@ -20,14 +20,20 @@ from pathlib import Path
 
 from .city_contract import paths_for
 from .city_scope import SCOPE_VERDICTS
-from .multiple_scenes import SCENE_PRECISIONS, SCENE_ROLES
+from .multiple_scenes import (
+    SCENE_PRECISIONS,
+    SCENE_ROLES,
+    _validate_event_time,
+    _validate_poi_contexts,
+    _validate_transit,
+)
 from .source_review_pack import read_checkpoint_connection
 
 SCHEMA_VERSION = 1
 REVIEW_REQUIRED_CITIES = {"berlin", "hamburg", "cologne", "frankfurt"}
 REVIEW_VERDICTS = {"supported", "needs_correction", "uncertain"}
 LOCATION_SCOPES = {"in_city", "out_of_city", "uncertain"}
-NO_POINT_PRECISIONS = {"street", "area", "district", "unknown"}
+NO_POINT_PRECISIONS = {"street", "area", "district", "route", "unknown"}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 
 IDENTITY_KEYS = {"schema_version", "city", "source_id", "source_url", "source_sha256"}
@@ -47,6 +53,7 @@ SCENE_KEYS = IDENTITY_KEYS | {
     "formal_locations",
 }
 INCIDENT_KEYS = {"incident_id", "evidence_quotes", "formal_location_ids"}
+INCIDENT_OPTIONAL_KEYS = {"event_time", "details"}
 LOCATION_KEYS = {
     "location_id",
     "label",
@@ -56,6 +63,7 @@ LOCATION_KEYS = {
     "evidence_quotes",
     "coordinates",
 }
+LOCATION_OPTIONAL_KEYS = {"transit_route", "poi_contexts"}
 DECISION_KEYS = IDENTITY_KEYS | {"review", "scope", "scene_inventory"}
 
 
@@ -78,6 +86,20 @@ def _require_exact_keys(value: object, expected: set[str], label: str) -> dict:
         raise TypeError(f"{label} must be an object")
     missing = expected - set(value)
     extra = set(value) - expected
+    if missing or extra:
+        raise ValueError(
+            f"{label} has missing fields {sorted(missing)} or unknown fields {sorted(extra)}"
+        )
+    return value
+
+
+def _require_core_keys(
+    value: object, required: set[str], optional: set[str], label: str
+) -> dict:
+    if not isinstance(value, dict):
+        raise TypeError(f"{label} must be an object")
+    missing = required - set(value)
+    extra = set(value) - required - optional
     if missing or extra:
         raise ValueError(
             f"{label} has missing fields {sorted(missing)} or unknown fields {sorted(extra)}"
@@ -235,7 +257,9 @@ def _validate_scenes(value: dict, body: str, ident: str, label: str) -> dict:
     location_ids = set()
     for number, location in enumerate(locations, start=1):
         item_label = f"{label} formal location {number}"
-        location = _require_exact_keys(location, LOCATION_KEYS, item_label)
+        location = _require_core_keys(
+            location, LOCATION_KEYS, LOCATION_OPTIONAL_KEYS, item_label
+        )
         location_id = location["location_id"]
         if (
             not isinstance(location_id, str)
@@ -253,8 +277,7 @@ def _validate_scenes(value: dict, body: str, ident: str, label: str) -> dict:
             raise ValueError(f"{item_label} has an invalid precision")
         if location["city_scope"] not in LOCATION_SCOPES:
             raise ValueError(f"{item_label} has an invalid city_scope")
-        normalized_locations.append(
-            {
+        normalized_location = {
                 "location_id": location_id,
                 "label": location_name,
                 "role": location["role"],
@@ -265,13 +288,25 @@ def _validate_scenes(value: dict, body: str, ident: str, label: str) -> dict:
                     location["coordinates"], location["precision"], item_label
                 ),
             }
+        transit = _validate_transit(
+            location.get("transit_route"), body, ident, location["precision"]
         )
+        if transit is not None:
+            normalized_location["transit_route"] = transit
+        contexts = _validate_poi_contexts(
+            location.get("poi_contexts"), body, ident
+        )
+        if contexts is not None:
+            normalized_location["poi_contexts"] = contexts
+        normalized_locations.append(normalized_location)
 
     normalized_incidents = []
     incident_ids = set()
     for number, incident in enumerate(incidents, start=1):
         item_label = f"{label} incident {number}"
-        incident = _require_exact_keys(incident, INCIDENT_KEYS, item_label)
+        incident = _require_core_keys(
+            incident, INCIDENT_KEYS, INCIDENT_OPTIONAL_KEYS, item_label
+        )
         incident_id = incident["incident_id"]
         if (
             not isinstance(incident_id, str)
@@ -287,13 +322,22 @@ def _validate_scenes(value: dict, body: str, ident: str, label: str) -> dict:
             or len(references) != len(set(references))
         ):
             raise ValueError(f"{item_label} references an unknown or duplicate formal location")
-        normalized_incidents.append(
-            {
+        normalized_incident = {
                 "incident_id": incident_id,
                 "evidence_quotes": _quotes(incident["evidence_quotes"], body, item_label),
                 "formal_location_ids": references,
             }
+        event_time = _validate_event_time(
+            incident.get("event_time"), body, ident
         )
+        if event_time is not None:
+            normalized_incident["event_time"] = event_time
+        if "details" in incident:
+            details = _normalized(incident["details"]) if isinstance(incident["details"], str) else ""
+            if not details:
+                raise ValueError(f"{item_label} has invalid details")
+            normalized_incident["details"] = details
+        normalized_incidents.append(normalized_incident)
     return {
         "incident_count": incident_count,
         "incidents_complete": True,

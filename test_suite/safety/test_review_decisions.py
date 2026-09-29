@@ -226,6 +226,33 @@ def test_explicit_zero_incident_and_empty_location_inventory_is_allowed(tmp_path
     db.close()
 
 
+def test_source_review_preserves_incident_time_details_and_poi_context(tmp_path):
+    db, url = source_db(tmp_path / "sources.sqlite")
+    files = decision_files(tmp_path, url=url)
+    _, _, scenes, write, *_ = files
+    article = scenes["articles"][0]
+    article["incidents"][0].update(
+        event_time={
+            "display": "am Tag der Meldung", "date": "2026-09-29",
+            "precision": "date", "evidence_quote": QUOTE_ONE,
+        },
+        details="The first robbery is distinct from the later property damage.",
+    )
+    article["formal_locations"][1]["poi_contexts"] = [{
+        "kind": "bar", "scope": "along_geometry", "radius_m": 0,
+        "evidence_quote": QUOTE_TWO,
+    }]
+    write()
+    run_import(db, files)
+    inventory = current_supported_decisions(db_path=db_path(db), city="berlin")[0][
+        "scene_inventory"
+    ]
+    assert inventory["incidents"][0]["event_time"]["date"] == "2026-09-29"
+    assert inventory["incidents"][0]["details"].startswith("The first robbery")
+    assert inventory["formal_locations"][1]["poi_contexts"][0]["kind"] == "bar"
+    db.close()
+
+
 @pytest.mark.parametrize("component", ["review", "scope", "incident", "location"])
 def test_every_semantic_level_requires_a_verbatim_full_text_quote(tmp_path, component):
     db, url = source_db(tmp_path / "sources.sqlite")

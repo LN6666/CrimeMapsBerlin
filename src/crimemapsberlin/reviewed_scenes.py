@@ -50,6 +50,8 @@ def _geometry_task(location: dict) -> str:
         return "checked_point_geocode_required"
     if precision == "street":
         return "checked_road_geometry_required"
+    if precision == "route":
+        return "checked_transit_route_geometry_required"
     if precision == "area":
         return "checked_area_geometry_required"
     if precision == "district":
@@ -170,6 +172,9 @@ def build_inventory(*, city: str, db_path: Path) -> dict:
                         "coordinates": location["coordinates"],
                         "geometry_task": _geometry_task(location),
                     }
+                    for key in ("transit_route", "poi_contexts"):
+                        if key in location:
+                            request[key] = location[key]
                     request["geometry_request_sha256"] = _digest(request)
                     geometry_requests.append(request)
             articles.append(

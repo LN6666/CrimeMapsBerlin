@@ -25,7 +25,10 @@ def test_llm_scene_decision_is_bound_to_source_hash_and_verbatim_evidence():
     with pytest.raises(ValueError, match="Stale"):
         validated_scene_decision(dict(row, sha256="changed"), decision)
     with pytest.raises(ValueError, match="evidence"):
-        validated_scene_decision(row, dict(decision, scenes=[dict(scene, evidence_quote="absent evidence quote")]))
+        validated_scene_decision(
+            row,
+            dict(decision, scenes=[dict(scene, evidence_quote="absent evidence quote")]),
+        )
     with pytest.raises(ValueError, match="Non-independent"):
         validated_scene_decision(row, dict(decision, scenes=[dict(
             scene, primary_for_count=False, case_relation="same_case_phase",
@@ -107,3 +110,55 @@ def test_legacy_row_without_title_only_skips_absent_semantic_overrides():
                 "evidence_quote": "evidence present only in a missing title",
             },
         })
+
+
+def test_moving_transit_scene_keeps_route_time_details_and_context_without_count_point():
+    quote = (
+        "Gegen 23 Uhr sahen Zeugen in einer U-Bahn der Linie U8 einen Mann mit einer Waffe."
+    )
+    row = {"id": "u8", "sha256": "source", "body": quote}
+    scene = {
+        "scene_id": "u8:route", "label": "U8", "role": "incident",
+        "location_precision": "route", "geocode_method": "osm_transit_route",
+        "geometry": {
+            "type": "LineString",
+            "coordinates": [[13.3, 52.5], [13.5, 52.6]],
+        },
+        "primary_for_count": False, "case_relation": "independent_case",
+        "minimum_incidents": 1, "evidence_quote": quote,
+        "details": "The weapon threat occurred inside the moving train.",
+        "event_time": {
+            "display": "gegen 23 Uhr", "date": "2026-09-19",
+            "precision": "approximate", "evidence_quote": quote,
+        },
+        "transit_route": {
+            "mode": "subway", "line": "U8", "extent": "full_line",
+            "evidence_quote": quote,
+        },
+        "poi_contexts": [{
+            "kind": "station", "scope": "along_geometry", "radius_m": 0,
+            "evidence_quote": quote,
+        }],
+    }
+    reviewed = validated_scene_decision(
+        row, {"id": "u8", "source_sha256": "source", "scenes": [scene]}
+    )
+    assert reviewed[0]["transit_route"]["extent"] == "full_line"
+    assert reviewed[0]["event_time"]["date"] == "2026-09-19"
+    assert reviewed[0]["primary_for_count"] is False
+
+
+def test_discovery_scene_cannot_be_selected_as_offence_count_point():
+    quote = "In der Nogatstraße versorgten Einsatzkräfte einen verletzten Mann."
+    row = {"id": "found", "sha256": "source", "body": quote}
+    scene = {
+        "scene_id": "found:discovery", "label": "Nogatstraße",
+        "role": "discovery", "location_precision": "point",
+        "geocode_method": "reviewed_discovery", "coordinates": [13.44, 52.47],
+        "primary_for_count": True, "case_relation": "independent_case",
+        "minimum_incidents": 1, "evidence_quote": quote,
+    }
+    with pytest.raises(ValueError, match="Invalid primary scene"):
+        validated_scene_decision(
+            row, {"id": "found", "source_sha256": "source", "scenes": [scene]}
+        )

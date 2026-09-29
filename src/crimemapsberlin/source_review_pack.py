@@ -310,9 +310,16 @@ bodies acquired from `{channel}` and verified against their stored SHA-256 value
 4. A long but explicit road may remain a road range. District-only information gets no
    generated coordinate. Do not turn an arrest, hospital, police station or discovery
    location into the offence scene without source evidence.
-5. Quote exact evidence for every semantic decision. Never invent coordinates, source IDs,
+5. Preserve the original event time on each incident when the source states it. For an
+   incident inside moving public transport, use a reviewed `route` location and record the
+   line and whether the source supports a complete line or a bounded segment; a later
+   station search remains a separate scene.
+6. POI emphasis is context only. When the source supports a type along a street/route or
+   near a scene, record an explicit `poi_contexts` item; do not attribute the incident to
+   one venue. Keep every separately described incident and investigation location.
+7. Quote exact evidence for every semantic decision. Never invent coordinates, source IDs,
    source hashes, dates or missing source text.
-6. Copy `source_sha256` exactly into every decision. A changed or missing hash blocks review.
+8. Copy `source_sha256` exactly into every decision. A changed or missing hash blocks review.
 
 ## Output
 
@@ -333,6 +340,9 @@ NDJSON adds `scope_verdict` and `evidence_quotes`. The scene JSON envelope is
 `{{"schema_version":1,"city":"{city}","articles":[...]}}`; every article declares
 `incident_count`, complete `incidents` and complete `formal_locations`, including an
 evidence quote for every incident and location. Zero, one and multiple incidents are valid.
+An incident may add source-backed `event_time` and `details`. A location may add
+`transit_route` and `poi_contexts`; these fields are optional when the source does not
+support them and mandatory when needed to express the reviewed moving-route or POI context.
 Do not mark archive coverage complete: this pack reports
 `channel_scan_complete={str(coverage['channel_scan_complete']).lower()}`,
 `missing_bodies={coverage['missing_bodies']}` and `source_errors={coverage['source_errors']}`.
@@ -428,6 +438,13 @@ def build_pack(
     external = output_dir / f"{stem}.sha256"
     external.write_text(f"{sha256(zip_path.read_bytes())}  {zip_path.name}\n", encoding="utf-8")
     status = output_dir / f"{stem}-STATUS.md"
+    base_status = ""
+    if base_pack:
+        base_status = (
+            f"- Base pack: `{base_pack['filename']}`\n"
+            f"- Base pack SHA-256: `{base_pack['sha256']}`\n"
+            f"- Base source IDs revalidated: {base_pack['source_bodies']}"
+        )
     status.write_text(
         f"""# {city} source review pack status
 
@@ -438,7 +455,7 @@ def build_pack(
 - Missing bodies: {coverage['missing_bodies']}
 - Source errors: {coverage['source_errors']}
 - Channel scan complete: {coverage['channel_scan_complete']}
-{f"- Base pack: `{base_pack['filename']}`\n- Base pack SHA-256: `{base_pack['sha256']}`\n- Base source IDs revalidated: {base_pack['source_bodies']}" if base_pack else ""}
+{base_status}
 - ZIP SHA-256: `{sha256(zip_path.read_bytes())}`
 
 This package is an input for source-first LLM review. It is not a completed city map,

@@ -31,6 +31,7 @@ METHODS = {
     "osm_point",
     "osm_footprint",
     "osm_line",
+    "osm_transit_route",
     "osm_intersection",
     "osm_polygon",
     "none",
@@ -181,6 +182,43 @@ def _derived_geometry(
                 for row, geometry in zip(selected, geometries, strict=True)
             ):
                 raise ValueError("osm_line selections must be checked road objects")
+            geometry = unary_union(geometries)
+        elif method == "osm_transit_route":
+            if (
+                task != "checked_transit_route_geometry_required"
+                or precision != "route"
+                or len(object_groups) != 1
+            ):
+                raise ValueError("osm_transit_route differs from the reviewed precision")
+            transit = request.get("transit_route")
+            line = transit.get("line") if isinstance(transit, dict) else None
+            if not isinstance(line, str) or not line:
+                raise ValueError("transit route request has no reviewed line")
+            if any(
+                geometry.geom_type not in {"LineString", "MultiLineString"}
+                or line not in row.get("names", [])
+                or not (
+                    row.get("tags", {}).get("railway")
+                    or row.get("tags", {}).get("public_transport")
+                )
+                for row, geometry in zip(selected, geometries, strict=True)
+            ):
+                raise ValueError("transit route selections must be checked line objects")
+            if transit.get("extent") == "full_line":
+                expected = {
+                    ident
+                    for ident, row in objects.items()
+                    if line in row.get("names", [])
+                    and row.get("geometry", {}).get("type") in {"LineString", "MultiLineString"}
+                    and (
+                        row.get("tags", {}).get("railway")
+                        or row.get("tags", {}).get("public_transport")
+                    )
+                }
+                if set(object_ids) != expected:
+                    raise ValueError(
+                        "full transit route selection does not cover every checked line segment"
+                    )
             geometry = unary_union(geometries)
         elif method == "osm_intersection":
             if task != "checked_point_geocode_required" or precision not in POINT_PRECISIONS:

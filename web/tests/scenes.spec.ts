@@ -8,6 +8,7 @@ import {
   sceneFeatures,
   sceneRoleGroup,
   sceneRoleLabel,
+  styledPois,
 } from "../src/safety/model";
 
 function report(id: string, changes: Partial<PoliceEvent> = {}): PoliceEvent {
@@ -191,6 +192,78 @@ test("invalid scene coordinates and road ranges are not rendered or counted", ()
   });
   expect(sceneFeatures([invalid]).features).toEqual([]);
   expect(countableEventIds([invalid])).toEqual(new Set());
+});
+
+test("moving transit incidents retain their reviewed full route without becoming count points", () => {
+  const moving = report("moving", {
+    scene_locations: [{
+      label: "U8 列车内",
+      role: "incident",
+      location_precision: "route",
+      geocode_method: "osm_transit_route",
+      geometry: {
+        type: "MultiLineString",
+        coordinates: [
+          [[13.40, 52.49], [13.41, 52.50]],
+          [[13.41, 52.50], [13.42, 52.51]],
+        ],
+      },
+      primary_for_count: false,
+      transit_route: {
+        mode: "subway",
+        line: "U8",
+        extent: "full_line",
+        evidence_quote: "in einem Zug der Linie U8",
+      },
+      event_time: {
+        display: "21. September 2026 gegen 23.30 Uhr",
+        date: "2026-09-21",
+        precision: "approximate",
+        evidence_quote: "gegen 23.30 Uhr",
+      },
+      details: "威胁发生在行驶中的 U8 列车内。",
+    }],
+  });
+  const features = sceneFeatures([moving]).features;
+  expect(features).toHaveLength(1);
+  expect(features[0].properties).toMatchObject({
+    geometry_kind: "transit_route",
+    transit_line: "U8",
+  });
+  expect(countableEventIds([moving])).toEqual(new Set());
+});
+
+test("reviewed POI context deepens display without becoming a venue incident", () => {
+  const poiData = {
+    pois: {
+      type: "FeatureCollection",
+      features: [{
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [13.4, 52.5] },
+        properties: { id: "bar-1", kind: "bar", name: "Bar" },
+      }],
+    },
+    catalog: { poi_types: { bar: { color: "#123456", label: "酒吧" } } },
+  } as unknown as Bundle;
+  const pois = styledPois(
+    poiData,
+    [{
+      event_id: "A",
+      poi_id: "bar-1",
+      status: "context_along_geometry",
+      source_url: "https://example.test/source",
+      mention_basis: "source_reviewed_context_only",
+    }],
+    new Set(["A"]),
+    new Set(["bar"]),
+    true,
+  );
+  expect(pois.features[0].properties).toMatchObject({
+    count: 0,
+    candidate_count: 0,
+    context_count: 1,
+    association_count: 1,
+  });
 });
 
 test("clicking overlapping scene shapes opens one report card with every scene", async ({ page }) => {

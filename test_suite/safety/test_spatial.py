@@ -2,14 +2,19 @@ import math
 from copy import deepcopy
 
 import pytest
-
 from shapely.geometry import Point, shape
 from shapely.ops import transform
 
 from crimemapsberlin.geocode import Gazetteer
 from crimemapsberlin.spatial import (
-    TO_METRIC, associate, build_months, cell_for, count_location, hexagons,
-    metric_transforms, pois_from_osm,
+    TO_METRIC,
+    associate,
+    build_months,
+    cell_for,
+    count_location,
+    hexagons,
+    metric_transforms,
+    pois_from_osm,
 )
 from crimemapsberlin.tiles import tiles
 
@@ -31,7 +36,12 @@ def test_hex_metric_geometry_and_count():
     assert polygon.covers(Point(13.4, 52.5))
     metric = transform(TO_METRIC, polygon)
     assert math.isclose(metric.area, 3 * math.sqrt(3) / 2 * 275**2, rel_tol=1e-7)
-    assert hexagons([event(), dict(event("district"), id="2")], 275)["features"][0]["properties"]["count"] == 1
+    assert (
+        hexagons([event(), dict(event("district"), id="2")], 275)["features"][0][
+            "properties"
+        ]["count"]
+        == 1
+    )
     assert key == cell_for(13.4, 52.5, 275)[0]
 
 
@@ -218,3 +228,43 @@ def test_legacy_report_without_scene_array_keeps_existing_counting():
     assert count_location(event("district")) is None
     with pytest.raises(ValueError, match="Duplicate announcement ID"):
         hexagons([event(), event()], 275)
+
+
+def test_reviewed_scene_context_deepens_all_same_type_pois_along_geometry_only():
+    pois, _ = pois_from_osm({"elements": [
+        dict(type="node", id=1, lon=13.4005, lat=52.5, tags={"amenity": "bar"}),
+        dict(type="node", id=2, lon=13.4015, lat=52.5, tags={"amenity": "pub"}),
+        dict(type="node", id=3, lon=13.42, lat=52.52, tags={"amenity": "bar"}),
+        dict(type="node", id=4, lon=13.401, lat=52.5005, tags={"railway": "station"}),
+        dict(type="node", id=5, lon=13.401, lat=52.5, tags={"amenity": "cafe"}),
+    ]})
+    report = {
+        **event("unknown"), "coordinates": None, "location_label": "",
+        "scene_locations": [{
+            "scene_id": "1:street", "label": "Teststraße", "role": "incident",
+            "location_precision": "street", "geocode_method": "reviewed_road",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [[13.4, 52.5], [13.402, 52.5]],
+            },
+            "primary_for_count": False,
+            "poi_contexts": [
+                {
+                    "kind": "bar", "scope": "along_geometry", "radius_m": 0,
+                    "evidence_quote": "The report names bars along Teststraße.",
+                },
+                {
+                    "kind": "station", "scope": "near_geometry", "radius_m": 75,
+                    "evidence_quote": "The report places the event near the station.",
+                },
+            ],
+        }],
+    }
+    links = associate([report], pois)
+    assert {(link["poi_id"], link["status"]) for link in links} == {
+        ("osm/node/1", "context_along_geometry"),
+        ("osm/node/2", "context_along_geometry"),
+        ("osm/node/4", "context_near_geometry"),
+    }
+    assert all(link["mention_basis"] == "source_reviewed_context_only" for link in links)
+    assert count_location(report) is None
