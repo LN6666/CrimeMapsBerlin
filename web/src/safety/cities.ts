@@ -40,6 +40,14 @@ export const mapViews = {
     policeUrl: "https://koeln.polizei.nrw/presse/pressemitteilungen",
     policeName: "Polizei Köln", externalUrl: "https://polizeikarte.de/koeln",
   },
+  nuremberg: {
+    id: "nuremberg", manifestCity: "Nürnberg",
+    name: "纽伦堡", latin: "NÜRNBERG", center: [11.0775, 49.4539] as [number, number],
+    manifestPath: "/safety/cities/nuremberg/manifest.json", dataRoot: "/safety/cities/nuremberg",
+    example: "如 Hauptbahnhof、公园或街道名称", aerial: false, kbo: false,
+    policeUrl: "https://www.presseportal.de/blaulicht/nr/6013",
+    policeName: "Polizeipräsidium Mittelfranken", externalUrl: "https://polizeikarte.de/nuernberg",
+  },
 } as const;
 
 export function requestedMapView(search: string) {
