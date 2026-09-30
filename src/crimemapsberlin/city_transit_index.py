@@ -26,7 +26,7 @@ from .city_geometry_index import (
 )
 from .poi_cities import boundary_for_city, load_verified_source
 
-MODES = {"subway", "tram", "train", "bus", "trolleybus", "ferry"}
+MODES = {"subway", "tram", "light_rail", "train", "bus", "trolleybus", "ferry"}
 PATH_ROLES = {"", "forward", "backward"}
 INACTIVE = {"construction", "proposed", "disused", "abandoned", "razed"}
 
@@ -55,6 +55,8 @@ def _operational_path(tags: dict, mode: str) -> bool:
     }
     if any(tags.get(key) not in {None, "", "no", "false", "0"} for key in lifecycle):
         return False
+    if mode == "light_rail":
+        return tags.get("railway") in {"light_rail", "tram", "subway"}
     if mode == "subway":
         return tags.get("railway") in {"subway", "light_rail"}
     if mode == "tram":

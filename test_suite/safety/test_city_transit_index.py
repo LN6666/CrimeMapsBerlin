@@ -123,3 +123,40 @@ def test_named_track_pieces_cannot_claim_a_complete_transit_line(railway):
     with pytest.raises(ValueError, match="checked line objects"):
         compile_geometry_decisions(inventory=inventory, geometry_index=incomplete,
                                    decision_envelope=envelope, border=border)
+
+
+@pytest.mark.parametrize("reviewed_mode", ["subway", "tram", "bus", "train"])
+def test_native_light_rail_relation_preserves_its_mode_and_requires_compatible_review(reviewed_mode):
+    relation = _relation()
+    relation["tags"]["route"] = "light_rail"
+    ways = _ways()
+    for ident in (10, 11):
+        ways[ident]["tags"]["railway"] = "light_rail"
+    row = route_object(relation, ways, box(0, 0, 5, 5))
+    assert row["tags"]["route"] == "light_rail"
+    assert row["transit_source_proof"]["member_way_ids"] == [10, 11]
+    inventory, index, envelope, border = _geometry_inputs()
+    inventory["geometry_requests"][0].update(
+        precision="route", geometry_task="checked_transit_route_geometry_required",
+        transit_route={"mode": reviewed_mode, "line": "U3", "extent": "full_line"},
+    )
+    index["objects"] = [row]
+    envelope["decisions"][0].update(method="osm_transit_route", osm_object_groups=[[row["id"]]])
+    if reviewed_mode in {"subway", "tram"}:
+        result = compile_geometry_decisions(inventory=inventory, geometry_index=index,
+                                            decision_envelope=envelope, border=border)
+        geometry = result["decisions"][0]["derived_geometry"]
+        assert shape(geometry["geometry"]).length == 2
+        assert not any(key.startswith("count_point") for key in geometry)
+    else:
+        with pytest.raises(ValueError, match="checked line objects"):
+            compile_geometry_decisions(inventory=inventory, geometry_index=index,
+                                       decision_envelope=envelope, border=border)
+
+
+def test_native_light_rail_relation_rejects_inactive_members():
+    relation = _relation()
+    relation["tags"]["route"] = "light_rail"
+    relation["members"].append({"type": "w", "ref": 12, "role": ""})
+    with pytest.raises(ValueError, match="inactive"):
+        route_object(relation, _ways(), box(0, 0, 5, 5))

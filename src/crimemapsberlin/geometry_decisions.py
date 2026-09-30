@@ -122,7 +122,8 @@ def _source_route_relation(row: dict, line: str, mode: str) -> bool:
         "transit_route" in row.get("roles", [])
         and row.get("id") == f"osm/relation/{proof.get('relation_id')}"
         and tags.get("type") == "route"
-        and tags.get("route") == mode
+        and (tags.get("route") == mode
+             or (tags.get("route") == "light_rail" and mode in {"subway", "tram"}))
         and tags.get("ref") == line
         and line in row.get("names", [])
         and proof.get("schema_version") == 1
