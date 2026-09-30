@@ -1,33 +1,33 @@
 # Stuttgart current progress
 
-Verified: 2026-09-30T17:20:19.113824+00:00. Counts describe local work, not published crimes.
+Verified: 2026-09-30T17:55:33.641538+00:00. Counts describe local work, not published crimes.
 
 | Stage | Current state |
 |---|---|
 | Selected source channel | 1,060/1,060 current full bodies; zero missing/error backlog |
-| First-pass source verdict | All 1,060 supported; 1,721 scenes and 2,807 formal locations |
-| Explicit time/details supplement | 97 scenes complete; 1,624 still missing required decisions |
-| Explicit location POI supplement | 206 locations complete; 2,601 still missing required decisions |
-| Deterministic geometry | 2,061/2,061 decisions; 1,753 display geometries, 308 documented gaps |
-| Map classification | 520/1,050 articles; 530 pending; 112 provisional announcement references |
+| First-pass source verdict | All 1,060 supported; 1,721 scenes and 2,810 formal locations |
+| Explicit time/details supplement | 184 scenes complete; 1,537 still missing required decisions |
+| Explicit location POI supplement | 351 locations complete; 2,459 still missing required decisions |
+| Deterministic geometry | 2,062/2,062 decisions; 1,755 display geometries, 307 documented gaps |
+| Map classification | 560/1,050 articles; 490 pending; 116 provisional announcement references |
 | Browser candidate / approval / publication | Incomplete, unapproved, unpublished |
 
 ## Continue from the current checkpoint
 
-Canonical source decisions are in the second repository's ignored `.runtime/cities/stuttgart/police.sqlite`, table `llm_review_decisions`. The older main intake SQLite is not this review store. Latest `.runtime/review/stuttgart/integrated-501-520/` contains twenty explicit source/map/POI decisions, a strict-referral relation, complete 1,060-row restore files, a B27 geometry delta and checksums. The preceding `integrated-481-500/` retains the missing-person/search-closure official relationship and another twenty-article delta.
+Canonical source decisions are in the second repository's ignored `.runtime/cities/stuttgart/police.sqlite`, table `llm_review_decisions`. The older main intake SQLite is not this review store. Latest `.runtime/review/stuttgart/integrated-541-560/` contains twenty explicit source/map/POI decisions, a recovered operational geometry delta, complete 1,060-row restore files and checksums. The preceding `integrated-521-540/` retains another twenty-article delta and the U12 geometry corrections. Older missing-person/search-closure and strict single-link referral decisions remain preserved in their earlier checkpoints.
 
-Main ignored `.runtime/safety/cities/stuttgart/semantic-completeness-audit-current.json` records remaining gaps. Current inventory, geometry/map decisions and ledgers, source review pack, OSM index, U15/B27 proofs and the B27 raw source-object extract pass `CHECKSUMS.integrated-current.sha256`. Continue at article 521, source `6277729`. Backfill absent time/details/POI decisions in the earlier 450 and excluded-scope articles before declaring full completion; never automatically fill unknown dates or empty POI lists.
+Main ignored `.runtime/safety/cities/stuttgart/semantic-completeness-audit-current.json` records remaining gaps. Current inventory, geometry/map decisions and ledgers, source review pack, OSM index, U15/U12/B27 proofs and B27 raw source extract pass all 12 `CHECKSUMS.integrated-current.sha256` checks; each new source checkpoint passes 16 checksums. Continue at article 561, source `6284021`. Backfill absent time/details/POI decisions in the earlier 450 and excluded-scope articles before declaring full completion; never automatically fill unknown dates or empty POI lists.
 
-The latest forty complete bodies add 56 scene time/detail and 118 location-POI judgments. Explicit corrections recover missing-person and search-closure scenes, a separate linked investigation, replacement transport, blood-sampling and custody locations. Three source weekday/date conflicts stay unnormalized. Original April events and a 2025–2026 investment-fraud interval retain their dates. A strict single-link police notice has zero independent scenes; the linked full original is analyzed once. Unknown stall, barbecue and roadway positions do not acquire broad park/plaza/building centre counts. Prior 500 map classification choices are unchanged.
+The latest forty complete bodies add 87 scene time/detail and 145 location-POI judgments. Two omitted blood-sampling locations and one traffic-impact range are recovered. The U12 hand injury is corrected to boarding/alighting at Hauptbahnhof, with the platform and door still unknown; a possible shard threat in a moving vehicle remains an uncertain event on an unknown U12 segment. Later station discovery, police action, arrest and medical transfer are kept separate. Four source announcements contain date/weekday conflicts that remain unnormalized; a stated June theft interval incompatible with the May escape is not silently changed to May. Six-home and three-vehicle announcements retain all distinct places and time windows. Parking/discovery spots, later arrests, unnamed parking lots and a roadside building-height reference do not become precise offence points. Prior 520 map classifications are unchanged.
 
-## Native geometry repairs
+## Native geometry and verification
 
-U15 uses six complete source `light_rail` relations and 186 operational path ways, preserving raw mode/ref tags. The exact moving-vehicle incident segment remains unknown; Ruhbank is a later arrest. No route-centre count is generated.
+U12 uses two complete original route relations, 1214006 and 1214007, with 199 operational path ways. The PBF's raw `light_rail` mode/ref tags are preserved. A whole-line display is a context range for unknown vehicle position, with no route-centre count. All previous index objects are unchanged. Of the two revised U12 requests, the unknown moving-vehicle segment now has a complete route range and the static Hauptbahnhof boarding injury remains unresolved. The recovered Alexanderstraße operation request uses the same previously checked 18 road ways; actual traffic-impact boundaries and duration remain unknown.
 
-The B27 repair uses 448 ways with the exact original road ref, including 180 previously missing ways and 268 existing ways with recovered ref/name evidence. B27a and two proposed ways are excluded. Every prior index object's geometry is preserved. Two source-specific broad B27 ranges and one newly recovered operation range are compiled; 2,058 other geometry results stay unchanged. Ittinghäuser Gewann's exact collision point and the actual traffic-impact boundaries remain unknown. A complete road range is a display envelope, not a claim that the whole road was blocked or that every point hosted the event.
+Earlier U15 proof retains six complete source relations and 186 operational path ways. B27 proof retains 448 exact-ref operational ways, excluding B27a and two proposed ways. Those repairs are unchanged; broad lines and road ranges are not exact incident coordinates or whole-road closure claims.
 
-No executable code changed in this forty-source update. Existing 23 importer and 13 focused native-route test results remain applicable; staged/canonical source import, source/hash/verbatim-evidence checks, new index readback, three GIS choices and partial map compilation passed. Raw bodies and generated data stay ignored and unpublished.
+No executable code changed in this forty-source update. Existing 23 importer and 13 focused native-route test results remain applicable. Staged/canonical source import, source/hash/verbatim-evidence validation, U12 index readback and exact route relation IDs, preservation of all old index objects, three explicit GIS choices, map compilation and the checkpoint checksums passed. Generated city data and raw report bodies remain ignored and unpublished.
 
-Source decision digest: `1f173cffefe961407f825ab32eb41f6cb8ab6e6c6b159481471ca991f942050a`. Inventory: `73a3dc9f685c5ee11d54dae0ac7d554cc416c6ce1351b7700839063b5ac74c1e`. OSM index: `96f23f7a4aa4173f48c33df9dfaef8a4c87f145c9e42d921a9935ad96a7b82a9`. Geometry ledger: `09863d97675a787eb35db22988f9dfdc21894f34b366eeae282c7475d907e7f5`. Map ledger: `a6d11e05fc7989eeaebf54ab1bd9efc03ebff51aa9fc05f941d0ff77e3e99477`.
+Source decision digest: `e160e99f1ad6544ec4d13fb6e7a288fc5222bcdac8dce8aa2d972f61edbb5acd`. Inventory: `8b7dfe3aa29aa6b5a50d4811a19f9833e6b1fab28a286554a8c9619c3c22b154`. OSM index: `1229499aad8ae80fed520926041f080a8d23a9e8ad28e11f9f6b2c1f67d7579c`. Geometry ledger: `9e8e3fe53d8f2efa87de0d17afc0913e99ce415e741a58fe05c18dd1a5429a3a`. Map ledger: `d27e506ff0d1f4b227478cd12577b399e20b6c457bb58d101a2c093729adab02`.
 
 Preserve road ranges, arrest/discovery/background roles and unresolved geometry. Remaining semantics, final event/count compilation, browser inspection and owner approval of current digests are required before publication.
