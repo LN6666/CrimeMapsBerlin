@@ -1,6 +1,6 @@
 # Nuremberg current progress
 
-Last verified: 2026-09-30T15:43:09.826997+00:00. This is the compact continuation entrypoint; historical source/GIS details remain in `HANDOFF.md`.
+Last verified: 2026-09-30T19:24:52.554705+00:00. This is the compact continuation entrypoint; historical source/GIS details remain in `HANDOFF.md`.
 
 Latest targeted source check: 2026-09-30T18:49:42.150806+00:00 (October 1 in Japan). All fifteen question articles were fetched again from the selected police-signed channel after verifying robots.txt, with at least one second between requests. All fifteen body hashes are unchanged. This checks existing questions only; it does not refresh the archive head or certify later announcements. Canonical source and semantic decisions are unchanged. Resume Nuremberg's remaining source questions, relation/count treatment and browser candidate before switching this chat back to Stuttgart; Stuttgart's current work is saved locally.
 
@@ -11,7 +11,9 @@ Latest targeted source check: 2026-09-30T18:49:42.150806+00:00 (October 1 in Jap
 | Supported-inventory geometry | 1,561/1,561 explicit decisions; 918 checked geometries, 643 documented gaps, zero pending |
 | Map-semantic draft | 398/398 current in-city/mixed articles; 729 retained scenes, 18 eligible announcement count references, zero pending |
 | Additional classified drafts | 10 scope-uncertain articles preserved separately; all original 408 classifications complete |
-| Relationship integrity | 113 current source/hash/scene/evidence bindings pass; final event-count compilation pending |
+| Relationship draft | 113 explicit LLM treatments compiled; 30 confirmed source-occurrence groups; 18 existing announcement references, zero duplicated confirmed-occurrence references; final map integration pending |
+| Field completeness | All 1,376 source scenes have time/detail decisions; all 3,578 formal locations have explicit POI decisions (85 nonempty contexts) |
+| Browser POI prerequisite | 4,645 POIs / 241 tiles; local product contract passes; 50 unknown footprints (including 46 station footprints) remain explicit |
 | Source-question audit | All 15 uncertain full bodies reread; conflicts preserved |
 | Final map / owner approval | Not compiled, not approved, not published |
 
@@ -19,9 +21,21 @@ Latest targeted source check: 2026-09-30T18:49:42.150806+00:00 (October 1 in Jap
 
 In `CrimeMapsDE-Cities-11-14`, restore the ignored `.runtime/review/nuremberg/checkpoint.json`, `map-draft-progress.current.json`, `map-decisions.draft.current.ndjson` and its five current parts. There is no unread supported map source. Ten additional classifications are in `map-decisions.scope-uncertain.current.ndjson`; their explicit municipality reassessments and old/new hashes are in `scope-correction.current.json`. A local history snapshot preserves the prior 408-article checkpoint.
 
-Each current draft binds its original source and source-review digest. The current supported inventory digest is `ac43731e184250e7107d59efb30e0df436cc51c05820d6fa7dfa1bffff3c4ebe`, source decision-set digest `27187ea8d31369611d620dd10dfa8db57a5d7f1592c1ad411592f46f14506c26`, geometry-ledger digest `807019db364571c4d79e1f929d8a93a05bb7a1820f483e9024aa344bfa000156`, and map-draft digest `58464c4e7cb1513886de91ca44773140aba6f665d6c578870ab82787b5df8a33`. All 45 current files pass SHA-256 readback; all 849 stored source decisions pass validation with zero stale entries.
+Each current draft binds its original source and source-review digest. The current supported inventory digest is `ac43731e184250e7107d59efb30e0df436cc51c05820d6fa7dfa1bffff3c4ebe`, source decision-set digest `27187ea8d31369611d620dd10dfa8db57a5d7f1592c1ad411592f46f14506c26`, geometry-ledger digest `807019db364571c4d79e1f929d8a93a05bb7a1820f483e9024aa344bfa000156`, and map-draft digest `58464c4e7cb1513886de91ca44773140aba6f665d6c578870ab82787b5df8a33`. The current restore manifest now covers 83 files, including the source recheck, relationship decisions/ledger and owner question packet; all pass SHA-256 readback. All 849 stored source decisions pass validation with zero stale entries.
 
 Every category, crime-report status and optional count choice is an explicit LLM decision. Ninety unique bodies were reread for specific ambiguities while reusing unchanged, personally completed full-body source reviews. No fixed narrative classifier was used. The ten scope corrections change no source body, scene, formal location, geometry request or native geometry; all 1,561 requests remain byte-identical, so their calculations were reused.
+
+## Relationship and count treatment
+
+All 113 existing proposals now have individual LLM treatment decisions: 31 same occurrences, 31 case updates, 13 aggregate contexts, 7 plan/actual pairs, 18 distinct follow-up phases, 4 tentative connections, 7 cumulative status updates and 2 plan revisions. Only the explicitly chosen same-occurrence edges join occurrence identities. Their 30 groups include searches, discoveries and historical events, so they are not a crime total. Source revisions, all scenes and locations remain intact; no relation moves an offence onto a later arrest/recovery/hospital site.
+
+Two complete source bodies (`6255212` and `6265116`) were reread for the bus/station ambiguity. The later summary's links to three earlier stages are aggregate context, preventing a one-to-many union from collapsing bus violence, station extortion and underground assault. The homicide/discovery link `6355379:incident:1` → `6354926:incident:2` is a case update rather than identity between actual killing and discovery. Five specific later-source preferences preserve corrected explanations, tram exterior location or the explicitly corroborated event date, without rewriting the original source.
+
+The ignored `relation-decisions.draft.current.json` and `relation-ledger.draft.current.json` bind all current source/semantic/map hashes. Relationship draft digest: `2ed59cff6f03ffc473c8ccaf8b78d54a1ab693d631dc9eec088936c7e2c8236a`. The new `source_relation_draft` module validates explicit choices and detects duplicate references through confirmed transitive occurrence links; it performs no narrative classification and cannot compile or approve a final map. Sixteen focused synthetic checks pass, covering transitive duplicates, aggregate/context separation, stale source/review/evidence bindings and uncertain sources. The real 849-source read-only compilation also passes. All 18 existing count choices and all 1,561 geometry calculations are unchanged.
+
+The browser builder's existing POI contract preflight passes on the current local Nuremberg product (2026-09-30T19:32:58Z). Native scene GIS and POIs share PBF SHA-256 `5319a61f89678370769a42d0f75be7bc35b1397c08750831122ecf89c14a168a`, municipal relation `62780` and EPSG:25832. This checks the build prerequisite; it does not build a map or fill missing venue/station footprints.
+
+To reproduce with the main repository's environment, invoke `python -m crimemapsberlin.source_relation_draft` with `--city nuremberg`, `--source-db` pointing to the third repository's `newsroom.sqlite`, `--relations source-relations.current.ndjson`, `--decisions relation-decisions.draft.current.json`, `--map-decisions map-decisions.draft.current.ndjson` and a local `--out` path. The draft always returns `formal_map_compiled=false`, `owner_approved=false` and `publication_ready=false`.
 
 ## Remaining gates
 
@@ -29,4 +43,6 @@ Fifteen uncertain source reviews still block formal map compilation. Their issue
 
 The targeted recheck is saved in the third repository under `.runtime/review/nuremberg/question-source-recheck-20261001/audit.json`, alongside the fifteen fetched bodies. All are local ignored files. The recheck supplies no new evidence to resolve the existing questions, so none is promoted to supported.
 
-Finalize event relations/counts after the source gate is resolved, build the browser candidate, and obtain owner inspection/approval of its current digests before publication. Eighteen draft count references are announcement-level selections, not eighteen independently proven crimes. Road/area geometries and unresolved locations remain preserved; no district centres, arrest/discovery/route points or unverified POI offence associations may substitute for original offence points.
+The concrete fifteen-source question packet is saved locally as `.runtime/review/nuremberg/source-question-owner-packet-20261001/REVIEW.md` and `Nuremberg-source-questions-owner-review-20261001.zip` (SHA-256 `949a6b8ed8e879608a54f2aacdebab2942cdf7fcef2bd8faed7b45adc68062bb`). It includes all fifteen complete rechecked bodies, exact issues and proposed handling: retain literal conflicts/unknown dates, no A6 municipal count without evidence, and no scooter identity/location selection. The owner has been asked to choose that handling or waiting for official revisions. No answer is recorded yet; no uncertain verdict is changed in advance.
+
+After the source gate is resolved, integrate the explicit relation/count treatment into the final ledger, build the browser candidate, and obtain owner inspection/approval of its current digests before publication. Eighteen draft count references are announcement-level selections, not eighteen independently proven crimes. Road/area geometries and unresolved locations remain preserved; no district centres, arrest/discovery/route points or unverified POI offence associations may substitute for original offence points.
