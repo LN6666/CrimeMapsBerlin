@@ -244,7 +244,7 @@ def test_geometry_decisions_do_not_replace_a_reviewed_address_with_a_whole_road(
         )
 
 
-def test_geometry_decisions_require_every_checked_segment_for_full_transit_line():
+def test_geometry_decisions_require_every_source_relation_for_full_transit_line():
     inventory, index, decisions, border = _inputs()
     request = inventory["geometry_requests"][1]
     request.update(
@@ -257,14 +257,29 @@ def test_geometry_decisions_require_every_checked_segment_for_full_transit_line(
     )
     index["objects"][0].update(names=["U8"], tags={"railway": "subway"})
     index["objects"].append({
-        "id": "osm/way/5", "roles": ["named_object"], "names": ["U8"],
-        "tags": {"railway": "subway"},
+        "id": "osm/relation/5", "roles": ["named_object", "transit_route"], "names": ["U8"],
+        "tags": {"type": "route", "route": "subway", "ref": "U8"},
+        "transit_source_proof": {
+            "schema_version": 1, "complete": True, "relation_id": 5,
+            "member_way_ids": [10], "member_way_count": 1,
+            "member_sequence": [10], "member_source_digest": "a" * 64,
+        },
         "geometry": mapping(LineString([(6.78, 51.24), (6.79, 51.25)])),
+    })
+    index["objects"].append({
+        "id": "osm/relation/6", "roles": ["named_object", "transit_route"], "names": ["U8"],
+        "tags": {"type": "route", "route": "subway", "ref": "U8"},
+        "transit_source_proof": {
+            "schema_version": 1, "complete": True, "relation_id": 6,
+            "member_way_ids": [11], "member_way_count": 1,
+            "member_sequence": [11], "member_source_digest": "b" * 64,
+        },
+        "geometry": mapping(LineString([(6.76, 51.22), (6.78, 51.24)])),
     })
     decisions["decisions"][1].update(
         verdict="resolved",
         method="osm_transit_route",
-        osm_object_groups=[["osm/way/1", "osm/way/5"]],
+        osm_object_groups=[["osm/relation/5", "osm/relation/6"]],
     )
     result = compile_geometry_decisions(
         inventory=inventory,
@@ -274,8 +289,8 @@ def test_geometry_decisions_require_every_checked_segment_for_full_transit_line(
     )
     assert result["decisions"][1]["derived_geometry"]["type"] == "MultiLineString"
     incomplete = copy.deepcopy(decisions)
-    incomplete["decisions"][1]["osm_object_groups"] = [["osm/way/1"]]
-    with pytest.raises(ValueError, match="every checked line segment"):
+    incomplete["decisions"][1]["osm_object_groups"] = [["osm/relation/5"]]
+    with pytest.raises(ValueError, match="every complete source route relation"):
         compile_geometry_decisions(
             inventory=inventory,
             geometry_index=index,

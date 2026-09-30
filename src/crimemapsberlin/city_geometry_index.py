@@ -37,8 +37,8 @@ from .poi_cities import (
 )
 
 SCHEMA_VERSION = 1
-PIPELINE_VERSION = 2
-SUPPORTED_PIPELINE_VERSIONS = {1, 2}
+PIPELINE_VERSION = 3
+SUPPORTED_PIPELINE_VERSIONS = {1, 2, 3}
 NAME_KEYS = ("name", "official_name", "short_name", "alt_name", "loc_name", "old_name")
 TAG_KEYS = {
     *NAME_KEYS,
@@ -61,6 +61,12 @@ TAG_KEYS = {
     "natural",
     "railway",
     "public_transport",
+    "type",
+    "route",
+    "from",
+    "to",
+    "operator",
+    "network",
     "building",
     "addr:street",
     "addr:housenumber",

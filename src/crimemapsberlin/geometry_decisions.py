@@ -110,6 +110,36 @@ def _identity(decision: dict, request: dict, city: str) -> None:
         raise ValueError("geometry decision schema version or city differs")
 
 
+def _source_route_relation(row: dict, line: str, mode: str) -> bool:
+    tags = row.get("tags", {})
+    proof = row.get("transit_source_proof", {})
+    members = proof.get("member_way_ids")
+    sequence = proof.get("member_sequence")
+    source_digest = proof.get("member_source_digest")
+    return (
+        "transit_route" in row.get("roles", [])
+        and row.get("id") == f"osm/relation/{proof.get('relation_id')}"
+        and tags.get("type") == "route"
+        and tags.get("route") == mode
+        and tags.get("ref") == line
+        and line in row.get("names", [])
+        and proof.get("schema_version") == 1
+        and proof.get("complete") is True
+        and isinstance(members, list)
+        and bool(members)
+        and all(type(ident) is int for ident in members)
+        and members == sorted(set(members))
+        and proof.get("member_way_count") == len(members)
+        and isinstance(sequence, list)
+        and all(type(ident) is int for ident in sequence)
+        and set(sequence) == set(members)
+        and isinstance(source_digest, str)
+        and len(source_digest) == 64
+        and all(char in "0123456789abcdef" for char in source_digest)
+        and row.get("geometry", {}).get("type") in {"LineString", "MultiLineString"}
+    )
+
+
 def _derived_geometry(
     decision: dict, request: dict, objects: dict[str, dict], border, city: str
 ) -> dict | None:
@@ -178,10 +208,20 @@ def _derived_geometry(
                 raise ValueError("osm_line differs from the reviewed precision")
             if len(object_groups) != 1 or any(
                 geometry.geom_type not in {"LineString", "MultiLineString"}
-                or "road" not in row["roles"]
+                or not (
+                    "road" in row["roles"]
+                    or (
+                        task == "checked_point_geocode_required"
+                        and precision in {"point", "place"}
+                        and (
+                            row.get("tags", {}).get("public_transport") == "platform"
+                            or row.get("tags", {}).get("railway") in {"platform", "platform_edge"}
+                        )
+                    )
+                )
                 for row, geometry in zip(selected, geometries, strict=True)
             ):
-                raise ValueError("osm_line selections must be checked road objects")
+                raise ValueError("osm_line selections must be checked road objects or point/place platforms")
             geometry = unary_union(geometries)
         elif method == "osm_transit_route":
             if (
@@ -192,14 +232,21 @@ def _derived_geometry(
                 raise ValueError("osm_transit_route differs from the reviewed precision")
             transit = request.get("transit_route")
             line = transit.get("line") if isinstance(transit, dict) else None
+            mode = transit.get("mode") if isinstance(transit, dict) else None
             if not isinstance(line, str) or not line:
                 raise ValueError("transit route request has no reviewed line")
             if any(
                 geometry.geom_type not in {"LineString", "MultiLineString"}
                 or line not in row.get("names", [])
                 or not (
-                    row.get("tags", {}).get("railway")
-                    or row.get("tags", {}).get("public_transport")
+                    _source_route_relation(row, line, mode)
+                    or (
+                        transit.get("extent") == "source_segment"
+                        and row.get("tags", {}).get("railway")
+                        and row.get("tags", {}).get("railway") not in {
+                            "construction", "proposed", "disused", "abandoned", "razed"
+                        }
+                    )
                 )
                 for row, geometry in zip(selected, geometries, strict=True)
             ):
@@ -208,16 +255,11 @@ def _derived_geometry(
                 expected = {
                     ident
                     for ident, row in objects.items()
-                    if line in row.get("names", [])
-                    and row.get("geometry", {}).get("type") in {"LineString", "MultiLineString"}
-                    and (
-                        row.get("tags", {}).get("railway")
-                        or row.get("tags", {}).get("public_transport")
-                    )
+                    if _source_route_relation(row, line, mode)
                 }
-                if set(object_ids) != expected:
+                if not expected or set(object_ids) != expected:
                     raise ValueError(
-                        "full transit route selection does not cover every checked line segment"
+                        "full transit route selection must cover every complete source route relation"
                     )
             geometry = unary_union(geometries)
         elif method == "osm_intersection":
