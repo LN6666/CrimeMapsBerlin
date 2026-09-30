@@ -20,6 +20,7 @@ from shapely.geometry import MultiPoint, Point, mapping, shape
 from shapely.ops import transform, unary_union
 
 from .city_geometry_index import validate_geometry_index
+from .city_transit_segment import source_track_segment
 from .poi_cities import POI_CITY_SPECS, geometry_covered_by
 from .spatial import metric_transforms
 
@@ -32,6 +33,7 @@ METHODS = {
     "osm_footprint",
     "osm_line",
     "osm_transit_route",
+    "osm_transit_segment",
     "osm_intersection",
     "osm_polygon",
     "none",
@@ -262,6 +264,18 @@ def _derived_geometry(
                         "full transit route selection must cover every complete source route relation"
                     )
             geometry = unary_union(geometries)
+        elif method == "osm_transit_segment":
+            transit = request.get("transit_route", {})
+            if (task != "checked_transit_route_geometry_required" or precision != "route"
+                    or transit.get("extent") != "source_segment"
+                    or len(object_groups) != 3
+                    or any(len(group) != 1 for group in object_groups[1:])):
+                raise ValueError("osm_transit_segment requires a reviewed source segment and two stop groups")
+            geometry = source_track_segment(
+                [objects[ident] for ident in object_groups[0]],
+                [objects[group[0]] for group in object_groups[1:]],
+                line=transit.get("line"), mode=transit.get("mode"),
+            )
         elif method == "osm_intersection":
             if task != "checked_point_geocode_required" or precision not in POINT_PRECISIONS:
                 raise ValueError("osm_intersection differs from the reviewed precision")
