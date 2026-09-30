@@ -278,10 +278,13 @@ def _derived_geometry(
             geometry = candidates[medoid]
             intersection_candidates = MultiPoint(candidates)
         elif method == "osm_polygon":
-            if task not in {
-                "checked_area_geometry_required",
-                "checked_district_geometry_required",
-            } or precision not in {"area", "district"}:
+            polygon_matches_review = (
+                (task == "checked_area_geometry_required" and precision == "area")
+                or (task == "checked_district_geometry_required" and precision == "district")
+                or (task == "checked_point_geocode_required" and precision in POINT_PRECISIONS)
+                or (task == "checked_road_geometry_required" and precision == "street")
+            )
+            if not polygon_matches_review:
                 raise ValueError("osm_polygon differs from the reviewed precision")
             if len(object_groups) != 1 or any(
                 geometry.geom_type not in {"Polygon", "MultiPolygon"}
@@ -292,6 +295,8 @@ def _derived_geometry(
                 "administrative_boundary" not in row["roles"] for row in selected
             ):
                 raise ValueError("district geometry must use administrative boundary objects")
+            if precision == "street" and any("road" not in row["roles"] for row in selected):
+                raise ValueError("street polygons must use checked road objects")
             geometry = unary_union(geometries)
         else:
             raise ValueError("unsupported geometry method")

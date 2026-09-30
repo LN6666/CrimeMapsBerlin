@@ -37,9 +37,18 @@ from .poi_cities import (
 )
 
 SCHEMA_VERSION = 1
-PIPELINE_VERSION = 1
+PIPELINE_VERSION = 2
+SUPPORTED_PIPELINE_VERSIONS = {1, 2}
 NAME_KEYS = ("name", "official_name", "short_name", "alt_name", "loc_name", "old_name")
 TAG_KEYS = {
+    *NAME_KEYS,
+    "ref",
+    "area",
+    "level",
+    "tram",
+    "subway",
+    "bus",
+    "train",
     "highway",
     "place",
     "boundary",
@@ -78,7 +87,8 @@ def normalized_name(value: str) -> str:
 
 def _names(tags: dict[str, str]) -> list[str]:
     names = []
-    for key in NAME_KEYS:
+    keys = (*NAME_KEYS, "ref") if tags.get("highway") else NAME_KEYS
+    for key in keys:
         for raw in tags.get(key, "").split(";"):
             value = _SPACE.sub(" ", raw.strip())
             if value:
@@ -217,7 +227,8 @@ class GeometryScanner(osmium.SimpleHandler):
             self.rejected["way_too_short"] += 1
             return
         is_polygon = (
-            not tags.get("highway")
+            tags.get("area") != "no"
+            and (not tags.get("highway") or tags.get("area") == "yes")
             and len(coordinates) >= 4
             and coordinates[0] == coordinates[-1]
         )
@@ -343,8 +354,8 @@ def validate_geometry_index(
     errors = []
     if payload.get("schema_version") != SCHEMA_VERSION:
         errors.append("schema version differs")
-    if payload.get("pipeline_version") != PIPELINE_VERSION:
-        errors.append("pipeline version differs")
+    if payload.get("pipeline_version") not in SUPPORTED_PIPELINE_VERSIONS:
+        errors.append("pipeline version is unsupported")
     if payload.get("city") != city:
         errors.append("city differs")
     if payload.get("source_pbf_sha256") != source_metadata["sha256"]:
