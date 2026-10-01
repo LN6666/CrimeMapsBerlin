@@ -185,7 +185,7 @@ export function sceneRoleLabel(role: SceneRole): string {
     incident: "案发地点",
     accident: "事故地点",
     discovery: "发现地点",
-    operation: "警方行动地点",
+    operation: "处置／行动地点",
     arrest: "抓捕地点",
     search: "搜查地点",
     background: "背景地点",
