@@ -35,6 +35,20 @@ The map manifest exports validated membership counts for all available types.
 Legacy manifests without those counts keep usable POI controls instead of being
 misrepresented as having zero native objects.
 
+Original subway platform polygons may also be selected as station context.
+The gate verifies the full native stop-area membership, platform tags, original
+closed node sequence and geometry against the bound PBF capture. It preserves
+an empty native member role when that is what the source records. A bus stop,
+station-name point, nearby platform or generated station boundary is rejected.
+The footprint does not locate a train carriage, track event or platform side.
+
+The current local update selects two such footprints: Wandsbek Markt for four
+locations in 6207386 and Berne for three station-context locations in 6204143.
+The separate Berne LKA26 location remains unknown. All seven are display
+references; their classifications, source evidence and count choices are retained.
+Berne's OSM U1 tag does not establish the actual vehicle or line in the report.
+The count gate rejects even a point accidentally attached to a reference geometry.
+
 ## Local candidate command
 
 ```sh
@@ -66,9 +80,9 @@ Production source, geometry, classification and both relation compilers reproduc
 the current canonical ledgers exactly. Focused negative tests reject stale or
 unauthorized display changes, unreviewed POI additions, altered tiles and reference
 counting. The real production candidate retains 489 mapped announcements, 3,334
-phases, 3,947 locations, 2,108 display references, 622 explicit GIS request gaps,
-109,326 unique POIs, 3,596 POI tiles and 1,838 context associations; count points
-remain zero. Unknown displayed locations total 1,839, a different denominator
+phases, 3,947 locations, 2,115 display references, 615 explicit GIS request gaps,
+109,326 unique POIs, 3,596 POI tiles and 1,840 context associations; count points
+remain zero. Unknown displayed locations total 1,832, a different denominator
 from the GIS request gaps.
 
 Archived D13 and the prior full owner ZIP remain preserved. This integration does

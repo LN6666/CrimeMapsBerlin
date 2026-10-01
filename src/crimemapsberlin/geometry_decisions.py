@@ -29,6 +29,7 @@ SCHEMA_VERSION = 1
 INTERSECTION_CLUSTER_MAX_M = 150
 VERDICTS = {"resolved", "unresolved", "needs_correction"}
 METHODS = {
+    "osm_station_platform_footprint_reference",
     "osm_platform_point_collection_reference",
     "official_pdf_horizontal_circle_reference",
     "osm_static_road_reference_segment",
@@ -628,7 +629,10 @@ def _derived_geometry_without_static_reference(
     return result
 
 
-def _derived_geometry(decision, request, objects, border, city, *, include_footprint_count_points=True):
+def _derived_geometry(decision, request, objects, border, city, *, include_footprint_count_points=True, source_pbf_sha256=None):
+    if decision.get("method") == "osm_station_platform_footprint_reference":
+        from .station_platform_references import station_platform_reference
+        return station_platform_reference(decision, request, objects, border, source_pbf_sha256)
     if decision.get("method") == "osm_platform_point_collection_reference":
         from .native_platform_references import native_platform_reference
         return native_platform_reference(decision, request, objects, border)
@@ -700,6 +704,7 @@ def compile_geometry_decisions(
             geometry = _derived_geometry(
                 decision, request, objects, border, city,
                 include_footprint_count_points=include_footprint_count_points,
+                source_pbf_sha256=geometry_index.get("source_pbf_sha256"),
             )
         except (TypeError, ValueError) as exc:
             raise type(exc)(f"{label} ({location_id}): {exc}") from exc

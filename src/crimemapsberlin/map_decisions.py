@@ -178,6 +178,8 @@ def _count_point(row: dict | None) -> list[float] | None:
     derived = row.get("derived_geometry")
     if not isinstance(derived, dict):
         return None
+    if str(derived.get("geometry_usage", "")).endswith("reference_only"):
+        return None
     count_geometry = derived.get("count_point")
     if count_geometry is None and derived.get("type") == "Point":
         count_geometry = derived.get("geometry")
