@@ -103,6 +103,57 @@ def test_accepts_individually_bound_evidence(reference_bundle):
     assert validate(reference_bundle) == reference_bundle[0]
 
 
+def phase_article(bundle):
+    decision, primary, _ = bundle
+    return {"city": "hamburg", "source_id": "10", "source_sha256": primary["sha256"],
+            "decision_sha256": _digest(decision), "source_review_decision": decision}
+
+
+def validate_phase(bundle, quotes, incident_id="10:incident:1", article=None):
+    from crimemapsberlin.source_phase_evidence import validate_referenced_phase_quotes
+
+    return validate_referenced_phase_quotes(
+        quotes, article=article or phase_article(bundle), source=bundle[1],
+        incident_id=incident_id, primary_validator=lambda value, source, city, ident: value,
+    )
+
+
+def test_map_phase_accepts_its_individually_bound_initial_quote(reference_bundle):
+    assert validate_phase(reference_bundle, ["earlier incident happened outside the bus."]) == [
+        "earlier incident happened outside the bus."]
+
+
+@pytest.mark.parametrize("quote", [
+    "No exact stop is established.",
+    "outside the bus. No exact stop",
+    "Primary current incident report. The earlier incident",
+])
+def test_map_phase_rejects_other_phase_or_stitched_evidence(reference_bundle, quote):
+    with pytest.raises(ValueError, match="same phase"):
+        validate_phase(reference_bundle, [quote])
+
+
+def test_map_phase_rejects_stale_review_hash(reference_bundle):
+    article = phase_article(reference_bundle)
+    article["decision_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="Stale or foreign"):
+        validate_phase(reference_bundle, ["The earlier incident happened outside the bus."],
+                       article=article)
+
+
+def test_map_phase_rechecks_actual_capture_bytes(reference_bundle):
+    path = Path(reference_bundle[2]["captures"]["11"]["body"]["file"])
+    path.write_text("Replaced body")
+    with pytest.raises(ValueError, match="Stale bound file"):
+        validate_phase(reference_bundle, ["The earlier incident happened outside the bus."])
+
+
+def test_map_phase_rejects_unknown_phase(reference_bundle):
+    with pytest.raises(ValueError, match="Unknown reviewed phase"):
+        validate_phase(reference_bundle, ["The earlier incident happened outside the bus."],
+                       incident_id="10:incident:2")
+
+
 @pytest.mark.parametrize("mutation", ["body", "html", "robots", "capture"])
 def test_changed_capture_bytes_rejected(reference_bundle, mutation):
     path = Path(reference_bundle[2]["captures"]["11"][mutation]["file"])
