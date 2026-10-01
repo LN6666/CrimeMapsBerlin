@@ -666,6 +666,10 @@ function refresh() {
       `可计数点位 ${rows.length - unmapped.length} 篇 · 无精确计数点位 ${unmapped.length} 篇 · ${rows.filter(event => event.scene_locations?.some(scene => scene.geometry)).length} 篇有场景展示参考`,
       el("stats"),
     );
+    const roadReferences = unmapped.filter(event => candidateRoadGeometry(event)).length;
+    if (roadReferences) {
+      text("p", `其中 ${roadReferences} 条可查看道路范围`, el("stats"));
+    }
     const btn = text(
       "button",
       `${unmapped.length} 条位置不足，查看列表`,

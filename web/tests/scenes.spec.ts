@@ -400,7 +400,7 @@ test("clicking overlapping scene shapes opens one report card with every scene",
   await expect(page.locator("#selection")).toContainText("同一公告最多计一次");
   await page.locator("#category").selectOption("Raub");
   await expect(page.locator("#selection")).not.toContainText("多地点公告");
-  await expect(page.locator("#stats")).toContainText("已定位 0 条 · 未定位 1 条");
+  await expect(page.locator("#stats")).toContainText("可计数点位 0 篇 · 无精确计数点位 1 篇");
   await page.locator("#month").selectOption("08");
   await expect(page.locator("#stats .big")).toHaveText("—");
 });
