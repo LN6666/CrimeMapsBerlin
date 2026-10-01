@@ -266,6 +266,46 @@ test("reviewed POI context deepens display without becoming a venue incident", (
   });
 });
 
+test("native platform references keep all original nodes and reject any count representative", () => {
+  const points: [number, number][] = [[10, 53.55], [10.001, 53.55], [10.002, 53.55]];
+  const row = report("platforms", { scene_locations: [{
+    label: "Three reviewed platforms", role: "incident", location_precision: "place",
+    geocode_method: "osm_native_platform_points", primary_for_count: true,
+    geometry_usage: "source_native_platform_points_reference_only",
+    coordinates: [10.001, 53.55], geometry: { type: "MultiPoint", coordinates: points },
+  }] });
+  const features = sceneFeatures([row]).features;
+  expect(features).toHaveLength(1);
+  expect(features[0].geometry).toEqual({ type: "MultiPoint", coordinates: points });
+  expect(features[0].properties.primary_for_count).toBe(false);
+  expect([...countableEventIds([row])]).toEqual([]);
+});
+
+test("junction reference points cannot bypass the count gate through a malformed primary flag", () => {
+  const row = report("junction", { scene_locations: [{
+    label: "Native junction reference", role: "incident", location_precision: "point",
+    geocode_method: "osm_junction_reference", primary_for_count: true,
+    geometry_usage: "source_junction_reference_only",
+    geometry: { type: "Point", coordinates: [10, 53.55] },
+  }] });
+  expect([...countableEventIds([row])]).toEqual([]);
+  expect(sceneFeatures([row]).features[0].properties.primary_for_count).toBe(false);
+});
+
+test("multiple POI memberships show a selected subtype and one announcement context", () => {
+  const feature = { type: "Feature" as const, geometry: { type: "Point" as const, coordinates: [10, 53.55] as [number, number] },
+    properties: { id: "osm/node/1", kind: "park", context_kinds: ["park", "school"] } };
+  const bundle = { pois: { type: "FeatureCollection", features: [feature] },
+    catalog: { poi_types: { park: { color: "green" }, school: { color: "blue" } } } } as unknown as Bundle;
+  const links = [1, 2].map(() => ({ event_id: "A", poi_id: "osm/node/1", status: "context_named_object",
+    source_url: "https://example.invalid/source", mention_basis: "source_reviewed_context_only" }));
+  const result = styledPois(bundle, links, new Set(["A"]), new Set(["school"]), true);
+  expect(result.features).toHaveLength(1);
+  expect(result.features[0].properties.display_kind).toBe("school");
+  expect(result.features[0].properties.context_count).toBe(1);
+  expect(result.features[0].properties.count).toBe(0);
+});
+
 test("clicking overlapping scene shapes opens one report card with every scene", async ({ page }) => {
   const png = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGN4+fYlAAWCAsAGiqfBAAAAAElFTkSuQmCC",

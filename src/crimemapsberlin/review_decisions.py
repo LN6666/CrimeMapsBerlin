@@ -63,7 +63,7 @@ LOCATION_KEYS = {
     "evidence_quotes",
     "coordinates",
 }
-LOCATION_OPTIONAL_KEYS = {"transit_route", "poi_contexts"}
+LOCATION_OPTIONAL_KEYS = {"transit_route", "poi_contexts", "poi_review", "transit_review"}
 DECISION_KEYS = IDENTITY_KEYS | {"review", "scope", "scene_inventory"}
 
 
@@ -167,6 +167,40 @@ def _quotes(value: object, body: str, label: str) -> list[str]:
     if len(set(normalized)) != len(normalized):
         raise ValueError(f"{label} contains duplicate evidence quotes")
     return normalized
+
+
+def _location_judgment(value: object, body: str, statuses: set[str], label: str) -> dict:
+    """Validate an explicitly authored judgment; never create a missing one."""
+    value = _require_exact_keys(value, {"status", "note", "evidence_quotes"}, label)
+    note = _normalized(value["note"]) if isinstance(value["note"], str) else ""
+    if value["status"] not in statuses or len(note) < 8:
+        raise ValueError(f"{label} needs a valid status and substantive review note")
+    return {
+        "status": value["status"],
+        "note": note,
+        "evidence_quotes": _quotes(value["evidence_quotes"], body, label),
+    }
+
+
+def _location_judgments(raw: dict, normalized: dict, body: str, label: str) -> None:
+    if "poi_review" in raw:
+        review = _location_judgment(
+            raw["poi_review"], body,
+            {"context_only", "source_unknown", "not_applicable"}, f"{label} POI review",
+        )
+        contexts = normalized.get("poi_contexts")
+        if contexts is None or (review["status"] == "context_only") != bool(contexts):
+            raise ValueError(f"{label} POI judgment differs from its explicit contexts")
+        normalized["poi_review"] = review
+    if "transit_review" in raw:
+        review = _location_judgment(
+            raw["transit_review"], body,
+            {"reviewed_route", "source_backed_context", "source_unknown", "not_applicable"},
+            f"{label} transit review",
+        )
+        if (review["status"] == "reviewed_route") != ("transit_route" in normalized):
+            raise ValueError(f"{label} transit judgment differs from its reviewed route")
+        normalized["transit_review"] = review
 
 
 def _identity(value: dict, city: str, source: dict, label: str) -> None:
@@ -298,6 +332,7 @@ def _validate_scenes(value: dict, body: str, ident: str, label: str) -> dict:
         )
         if contexts is not None:
             normalized_location["poi_contexts"] = contexts
+        _location_judgments(location, normalized_location, body, item_label)
         normalized_locations.append(normalized_location)
 
     normalized_incidents = []
@@ -347,7 +382,7 @@ def _validate_scenes(value: dict, body: str, ident: str, label: str) -> dict:
     }
 
 
-def _revalidate_stored_decision(
+def _revalidate_single_source_decision(
     value: object, source: dict, city: str, ident: str
 ) -> dict:
     decision = _require_exact_keys(value, DECISION_KEYS, f"stored decision for {ident}")
@@ -380,6 +415,28 @@ def _revalidate_stored_decision(
     if normalized != decision:
         raise ValueError(f"Stored review decision is not canonical: {ident}")
     return normalized
+
+
+def _revalidate_stored_decision(value, source, city, ident):
+    if isinstance(value, dict) and "source_attachment_binding" in value:
+        from .official_attachment_reviews import validate_attachment_referenced_decision
+        return validate_attachment_referenced_decision(
+            value, source=source, city=city, source_id=ident,
+            primary_validator=_revalidate_stored_decision,
+        )
+    if isinstance(value, dict) and "source_document_binding" in value:
+        from .official_pdf_references import validate_pdf_referenced_decision
+        return validate_pdf_referenced_decision(
+            value, source=source, city=city, source_id=ident,
+            primary_validator=_revalidate_single_source_decision,
+        )
+    if isinstance(value, dict) and "source_reference_binding" in value:
+        from .article_source_references import validate_source_referenced_decision
+        return validate_source_referenced_decision(
+            value, source=source, city=city, source_id=ident,
+            primary_validator=_revalidate_single_source_decision,
+        )
+    return _revalidate_single_source_decision(value, source, city, ident)
 
 
 def validate_stored_decision(

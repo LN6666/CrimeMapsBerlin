@@ -66,6 +66,8 @@ def count_location(event: dict) -> dict | None:
             raise ValueError(f"Top-level point without count scene for {event.get('id')}")
         return None
     primary = primaries[0]
+    if str(primary.get("geometry_usage", "")).endswith("reference_only"):
+        raise ValueError(f"Display reference cannot be a count scene for {event.get('id')}")
     point = primary.get("coordinates")
     geometry = primary.get("geometry")
     if geometry is not None and not isinstance(geometry, dict):
@@ -361,6 +363,7 @@ def associate(
                         "mention_basis": mention_basis,
                     }
                 )
+    reviewed_pairs = {}
     for event in events:
         for scene in event.get("scene_locations", []):
             contexts = scene.get("poi_contexts", [])
@@ -383,7 +386,12 @@ def associate(
                 kind = context.get("kind")
                 scope = context.get("scope")
                 radius = context.get("radius_m")
-                if scope == "named_object":
+                native_platforms = (
+                    scene.get("geometry_usage") == "source_native_platform_points_reference_only"
+                )
+                if scope == "named_object" or (scope == "along_geometry" and native_platforms):
+                    # Original reviewed platform IDs survive public coordinate rounding.
+                    # These are station-name references, never inferred incident positions.
                     candidate_indexes = [
                         place_index_by_id[ident]
                         for ident in scene.get("location_object_ids", [])
@@ -396,14 +404,12 @@ def associate(
                     raise ValueError(f"Invalid POI context scope for {event.get('id')}")
                 for index in candidate_indexes:
                     place = places[index]["properties"]
-                    if place.get("kind") != kind:
+                    if kind not in place.get("context_kinds", [place.get("kind")]):
                         continue
                     pair = event["id"], place["id"]
-                    if pair in seen:
-                        continue
-                    seen.add(pair)
-                    links.append(
-                        {
+                    if pair not in seen:
+                        seen.add(pair)
+                        row = {
                             "event_id": event["id"],
                             "scene_id": scene.get("scene_id"),
                             "poi_id": place["id"],
@@ -412,7 +418,27 @@ def associate(
                             "mention_basis": "source_reviewed_context_only",
                             "evidence_quote": context.get("evidence_quote"),
                         }
-                    )
+                        links.append(row)
+                        if native_platforms:
+                            row.update({k: scene[k] for k in (
+                                "geometry_usage", "actual_platform_side_known", "actual_event_position_known"
+                            ) if k in scene})
+                        if "context_kinds" in place:
+                            row.update(context_kinds=[], source_context_evidence=[])
+                            reviewed_pairs[pair] = row
+                    row = reviewed_pairs.get(pair)
+                    if row is not None:
+                        evidence = {
+                            "scene_id": scene.get("scene_id"), "kind": kind,
+                            "scope": scope, "radius_m": radius,
+                            "evidence_quote": context.get("evidence_quote"),
+                            "source_sha256": event.get("source_sha256"),
+                            "source_review_sha256": event.get("source_review_sha256"),
+                        }
+                        if kind not in row["context_kinds"]:
+                            row["context_kinds"].append(kind)
+                        if evidence not in row["source_context_evidence"]:
+                            row["source_context_evidence"].append(evidence)
     return links
 
 

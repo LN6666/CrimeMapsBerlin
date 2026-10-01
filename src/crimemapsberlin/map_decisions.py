@@ -402,7 +402,21 @@ def compile_map_decisions(
             incident_seen.add(incident_id)
             if item["category"] not in CATEGORIES:
                 raise ValueError(f"{incident_label} has an invalid category")
-            evidence = _quotes(item["evidence_quotes"], source_text, incident_label)
+            try:
+                evidence = _quotes(item["evidence_quotes"], source_text, incident_label)
+            except ValueError:
+                if "source_reference_binding" not in article:
+                    raise
+                from .review_decisions import validate_stored_decision
+                from .source_phase_evidence import validate_referenced_phase_quotes
+                def primary(value, source, city, ident):
+                    return validate_stored_decision(value, source=source, city=city, source_id=ident)
+                evidence = validate_referenced_phase_quotes(
+                    item["evidence_quotes"], article={**article, "city": city},
+                    source={"id": source_id, "url": source["source_url"],
+                            "body": source["source_body"], "sha256": source["source_sha256"]},
+                    incident_id=incident_id, primary_validator=primary,
+                )
             normalized_incidents.append(
                 {
                     "incident_id": incident_id,
