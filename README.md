@@ -181,6 +181,12 @@ uv run python -m crimemapsberlin.geometry_decisions \
   --out .runtime/safety/cities/dusseldorf/geometry-ledger-part-0001.json
 ```
 
+公园可使用 `osm_park_footprint_reference` 保存 LLM 明确选择的原生公园面，包括有完整
+PBF 原始节点证明但没有名称的中间区块。门禁核对原标签、闭合节点、几何、市界和来源
+哈希；它不为无名区块补名称，也不生成公园中心或案件计数点。同一公园的名称对应关系
+仍由 LLM 对照来源说明，园内独立游乐场不会因面积重叠变成警方提到的公园主体。
+方法和当前汉堡候选进度见[原生公园参考](docs/HAMBURG-NATIVE-PARK-REFERENCES.md)。
+
 来源与几何复核全部完成后，还需要由 LLM 从完整原文明确给每个已确认案件分类，并为
 每篇公告选择零个或一个可计数的市内案件/事故地点。程序不会用关键词代替该判断；
 `map_decisions` 只制作复核包并校验原文证据、来源/复核/几何哈希和主地点资格，

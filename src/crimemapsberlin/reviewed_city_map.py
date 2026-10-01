@@ -296,6 +296,8 @@ def _scene(
             "geodesic_model",
             "radius_metres",
             "native_platform_sources",
+            "native_park_sources",
+            "complete_park_boundary_known",
             "source_document_id",
             "source_object_groups",
         ):

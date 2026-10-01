@@ -389,9 +389,16 @@ def associate(
                 native_platforms = (
                     scene.get("geometry_usage") == "source_native_platform_points_reference_only"
                 )
-                if scope == "named_object" or (scope == "along_geometry" and native_platforms):
+                native_park = (
+                    kind == "park" and scene.get("geocode_method") == "osm_park_footprint_reference"
+                    and scene.get("geometry_usage") == "source_footprint_reference_only"
+                    and bool(scene.get("native_park_sources"))
+                )
+                if scope == "named_object" or (scope == "along_geometry" and (native_platforms or native_park)):
                     # Original reviewed platform IDs survive public coordinate rounding.
                     # These are station-name references, never inferred incident positions.
+                    # Park identity references likewise use only the authored park faces,
+                    # rather than a nested playground or an adjacent separate park.
                     candidate_indexes = [
                         place_index_by_id[ident]
                         for ident in scene.get("location_object_ids", [])
@@ -423,6 +430,9 @@ def associate(
                             row.update({k: scene[k] for k in (
                                 "geometry_usage", "actual_platform_side_known", "actual_event_position_known"
                             ) if k in scene})
+                        if native_park:
+                            row.update(geometry_usage="source_footprint_reference_only",
+                                       actual_event_position_known=False, complete_park_boundary_known=False)
                         if "context_kinds" in place:
                             row.update(context_kinds=[], source_context_evidence=[])
                             reviewed_pairs[pair] = row

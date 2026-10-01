@@ -271,6 +271,32 @@ def test_scene_count_fails_closed_on_invalid_primary_or_duplicate_road(change):
         count_location(report)
 
 
+def test_park_identity_context_keeps_only_selected_faces_and_excludes_nested_playground():
+    # All three points lie inside the visible park reference. The third is a
+    # separately mapped playground, not an authored park identity face.
+    pois, _ = pois_from_osm({"elements": [
+        {"type": "node", "id": ident, "lon": 13.4 + ident * .001, "lat": 52.5,
+         "tags": {"leisure": "park", "name": name}}
+        for ident, name in [(1, "Example park"), (2, "park"), (3, "Nested playground")]
+    ]})
+    for feature in pois["features"]:
+        feature["properties"]["context_kinds"] = ["park"]
+    scene = {"scene_id": "park-context", "geocode_method": "osm_park_footprint_reference",
+        "geometry_usage": "source_footprint_reference_only",
+        "geometry": {"type": "Polygon", "coordinates": [[[13.39, 52.49], [13.42, 52.49],
+            [13.42, 52.51], [13.39, 52.51], [13.39, 52.49]]]},
+        "location_object_ids": ["osm/node/1", "osm/node/2"],
+        "native_park_sources": [{"object_id": "osm/node/1"}, {"object_id": "osm/node/2"}],
+        "primary_for_count": False, "actual_event_position_known": False,
+        "poi_contexts": [{"kind": "park", "scope": "along_geometry", "radius_m": 0,
+                          "evidence_quote": "Near the source-named park; actual site unknown."}]}
+    report = {**event("unknown"), "coordinates": None, "scene_locations": [scene]}
+    links = associate([report], pois, include_legacy_links=False)
+    assert [r["poi_id"] for r in links] == ["osm/node/1", "osm/node/2"]
+    assert all(r["mention_basis"] == "source_reviewed_context_only" for r in links)
+    assert all(r["actual_event_position_known"] is False for r in links)
+
+
 def test_unmarked_scene_cannot_inherit_top_level_point_and_point_geometry_can_identify_primary():
     report = scene_event()
     report["scene_locations"][0]["primary_for_count"] = False

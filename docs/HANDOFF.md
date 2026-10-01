@@ -2,6 +2,21 @@
 
 ## Current objective
 
+Hamburg D16 supersedes the earlier Hamburg candidate counts below: the frozen
+494-source review remains unchanged, with 489 displayed announcements, 3,334
+phases and 3,947 locations. Four park contexts now use three original park faces,
+including the nameless middle face with its complete PBF proof. There are 2,119
+display references, 611 explicit GIS gaps and zero count points; these are distinct
+from the 1,828 unlocated display locations. The current local candidate has 1,846
+unique announcement–POI context pairs. Park identity uses a recorded LLM inference;
+the council-record mirror is labelled as independent and never relabelled as a
+direct official-site capture. Actual event positions and complete legal park bounds
+remain unknown. Other source/phase/role/time/category/count choices are unchanged.
+Recovery uses `.runtime/review/hamburg/full-semantic-20261001/native-park-footprints-0001/`
+and `map-build-0016/`; D15 and the historical full-source ZIP are preserved. This
+does not finish whole-city acceptance or authorize publication. See
+[native park references](HAMBURG-NATIVE-PARK-REFERENCES.md).
+
 CrimeMapsBerlin replaces CiviFlux. The owner authorized removal of the former plugin code locally and on GitHub, and renaming the repository. Git history is preserved. The old traffic disruption, digital twin, ontology/PPR and Qwen development plans are superseded for this product.
 
 ## Requirements retained from conversation

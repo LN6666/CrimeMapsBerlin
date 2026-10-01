@@ -29,6 +29,7 @@ SCHEMA_VERSION = 1
 INTERSECTION_CLUSTER_MAX_M = 150
 VERDICTS = {"resolved", "unresolved", "needs_correction"}
 METHODS = {
+    "osm_park_footprint_reference",
     "osm_station_platform_footprint_reference",
     "osm_platform_point_collection_reference",
     "official_pdf_horizontal_circle_reference",
@@ -630,6 +631,9 @@ def _derived_geometry_without_static_reference(
 
 
 def _derived_geometry(decision, request, objects, border, city, *, include_footprint_count_points=True, source_pbf_sha256=None):
+    if decision.get("method") == "osm_park_footprint_reference":
+        from .park_footprint_references import park_footprint_reference
+        return park_footprint_reference(decision, request, objects, border, source_pbf_sha256)
     if decision.get("method") == "osm_station_platform_footprint_reference":
         from .station_platform_references import station_platform_reference
         return station_platform_reference(decision, request, objects, border, source_pbf_sha256)

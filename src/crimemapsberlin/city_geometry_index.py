@@ -29,6 +29,7 @@ from shapely.geometry import (
 )
 from shapely.prepared import prep
 
+from .park_footprint_references import valid_native_park_object
 from .poi_cities import (
     POI_CITY_SPECS,
     boundary_for_city,
@@ -439,7 +440,9 @@ def write_geometry_index(
             "geometry": mapping(geometry),
         }
         row["geometry_sha256"] = _digest(row["geometry"])
-        if ((not row["names"] or "native_unnamed_way_source_proof" in row or "native_road_vertex_source_proof" in row)
+        if ((not row["names"] or "native_unnamed_way_source_proof" in row or "native_road_vertex_source_proof" in row or "native_park_source_proof" in row)
+                and not valid_native_park_object(row, pipeline_version=pipeline_version,
+                                                 source_metadata=source_metadata, border=border)
                 and not _valid_native_unnamed_way(row, pipeline_version=pipeline_version,
                                                  source_metadata=source_metadata, border=border)
                 and not _valid_native_road_vertex(row, pipeline_version=pipeline_version,
@@ -548,7 +551,9 @@ def validate_geometry_index(
         ):
             errors.append(f"names missing: {ident}")
             continue
-        if ((not names or "native_unnamed_way_source_proof" in row or "native_road_vertex_source_proof" in row)
+        if ((not names or "native_unnamed_way_source_proof" in row or "native_road_vertex_source_proof" in row or "native_park_source_proof" in row)
+                and not valid_native_park_object(row, pipeline_version=payload.get("pipeline_version"),
+                                                 source_metadata=source_metadata, border=border)
                 and not _valid_native_unnamed_way(row, pipeline_version=payload.get("pipeline_version"),
                                                  source_metadata=source_metadata, border=border)
                 and not _valid_native_road_vertex(row, pipeline_version=payload.get("pipeline_version"),
