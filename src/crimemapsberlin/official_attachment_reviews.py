@@ -10,6 +10,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import re
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urljoin, urlsplit
@@ -167,3 +168,78 @@ def validate_attachment_review(binding, *, source):
     if len(set(identifiers)) != len(identifiers):
         raise ValueError("Attachment claim IDs are duplicated")
     return copy.deepcopy(review)
+
+
+def validate_attachment_referenced_decision(value, *, source, city, source_id, primary_validator):
+    """Compose explicit attachment quotes with existing primary/article gates.
+
+    Document evidence is checked in one declared page before the unchanged
+    source validator sees the retained primary evidence. Scalar time quotations
+    need an explicit primary fallback; this is validation input only, never a
+    replacement for the document quotation stored in the actual decision.
+    """
+    if city != "hamburg" or source_id != source["id"]:
+        raise ValueError("Attachment decision belongs to another city/source")
+    binding = value.get("source_attachment_binding")
+    if not isinstance(binding, dict) or set(binding) != {
+        "review_bundle", "evidence_sources", "scalar_primary_fallbacks"
+    }:
+        raise ValueError("Attachment decision binding is incomplete")
+    review = validate_attachment_review(binding["review_bundle"], source=source)
+    origins = binding["evidence_sources"]
+    fallbacks = binding["scalar_primary_fallbacks"]
+    if not isinstance(origins, dict) or not origins or not isinstance(fallbacks, dict):
+        raise ValueError("Attachment decision needs individual quotation origins")
+    claims = {row["claim_id"]: row for row in review["claims"]}
+    primary = copy.deepcopy(value)
+    primary.pop("source_attachment_binding")
+    grouped = {}
+    scalar_paths = set()
+    for path, origin in origins.items():
+        array = re.fullmatch(
+            r"/scene_inventory/(incidents|formal_locations)/\d+/(?:poi_review/|transit_review/)?evidence_quotes/\d+",
+            path,
+        )
+        scalar = re.fullmatch(r"/scene_inventory/incidents/\d+/event_time/evidence_quote", path)
+        if not array and not scalar:
+            raise ValueError("Attachment quotation has an invalid decision path")
+        if not isinstance(origin, dict) or set(origin) != {"claim_id", "evidence_index"}:
+            raise ValueError("Attachment quotation needs one reviewed claim origin")
+        try:
+            evidence = claims[origin["claim_id"]]["evidence"][origin["evidence_index"]]
+            parts = path.strip("/").split("/")
+            container = primary
+            for part in parts[:-1]:
+                container = container[int(part)] if isinstance(container, list) else container[part]
+            key = int(parts[-1]) if isinstance(container, list) else parts[-1]
+            quote = container[key]
+        except (KeyError, IndexError, TypeError) as exc:
+            raise ValueError("Attachment quotation points to missing evidence") from exc
+        if (type(origin["evidence_index"]) is not int or origin["evidence_index"] < 0
+                or evidence["kind"] != "document" or quote != _text(evidence["quote"])):
+            raise ValueError("Attachment quotation differs from its individual reviewed page")
+        if scalar:
+            if review["document_content_applicability"] == "different_period_at_current_link":
+                raise ValueError("Different-period attachment cannot supply primary event time")
+            fallback = fallbacks.get(path)
+            if (not isinstance(fallback, str) or len(fallback) < 15
+                    or fallback != _text(fallback) or fallback not in _text(source["body"])):
+                raise ValueError("Attachment scalar evidence has no explicit primary fallback")
+            container[key] = fallback
+            scalar_paths.add(path)
+        else:
+            grouped.setdefault(path.rsplit("/", 1)[0], (container, []))[1].append(key)
+    if set(fallbacks) != scalar_paths:
+        raise ValueError("Attachment scalar fallback paths do not match the quotations")
+    for container, indices in grouped.values():
+        # Appended document quotations do not shift previously bound article
+        # quotation indices in a composed primary/reference decision.
+        if sorted(indices) != list(range(min(indices), len(container))):
+            raise ValueError("Attachment array quotations must follow retained primary/article evidence")
+        for index in sorted(indices, reverse=True):
+            del container[index]
+        if not container:
+            raise ValueError("Supplemented evidence retains a primary announcement anchor")
+    if primary_validator(primary, source, city, source_id) != primary:
+        raise ValueError("Attachment primary/reference decision is not canonical")
+    return copy.deepcopy(value)

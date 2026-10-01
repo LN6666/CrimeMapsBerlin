@@ -5,7 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from crimemapsberlin.official_attachment_reviews import validate_attachment_review
+from crimemapsberlin.official_attachment_reviews import (
+    validate_attachment_referenced_decision,
+    validate_attachment_review,
+)
 
 
 def bound(path, value):
@@ -180,3 +183,84 @@ def test_image_cannot_claim_unperformed_automatic_transcription(bundle):
     refresh(bundle)
     with pytest.raises(ValueError, match="explicit visual origin"):
         validate(bundle)
+
+
+def decision(bundle):
+    return {"scene_inventory": {"incidents": [{"evidence_quotes": [bundle[0]["body"], "Valid October."]}]},
+            "existing_article_provenance": {"retained": True},
+            "source_attachment_binding": {"review_bundle": bundle[3],
+                "evidence_sources": {"/scene_inventory/incidents/0/evidence_quotes/1": {
+                    "claim_id": "different-period", "evidence_index": 0}},
+                "scalar_primary_fallbacks": {}}}
+
+
+def validate_decision(bundle, value):
+    def primary(kept, source, city, source_id):
+        assert city == "hamburg" and source_id == "11"
+        assert kept["existing_article_provenance"] == {"retained": True}
+        if kept["scene_inventory"]["incidents"][0]["evidence_quotes"] != [source["body"]]:
+            raise ValueError("Unbound document evidence cannot enter primary/reference evidence")
+        if "event_time" in kept["scene_inventory"]["incidents"][0]:
+            assert kept["scene_inventory"]["incidents"][0]["event_time"]["evidence_quote"] == source["body"]
+        return kept
+    return validate_attachment_referenced_decision(value, source=bundle[0], city="hamburg",
+                                                  source_id="11", primary_validator=primary)
+
+
+def test_composed_document_and_article_origins_preserve_actual_decision(bundle):
+    value = decision(bundle)
+    assert validate_decision(bundle, value) == value
+    assert value["scene_inventory"]["incidents"][0]["evidence_quotes"][1] == "Valid October."
+
+
+def test_unbound_document_quote_is_rejected_by_retained_primary_validator(bundle):
+    value = decision(bundle)
+    value["scene_inventory"]["incidents"][0]["evidence_quotes"].append("Signed September.")
+    value["source_attachment_binding"]["evidence_sources"][
+        "/scene_inventory/incidents/0/evidence_quotes/2"] = {
+            "claim_id": "different-period", "evidence_index": 0}
+    with pytest.raises(ValueError, match="differs from its individual"):
+        validate_decision(bundle, value)
+
+
+def test_supplement_cannot_remove_all_primary_evidence(bundle):
+    value = decision(bundle)
+    value["scene_inventory"]["incidents"][0]["evidence_quotes"] = ["Valid October."]
+    origins = value["source_attachment_binding"]["evidence_sources"]
+    origins["/scene_inventory/incidents/0/evidence_quotes/0"] = origins.pop(
+        "/scene_inventory/incidents/0/evidence_quotes/1")
+    with pytest.raises(ValueError, match="primary announcement anchor"):
+        validate_decision(bundle, value)
+
+
+def scalar_decision(bundle):
+    value = decision(bundle)
+    value["scene_inventory"]["incidents"][0]["event_time"] = {"evidence_quote": "Valid October."}
+    path = "/scene_inventory/incidents/0/event_time/evidence_quote"
+    value["source_attachment_binding"]["evidence_sources"][path] = {
+        "claim_id": "different-period", "evidence_index": 0}
+    value["source_attachment_binding"]["scalar_primary_fallbacks"][path] = bundle[0]["body"]
+    return value
+
+
+def test_different_period_attachment_cannot_supply_primary_date_evidence(bundle):
+    with pytest.raises(ValueError, match="cannot supply primary event time"):
+        validate_decision(bundle, scalar_decision(bundle))
+
+
+def test_scalar_fallback_is_validation_only_and_original_document_quote_survives(bundle):
+    bundle[2]["document_content_applicability"] = "matches_primary_subject"
+    refresh(bundle)
+    value = scalar_decision(bundle)
+    assert validate_decision(bundle, value) == value
+    assert value["scene_inventory"]["incidents"][0]["event_time"]["evidence_quote"] == "Valid October."
+
+
+def test_scalar_fallback_cannot_borrow_other_document_text(bundle):
+    bundle[2]["document_content_applicability"] = "matches_primary_subject"
+    refresh(bundle)
+    value = scalar_decision(bundle)
+    path = "/scene_inventory/incidents/0/event_time/evidence_quote"
+    value["source_attachment_binding"]["scalar_primary_fallbacks"][path] = "Other source document quotation"
+    with pytest.raises(ValueError, match="no explicit primary fallback"):
+        validate_decision(bundle, value)
