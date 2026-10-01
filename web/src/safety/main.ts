@@ -347,7 +347,7 @@ function listReports(parent: HTMLElement, ids: string[]) {
         if (scene.geometry_usage === "source_road_reference_only" && !scene.transit_route)
           text("small", `${transitGeometryLabel(scene)}；不生成精确案发或计数点。`, item);
         if (scene.static_scene_reference === true && scene.geometry) {
-          const focus = text("button", "查看这段道路参考", item);
+          const focus = text("button", "查看场景参考范围", item);
           focus.onclick = () => focusReviewedScenes(e, [scene]);
         }
         if (scene.geometry_usage === "source_junction_reference_only")
