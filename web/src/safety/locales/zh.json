@@ -764,5 +764,6 @@
   "geometry.parkReference": "仅以地图中已核对的公园区域作参照。完整公园边界及具体事件位置仍未知，不计入六边形。",
   "source.reviewDetails": "查看补充来源核对说明及使用限制",
   "source.serviceHistory": "查看早期应急服务的背景说明",
-  "geometry.showReference": "在地图上显示此参照"
+  "geometry.showReference": "在地图上显示此参照",
+  "report.sourceUncertain": "这篇公告仍有部分来源信息无法确认，相关解读保留为不确定。"
 }

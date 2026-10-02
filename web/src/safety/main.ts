@@ -266,6 +266,8 @@ function listReports(parent: HTMLElement, ids: string[]) {
       `${e.event_date ? date(e.event_date) : t("report.publishedMonth",{month:e.month??"—"})} · ${categoryLabel(e.category)} · ${precisionLabels[e.location_precision] ?? t("precision.unknown")}`,
       card,
     );
+    if (e.source_status === "uncertain")
+      text("small", t("report.sourceUncertain"), card);
     if (e.source_status && ["unavailable","refresh_failed"].includes(e.source_status)) {
       const status = sourceStatusLabels[e.source_status];
       text(
