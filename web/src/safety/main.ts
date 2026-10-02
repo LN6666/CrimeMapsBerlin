@@ -17,6 +17,7 @@ import {
   sceneFeatures,
   sceneRoleLabel,
   styledPois,
+  transitGeometryLabel,
 } from "./model";
 import type { Bundle, FC, PoliceEvent } from "./model";
 import { DataClient } from "./data";
@@ -24,7 +25,7 @@ import type { Manifest } from "./data";
 import { Basemaps, basemapLabels } from "./basemaps";
 import type { BasemapId } from "./basemaps";
 import { externalMaps, externalMapsDirectory } from "./external-maps";
-import { cityGroups, requestedMapView } from "./cities";
+import { approvedCityLinks, cityGroups, requestedMapView } from "./cities";
 
 const cityView = requestedMapView(window.location.search);
 const currentCity = cityView.id;
@@ -53,11 +54,11 @@ const reviewedTagLabels: Record<string, string> = {
   possible_hate_crime: "可能仇恨犯罪",
 };
 const precisionLabels: Record<string, string> = {
-  street: "街道近似位置",
+  street: "道路范围参考",
   place: "场所近似位置",
   address: "地址近似位置",
   point: "点位",
-  route: "移动公共交通路线",
+  route: "路线/移动范围",
   district: "仅区域信息",
   city: "仅城市级位置",
   unknown: "位置待核验",
@@ -68,10 +69,14 @@ const locationScopeLabels: Record<string, string> = {
   unresolved_no_upstream_coordinate: "上游未提供坐标，不计入市域网格",
 };
 const sourceStatusLabels: Record<string, string> = {
+  current_cached_official_source_reviewed_with_declared_gaps:
+    "当前缓存已逐篇复核；保留位置、POI和引用缺口，未批准发布",
   polizeikarte_complete_365_day_snapshot:
     "POLIZEIKARTE 滚动 365 天完整快照；保留对应警方原文链接",
   complete_official_archive_source_and_geometry_reviewed:
     "官方来源、场景、几何和地图语义已完成复核；等待所有者批准",
+  complete_frozen_owner_batch_source_and_geometry_reviewed:
+    "所有者冻结批次的原文、场景、几何和地图语义已复核；不代表全量犯罪清单；未批准发布",
 };
 const sceneRelationLabels: Record<string, string> = {
   independent_case: "独立案件或事故",
@@ -90,22 +95,28 @@ const sceneColor: maplibregl.ExpressionSpecification = [
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `<header><div><span class="brand">${currentCity === "berlin" ? "CRIMEMAPSBERLIN" : "CRIMEMAPS.DE"}</span><span id="review-badge" class="review-badge" hidden>本地所有者审核预览 · 未批准 · 不可发布</span><h1>${cityView.name} · 警情与城市场所</h1></div><div class="toolbar"><label class="city-switch">选择城市<select id="city-switch" aria-label="选择城市"></select></label><label>年份<select id="year" aria-label="年份"></select></label><label>月份<select id="month" aria-label="月份"></select></label><button id="overview">全市概览</button><button id="sources">警方来源</button></div></header>
-<main><aside class="controls"><p class="eyebrow">${cityView.latin} / PUBLIC REPORTS</p><h2>看事件，也看周边</h2><p id="coverage">读取本地数据…</p><nav id="external-maps" class="external-maps" aria-label="外部警情网站"></nav><label class="search-label">查找${cityView.name}场所<input id="search" placeholder="${cityView.example}" autocomplete="off"></label><div id="search-results"></div><label>事件类别<select id="category"><option value="all">全部警方公告</option></select></label><div class="rule"></div><h3>六边形 · 公告数量</h3><div class="ramp"></div><div class="ends"><span>少</span><span>多</span></div><p id="resolution"></p><label class="toggle"><input id="hex-toggle" type="checkbox" checked> 显示六边形</label><label class="toggle"><input id="candidate-roads-toggle" type="checkbox" checked> 显示待定位道路范围</label><p class="hint"><span class="road-swatch" aria-hidden="true"></span>橙色虚线仅表示原文提到的道路候选范围，具体案发位置未知；不计入六边形或 POI 关联。</p><div class="scene-legend" aria-label="公告场景颜色"><span><i class="scene-swatch incident"></i>案发/事故</span><span><i class="scene-swatch discovery"></i>发现</span><span><i class="scene-swatch operation"></i>警方行动</span><span><i class="scene-swatch context"></i>背景/待核</span><span><i class="route-swatch"></i>移动公交路线</span></div><h3>周边 POI</h3><div id="poi-filters"></div><label class="toggle"><input id="highlight" type="checkbox" checked> 经复核的同类场所上下文加深</label><p class="hint">加深仅表示原文复核确认的整条街道、路线沿线或附近同类场所上下文，不表示事件发生在具体场所内。</p><div class="rule"></div><button id="kbo">查看柏林 kbO 官方区域</button><p class="hint">警方划定区域与事件网格分别展示。</p><p id="freshness" class="hint"></p></aside>
+<main><aside class="controls"><p class="eyebrow">${cityView.latin} / PUBLIC REPORTS</p><h2>看事件，也看周边</h2><p id="coverage">读取本地数据…</p><nav id="external-maps" class="external-maps" aria-label="外部警情网站"></nav><label class="search-label">查找${cityView.name}场所<input id="search" placeholder="${cityView.example}" autocomplete="off"></label><div id="search-results"></div><label>事件类别<select id="category"><option value="all">全部警方公告</option></select></label><div class="rule"></div><h3>六边形 · 公告数量</h3><div class="ramp"></div><div class="ends"><span>少</span><span>多</span></div><p id="resolution"></p><label class="toggle"><input id="hex-toggle" type="checkbox" checked> 显示六边形</label><label class="toggle"><input id="candidate-roads-toggle" type="checkbox" checked> 显示待定位道路范围</label><p class="hint"><span class="road-swatch" aria-hidden="true"></span>橙色虚线仅表示原文提到的道路候选范围，具体案发位置未知；不计入六边形或 POI 关联。</p><div class="scene-legend" aria-label="公告场景颜色"><span><i class="scene-swatch incident"></i>案发/事故</span><span><i class="scene-swatch discovery"></i>发现</span><span><i class="scene-swatch operation"></i>处置／行动</span><span><i class="scene-swatch context"></i>背景/待核</span><span><i class="route-swatch"></i>移动公交路线</span></div><h3>周边 POI</h3><div id="poi-filters"></div><label class="toggle"><input id="highlight" type="checkbox" checked> 经复核的同类场所上下文加深</label><p class="hint">加深仅表示原文复核确认的整条街道、路线沿线或附近同类场所上下文，不表示事件发生在具体场所内。</p><div class="rule"></div><button id="kbo">查看柏林 kbO 官方区域</button><p class="hint">警方划定区域与事件网格分别展示。</p><p id="freshness" class="hint"></p></aside>
 <section class="map-wrap"><div id="map" aria-label="${cityView.name}警情交互地图"></div><div class="map-label"><span class="dot"></span><span id="map-status">正在准备地图</span></div><div class="basemap-picker"><label>底图<select id="basemap" aria-label="底图" disabled><option value="street">标准街道</option><option value="aerial">航空影像（2026）</option><option value="local">本地简图</option></select></label><div id="basemap-error" role="status" hidden><span></span><button id="basemap-fallback">使用本地简图</button></div></div><div class="map-note">浅色 POI 是城市设施，不代表被警方认定为高发场所</div></section>
 <aside class="details"><div id="stats"></div><div id="selection"><h2>选择一个六边形或 POI</h2><p>查看该区域的事件、类别，以及可以追溯的警方原文。</p></div></aside></main>
 <dialog id="drawer"><button id="close-dialog" class="close">关闭</button><div id="drawer-content"></div></dialog>`;
 const el = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const citySelect = el<HTMLSelectElement>("city-switch");
+let publishedCityLinks = new Map<string, string>();
+try {
+  const directory = document.getElementById("approved-city-maps")?.textContent;
+  if (directory) publishedCityLinks = approvedCityLinks(JSON.parse(directory));
+} catch { /* Missing or malformed availability data keeps existing city choices. */ }
 for (const group of cityGroups) {
   const section = document.createElement("optgroup");
   section.label = group.label;
   for (const city of group.cities) {
+    const href = city.href ?? publishedCityLinks.get(city.id);
     const option = new Option(
-      city.name + (city.href ? "" : " · 制作中"),
+      city.name + (href ? "" : " · 制作中"),
       city.id,
     );
-    option.disabled = !city.href && city.id !== currentCity;
+    option.disabled = !href && city.id !== currentCity;
     section.append(option);
   }
   citySelect.append(section);
@@ -115,7 +126,8 @@ citySelect.onchange = () => {
   const destination = cityGroups.flatMap((group) => group.cities).find(
     (city) => city.id === citySelect.value,
   );
-  if (destination?.href) window.location.assign(destination.href);
+  const href = destination?.href ?? publishedCityLinks.get(citySelect.value);
+  if (href) window.location.assign(href);
 };
 const text = (tag: string, value: string, parent: HTMLElement) => {
   const n = document.createElement(tag);
@@ -200,11 +212,31 @@ function focusRoad(event: PoliceEvent) {
   el<HTMLDialogElement>("drawer").close();
   showSelection();
 }
+function focusReviewedScenes(event: PoliceEvent, scenes = event.scene_locations ?? []) {
+  let west = Infinity, east = -Infinity, south = Infinity, north = -Infinity, count = 0;
+  function visit(value: unknown): void {
+    if (!Array.isArray(value)) return;
+    if (value.length >= 2 && typeof value[0] === "number" && typeof value[1] === "number") {
+      west = Math.min(west, value[0]); east = Math.max(east, value[0]);
+      south = Math.min(south, value[1]); north = Math.max(north, value[1]); count += 1;
+      return;
+    }
+    value.forEach(visit);
+  }
+  for (const scene of scenes) {
+    const geometry = scene.geometry;
+    if (geometry && "coordinates" in geometry) visit(geometry.coordinates);
+  }
+  if (!count) return;
+  map.fitBounds([[west, south], [east, north]], {padding:55, maxZoom:scenes.some(scene => scene.static_scene_reference === true) ? 17 : 14});
+  el<HTMLDialogElement>("drawer").close();
+}
 function listReports(parent: HTMLElement, ids: string[]) {
   const wanted = new Set(ids);
   for (const e of data.events.filter((e) => wanted.has(e.id))) {
     const card = document.createElement("article");
     card.className = "report";
+    card.dataset.sourceId = e.id;
     parent.append(card);
     text(
       "small",
@@ -212,7 +244,15 @@ function listReports(parent: HTMLElement, ids: string[]) {
       card,
     );
     if (e.source_status && e.source_status !== "available") {
-      const status = sourceStatusLabels[e.source_status];
+      let status = sourceStatusLabels[e.source_status];
+      if (manifest.owner_approved === true && manifest.publication_ready === true) {
+        if (e.source_status === "complete_official_archive_source_and_geometry_reviewed")
+          status = "官方来源、场景、几何和地图语义已复核；所有者已批准当前版本";
+        else if (e.source_status === "current_cached_official_source_reviewed_with_declared_gaps")
+          status = "当前缓存已逐篇复核；保留位置、POI和引用缺口；所有者已批准当前版本";
+        else if (e.source_status === "complete_frozen_owner_batch_source_and_geometry_reviewed")
+          status = "所有者冻结批次已复核并批准；不代表全量犯罪清单";
+      }
       text(
         "small",
         status ?? (e.source_status === "unavailable"
@@ -221,7 +261,58 @@ function listReports(parent: HTMLElement, ids: string[]) {
         card,
       );
     }
+    if (e.source_scope_verdict === "uncertain")
+      text("small", "市域位置不确定：保留原文和未定位场景，不计入六边形", card);
     text("h4", e.title, card);
+    if (e.map_review_note) text("p", `分类及计数说明：${e.map_review_note}`, card);
+    for (const attachment of e.source_attachments ?? []) {
+      const details = document.createElement("details");
+      card.append(details);
+      text("summary", `已复核官方附件 · ${attachment.page_count}页`, details);
+      text("p", attachment.note, details);
+      link(details, "查看已复核官方附件", attachment.source_url);
+      text("small", `附件 SHA-256：${attachment.source_sha256}`, details);
+    }
+    if (e.source_supporting_materials?.length) {
+      const details = document.createElement("details");
+      details.className = "source-supporting-materials";
+      card.append(details);
+      text("summary", `已复核补充资料 · ${e.source_supporting_materials.length}项`, details);
+      for (const material of e.source_supporting_materials) {
+        text("p", material.note, details);
+        link(details, material.label, material.source_url);
+      }
+    }
+    for (const claim of e.current_claim_overlays ?? [])
+      text("p", `后续来源修订：${claim.display_note}`, card);
+    for (const history of e.historical_source_reviews ?? []) {
+      const disclosure = document.createElement("details");
+      disclosure.className = "historical-source-review";
+      card.append(disclosure);
+      text("summary", `官方补充公告 · ${history.source_incidents.length}个来源阶段`, disclosure);
+      const sourceLink = document.createElement("a");
+      sourceLink.href = history.source_url;
+      sourceLink.target = "_blank";
+      sourceLink.rel = "noopener noreferrer";
+      sourceLink.textContent = history.title;
+      disclosure.append(sourceLink);
+      text("small", `公布时间：${history.published_at_source_literal}（来源字面）`, disclosure);
+      text("p", history.review_note, disclosure);
+      for (const incident of history.source_incidents) {
+        const stage = document.createElement("section");
+        disclosure.append(stage);
+        text("strong", `原始事件时间：${incident.event_time.display}`, stage);
+        text("p", incident.details, stage);
+        for (const location of history.formal_locations.filter((location) =>
+          incident.formal_location_ids.includes(location.location_id))) {
+          text("small", `${sceneRoleLabel(location.role)} · ${location.label} · ${precisionLabels[location.precision] ?? "位置未知"}`, stage);
+          text("small", `场所判断：${location.poi_review.note}`, stage);
+          text("small", `交通判断：${location.transit_review.note}`, stage);
+        }
+      }
+    }
+    for (const comparison of e.source_reference_comparisons ?? [])
+      text("small", `补充来源关系：${comparison.review_note}`, card);
     for (const tag of e.reviewed_tags ?? []) {
       const label = reviewedTagLabels[tag.tag];
       if (label)
@@ -240,9 +331,14 @@ function listReports(parent: HTMLElement, ids: string[]) {
         const item = document.createElement("li");
         scenes.append(item);
         text("strong", `${sceneRoleLabel(scene.role)} · ${scene.label}`, item);
+        const locationDisplay = !scene.geometry && !scene.coordinates && !scene.candidate_road_geometry
+          ? "位置未知"
+          : scene.geometry_usage === "official_attachment_horizontal_reference_only"
+          ? "附件水平范围参考"
+          : (precisionLabels[scene.location_precision] ?? "位置待核验");
         text(
           "small",
-          `${scene.case_relation ? `${sceneRelationLabels[scene.case_relation]} · ` : ""}${precisionLabels[scene.location_precision] ?? "位置待核验"} · ${scene.primary_for_count ? "主场景" : "仅展示，不计入六边形"}${scene.candidate_road_geometry ? " · 道路范围待核验" : ""}`,
+          `${scene.case_relation ? `${sceneRelationLabels[scene.case_relation]} · ` : ""}${locationDisplay} · ${scene.primary_for_count ? "主场景" : "仅展示，不计入六边形"}${scene.candidate_road_geometry ? " · 道路范围待核验" : ""}`,
           item,
         );
         const eventTimes = [
@@ -255,20 +351,61 @@ function listReports(parent: HTMLElement, ids: string[]) {
         if (scene.transit_route)
           text(
             "small",
-            `${scene.transit_route.mode} ${scene.transit_route.line} · ${scene.transit_route.extent === "full_line" ? "整条线路展示" : "原文涉及路段"}`,
+            `${scene.transit_route.mode} ${scene.transit_route.line} · ${transitGeometryLabel(scene)}`,
             item,
           );
+        if (scene.geometry_usage === "source_native_platform_points_reference_only") {
+          text("small", `原生站台集合参考 · ${scene.native_platform_count ?? "多"}个原始节点；实际站台侧和案发位置未知，不计入六边形。`, item);
+          const focus = text("button", "查看原生站台参考", item);
+          focus.onclick = () => focusReviewedScenes(e, [scene]);
+        }
+        if (scene.geometry_usage === "source_station_platform_footprint_reference_only")
+          text("small", "原生站台轮廓参考；实际站台侧、出口及事件位置未知，不表示完整站区，不计入六边形。", item);
+        if (scene.geometry_usage === "official_attachment_horizontal_reference_only") {
+          text("small", "警方附件水平范围参考；高度、坐标基准及完整法定条件未核。历史管理范围，不计为犯罪地点。", item);
+          if (scene.source_attachment_url) link(item, "查看警方原始PDF附件", scene.source_attachment_url);
+          const focus = text("button", "查看附件水平范围", item);
+          focus.onclick = () => focusReviewedScenes(e, [scene]);
+        }
+        if (scene.source_attachment_url && scene.geometry && scene.geometry_usage !== "official_attachment_horizontal_reference_only") {
+          text("small", "附件补证的道路或联系机关范围参考；不证明精确案发地，不计入六边形。", item);
+          const focus = text("button", "查看附件补证范围参考", item);
+          focus.onclick = () => focusReviewedScenes(e, [scene]);
+        }
+        if (scene.geometry_usage === "source_footprint_reference_only") {
+          text("small", scene.actual_non_transit_extent_known === false
+            ? "原生地名轮廓参考；实际非公交轨迹及精确事件位置未知，不生成计数点。"
+            : "原生地名轮廓参考；精确事件位置未知，不生成计数点。", item);
+          const focus = text("button", "查看原生场所轮廓参考", item);
+          focus.onclick = () => focusReviewedScenes(e, [scene]);
+        }
+        if (scene.geometry_usage === "source_road_reference_only" && !scene.transit_route)
+          text("small", `${transitGeometryLabel(scene)}；不生成精确案发或计数点。`, item);
+        if (scene.static_scene_reference === true && scene.geometry) {
+          const focus = text("button", "查看场景参考范围", item);
+          focus.onclick = () => focusReviewedScenes(e, [scene]);
+        }
+        if (scene.geometry_usage === "source_junction_reference_only")
+          text("small", "原生路口候选节点参考；实际事件点未知，不计入六边形。", item);
         const details = [
           scene.details,
           ...(scene.incidents ?? []).map((incident) => incident.details),
         ].filter((value): value is string => Boolean(value));
         for (const detail of [...new Set(details)]) text("small", detail, item);
+        for (const note of new Set((scene.source_relations ?? []).map((r) => r.decision.review_note)))
+          text("small", `来源阶段关系：${note}`, item);
+        if (scene.poi_review)
+          text("small", `场所判断：${scene.poi_review.note}`, item);
+        if (scene.transit_review)
+          text("small", `交通判断：${scene.transit_review.note}`, item);
+        if (scene.geometry_review?.review_note)
+          text("small", `定位复核说明：${scene.geometry_review.review_note}`, item);
         if (scene.poi_contexts?.length) {
           const kinds = [...new Set(scene.poi_contexts.map((context) =>
             data.catalog.poi_types[context.kind]?.label ?? context.kind))];
           text(
             "small",
-            `经原文复核的场所上下文：${kinds.join("、")}；仅调高相关 POI 显示强度，不表示事件发生在该场所内。`,
+            `经原文复核的场所上下文：${kinds.join("、")}；仅作地点上下文，不表示事件发生在具名场所内。`,
             item,
           );
         }
@@ -325,6 +462,11 @@ function listReports(parent: HTMLElement, ids: string[]) {
         `匹配对象跨度约 ${e.location_extent_m.toLocaleString()} 米；${e.coordinates ? "六边形采用近似位置" : "具体案发位置待核验"}`,
         card,
       );
+    if (e.scene_locations?.some(scene => scene.geometry)) {
+      const button = text("button", "在地图查看已复核场景范围", card);
+      button.className = "reviewed-scene-focus";
+      button.onclick = () => focusReviewedScenes(e);
+    }
     link(card, "警方原文 ↗", e.source_url);
     if (e.poi_mentions.length)
       text(
@@ -422,7 +564,7 @@ function showSelection() {
   } else {
     text(
       "p",
-      data.catalog.poi_types[p.kind]?.label ?? p.kind,
+      (p.context_kinds ?? [p.kind]).map((kind: string) => data.catalog.poi_types[kind]?.label ?? kind).join(" / "),
       panel,
     ).className = "eyebrow";
     text("h2", p.name, panel);
@@ -435,6 +577,10 @@ function showSelection() {
           : "展示范围：OSM 已绘制区域",
       panel,
     );
+    if (p.native_reference_extent === "named_park_building_only")
+      text("p", "这里只显示园区的一处建筑；整个园区边界仍未知。", panel);
+    if ((p.context_kinds ?? [p.kind]).includes("industrial_company"))
+      text("p", "工业用途依OSM现有标注；实际经营状态和完整厂区范围未核实。", panel);
     text(
       "p",
       `附近同类提及 ${p.count} 条；街道近似坐标候选 ${p.candidate_count} 条；经复核上下文 ${p.context_count ?? 0} 条`,
@@ -442,10 +588,12 @@ function showSelection() {
     );
     text("p", "这些是经原文复核的场所上下文，不表示事件发生在这家店内。", panel).className =
       "hint";
+    if ((p.context_count ?? 0) > 0 && p.native_type_addition_binding?.source_venue_identity_verified === false)
+      text("p", "关联公告未确认这是原文所指场所；仅保留同类道路上下文。", panel);
     if (p.opening_hours) text("p", `OSM 营业时间：${p.opening_hours}`, panel);
     link(panel, "OSM 对象 ↗", p.source_url);
     const sources = data.catalog.sources.filter((s) =>
-      s.poi_types.includes(p.kind),
+      s.poi_types.some((kind: string) => (p.context_kinds ?? [p.kind]).includes(kind)),
     );
     const details = document.createElement("details");
     panel.append(details);
@@ -550,9 +698,13 @@ function refresh() {
     );
     text(
       "p",
-      `已定位 ${rows.length - unmapped.length} 条 · 未定位 ${unmapped.length} 条（其中 ${activeRoads.features.length} 条可查看道路范围）`,
+      `可计数点位 ${rows.length - unmapped.length} 篇 · 无精确计数点位 ${unmapped.length} 篇 · ${rows.filter(event => event.scene_locations?.some(scene => scene.geometry)).length} 篇有场景展示参考`,
       el("stats"),
     );
+    const roadReferences = unmapped.filter(event => candidateRoadGeometry(event)).length;
+    if (roadReferences) {
+      text("p", `其中 ${roadReferences} 条可查看道路范围`, el("stats"));
+    }
     const btn = text(
       "button",
       `${unmapped.length} 条位置不足，查看列表`,
@@ -564,7 +716,7 @@ function refresh() {
         "p",
         data.metadata.upstream_provider === "POLIZEIKARTE"
           ? "上游没有提供可计入慕尼黑市域网格的街道点，或坐标位于市界外；记录及来源仍完整保留。"
-          : "道路候选范围不确定具体案发位置，公告保留在未定位列表。",
+          : "已复核的道路或设施参考不等于精确案件点；没有精确点的公告及全部地点场景继续保留。",
         p,
       );
       listReports(
@@ -733,6 +885,10 @@ async function start() {
       manifest.status?.includes("unapproved")
     )
       el("review-badge").hidden = false;
+    if (manifest.owner_approved === true && manifest.publication_ready === true) {
+      const current = [...citySelect.options].find((option) => option.value === currentCity);
+      if (current) current.textContent = cityView.name;
+    }
     client = new DataClient(manifest, cityView.dataRoot);
     data = {
       ...manifest,
@@ -757,19 +913,46 @@ async function start() {
     el<HTMLSelectElement>("month").value = latest.slice(5, 7);
     for (const c of manifest.categories)
       el<HTMLSelectElement>("category").add(new Option(categoryLabel(c), c));
+    const baselinePoiKinds = new Set(["airport", "attraction", "bar", "cafe", "fast_food", "hotel", "marketplace", "nightclub", "park", "parking", "restaurant", "shop", "station"]);
+    const visibleAddedKinds = new Set(["healthcare", "school", "bus_stop"]);
+    const extraTypes = document.createElement("details");
+    extraTypes.id = "additional-poi-types";
+    const extraTypeCount = Object.keys(data.catalog.poi_types)
+      .filter((kind) => !baselinePoiKinds.has(kind) && !visibleAddedKinds.has(kind)).length;
+    text("summary", `其他场所类型（${extraTypeCount}类）`, extraTypes);
     for (const [key, value] of Object.entries(data.catalog.poi_types)) {
       const label = document.createElement("label");
       label.className = "toggle";
       const input = document.createElement("input");
       input.type = "checkbox";
       input.value = key;
+      const memberships = manifest.metadata.poi_membership_counts;
+      const nativeCount = memberships ? Number(memberships[key] ?? 0) : undefined;
+      input.disabled = nativeCount === 0;
       input.checked = ["bar", "nightclub", "station", "shop"].includes(key);
       input.onchange = () => void loadViewport();
       label.append(input);
       const swatch = document.createElement("i");
       swatch.style.background = value.color;
-      label.append(swatch, document.createTextNode(value.label));
-      el("poi-filters").append(label);
+      label.append(swatch, document.createTextNode(`${value.label}${nativeCount === undefined ? "" : ` · ${nativeCount}${nativeCount === 0 ? "（原生对象待核）" : ""}`}`));
+      (baselinePoiKinds.has(key) || visibleAddedKinds.has(key) ? el("poi-filters") : extraTypes).append(label);
+    }
+    el("poi-filters").append(extraTypes);
+    if (manifest.metadata.candidate_notice) {
+      const notice = document.createElement("p");
+      notice.id = "current-candidate-notice";
+      notice.textContent = String(manifest.metadata.candidate_notice);
+      notice.className = "hint";
+      el("coverage").after(notice);
+    }
+    if (manifest.metadata.source_reference_review_url) {
+      const link = document.createElement("a");
+      link.id = "official-reference-reviews";
+      link.href = `/safety/cities/hamburg/${String(manifest.metadata.source_reference_review_url)}`;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "查看官方补充公告与逐篇说明（含市域未知记录）";
+      el("coverage").after(link);
     }
     const outside = Number(manifest.metadata.known_outside_municipality ?? 0);
     const cityPoints = Number(manifest.metadata.point_entries_in_city ?? 0);
@@ -916,14 +1099,19 @@ async function start() {
         type: "fill",
         source: "scenes",
         filter: ["==", ["geometry-type"], "Polygon"],
-        paint: { "fill-color": sceneColor, "fill-opacity": 0.22 },
+        paint: { "fill-color": sceneColor, "fill-opacity": ["case", ["any", ["==", ["get", "role_group"], "context"], ["in", ["get", "location_precision"], ["literal", ["district", "area"]]]], 0, 0.22] },
       });
       map.addLayer({
         id: "scene-area-outline",
         type: "line",
         source: "scenes",
-        filter: ["==", ["geometry-type"], "Polygon"],
+        filter: ["all", ["==", ["geometry-type"], "Polygon"], ["!", ["any", ["==", ["get", "role_group"], "context"], ["in", ["get", "location_precision"], ["literal", ["district", "area"]]]]]],
         paint: { "line-color": sceneColor, "line-width": 2 },
+      });
+      map.addLayer({
+        id: "scene-context-boundary", type: "line", source: "scenes",
+        filter: ["all", ["==", ["geometry-type"], "Polygon"], ["any", ["==", ["get", "role_group"], "context"], ["in", ["get", "location_precision"], ["literal", ["district", "area"]]]]],
+        paint: {"line-color": sceneColor, "line-width": ["case", ["==", ["get", "geometry_usage"], "official_attachment_horizontal_reference_only"], 2, 0.8], "line-opacity": ["case", ["==", ["get", "geometry_usage"], "official_attachment_horizontal_reference_only"], 0.7, 0.2]},
       });
       map.addLayer({
         id: "scene-line",
@@ -934,8 +1122,17 @@ async function start() {
           ["==", ["geometry-type"], "LineString"],
           ["!=", ["get", "geometry_kind"], "candidate_road"],
           ["!=", ["get", "geometry_kind"], "transit_route"],
+          ["!=", ["get", "geometry_kind"], "transit_line_reference"],
         ],
         paint: { "line-color": sceneColor, "line-width": 4 },
+      });
+      map.addLayer({
+        id: "scene-line-hit", type: "line", source: "scenes",
+        filter: ["all", ["==", ["geometry-type"], "LineString"],
+          ["!=", ["get", "geometry_kind"], "candidate_road"],
+          ["!=", ["get", "geometry_kind"], "transit_route"],
+          ["!=", ["get", "geometry_kind"], "transit_line_reference"]],
+        paint: { "line-width": 14, "line-opacity": 0 },
       });
       map.addLayer({
         id: "scene-transit-route",
@@ -946,6 +1143,18 @@ async function start() {
           "line-color": "#6d4bc3",
           "line-width": 5,
           "line-dasharray": [2, 1.2],
+        },
+      });
+      map.addLayer({
+        id: "scene-transit-line-reference",
+        type: "line",
+        source: "scenes",
+        filter: ["==", ["get", "geometry_kind"], "transit_line_reference"],
+        paint: {
+          "line-color": "#6d4bc3",
+          "line-width": 2,
+          "line-opacity": 0.45,
+          "line-dasharray": [1, 3],
         },
       });
       map.addLayer({
@@ -973,11 +1182,15 @@ async function start() {
         filter: ["==", ["geometry-type"], "Point"],
         paint: {
           "circle-radius": 6,
-          "circle-color": sceneColor,
-          "circle-stroke-color": "#fff",
+          "circle-color": ["case", ["==", ["get", "geometry_usage"], "source_native_platform_points_reference_only"], "#fff", sceneColor],
+          "circle-stroke-color": ["case", ["==", ["get", "geometry_usage"], "source_native_platform_points_reference_only"], "#a16207", "#fff"],
           "circle-stroke-width": 2,
         },
       });
+      // Show selectable POIs above broad scene areas and road references;
+      // exact native scene points remain visible above the contextual POIs.
+      for (const layer of ["poi-fill", "poi-line", "poi-point"])
+        map.moveLayer(layer, "scene-point");
       setSource("kbo", {
         type: "FeatureCollection",
         features: data.zones.features,
@@ -1004,15 +1217,32 @@ async function start() {
         if (expired) return;
         const fs = map.queryRenderedFeatures(e.point, {
           layers: [
-            "scene-point", "scene-candidate-road-hit", "scene-line", "scene-transit-route",
-            "scene-area-fill", "scene-area-outline",
+            "scene-point", "scene-candidate-road-hit", "scene-line", "scene-line-hit", "scene-transit-route",
+            "scene-area-fill", "scene-area-outline", "scene-context-boundary",
             "candidate-roads-hit", "poi-fill", "poi-point", "hex-fill",
           ],
         });
         if (!fs.length) return;
-        const scenes = fs.filter((f) => f.layer.id.startsWith("scene-"));
+        const pointScenes = fs.filter((f) => f.layer.id === "scene-point");
+        if (pointScenes.length) {
+          selected = { type: "scene", ids: sceneEventIds(pointScenes) };
+          showSelection();
+          return;
+        }
+        const poi = fs.find((f) => f.layer.id.startsWith("poi-"));
+        if (poi) {
+          selected = { type: "poi", id: poi.properties.id };
+          showSelection();
+          return;
+        }
+        const coarseArea = (f: (typeof fs)[number]) =>
+          ["scene-area-fill", "scene-area-outline", "scene-context-boundary"].includes(f.layer.id) &&
+          (f.properties.role_group === "context" || ["district", "area"].includes(f.properties.location_precision));
+        const scenes = fs.filter((f) => f.layer.id.startsWith("scene-") &&
+          !(f.layer.id === "scene-area-fill" && coarseArea(f)));
+        const specificScenes = scenes.filter((f) => !coarseArea(f));
         if (scenes.length) {
-          selected = { type: "scene", ids: sceneEventIds(scenes) };
+          selected = { type: "scene", ids: sceneEventIds(specificScenes.length ? specificScenes : scenes) };
           showSelection();
           return;
         }
@@ -1028,11 +1258,9 @@ async function start() {
           showSelection();
           return;
         }
-        const f = fs[0];
-        selected = {
-          type: f.layer.id.startsWith("poi") ? "poi" : "hex",
-          id: f.properties.id,
-        };
+        const f = fs.find((f) => f.layer.id === "hex-fill");
+        if (!f) return;
+        selected = { type: "hex", id: f.properties.id };
         showSelection();
       });
       map.on("movestart", () => viewportRequest.abort());

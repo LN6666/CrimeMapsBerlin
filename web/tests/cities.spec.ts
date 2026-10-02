@@ -1,68 +1,151 @@
 import { expect, test } from "@playwright/test";
 
-test("Hamburg preview reads only Hamburg data and shows city-specific sources", async ({ page }) => {
-  const requested: string[] = [];
-  const empty = { type: "FeatureCollection", features: [] };
-  await page.route("https://tile.openstreetmap.org/**", (route) =>
-    route.fulfill({
-      contentType: "image/png",
-      headers: { "access-control-allow-origin": "*" },
-      body: Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGN4+fYlAAWCAsAGiqfBAAAAAElFTkSuQmCC",
-        "base64",
-      ),
-    }),
-  );
-  await page.route("http://127.0.0.1:4173/safety/**", (route) => {
-    const url = route.request().url();
-    requested.push(url);
-    if (url.endsWith("/cities/hamburg/manifest.json"))
-      return route.fulfill({
-        json: {
-          schema_version: 2,
-          city: "Hamburg",
-          generation: "0123456789abcdef-20260928T120000",
-          retrieved_at: "2026-09-28T12:00:00Z",
+for (const [ownerApproved, publicationReady] of [[true, true], [true, false], [false, false]]) {
+  test(`Berlin entrance enables only released Hamburg ${ownerApproved}/${publicationReady}`, async ({ page }) => {
+    const directory = JSON.stringify({ schema_version: 1, cities: [{
+      id: "hamburg", owner_approved: ownerApproved, publication_ready: publicationReady,
+      manifest_sha256: "a".repeat(64), packet_digest: "b".repeat(64),
+    }, { id: "frankfurt", owner_approved: false, publication_ready: false }] });
+    await page.route(/^http:\/\/127\.0\.0\.1:4173\/(?:\?.*)?$/, async (route) => {
+      const response = await route.fetch();
+      const html = await response.text();
+      await route.fulfill({ response, body: html.replace("</head>",
+        `<script id="approved-city-maps" type="application/json">${directory}</script></head>`) });
+    });
+    const empty = { type: "FeatureCollection", features: [] };
+    await page.route("https://tile.openstreetmap.org/**", (route) => route.fulfill({
+      contentType: "image/png", headers: { "access-control-allow-origin": "*" },
+      body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGN4+fYlAAWCAsAGiqfBAAAAAElFTkSuQmCC", "base64"),
+    }));
+    await page.route("http://127.0.0.1:4173/safety/**", (route) => {
+      const url = route.request().url();
+      if (url.endsWith("/manifest.json")) {
+        const hamburg = url.includes("/cities/hamburg/");
+        return route.fulfill({ json: {
+          schema_version: 2, city: hamburg ? "Hamburg" : "Berlin",
+          ...(hamburg ? { owner_approved: true, publication_ready: true } : {}),
+          generation: "0123456789abcdef-20261002T120000", retrieved_at: "2026-10-02T12:00:00Z",
           coverage: { discovered: 1, fetched: 1, pending: 0, failed: 0 },
-          months: { "2026-09": { count: 1 } },
-          categories: ["Diebstahl"],
-          tile_index: { pois: [], roads: [] },
-          tile_size: [0.04, 0.025],
+          months: { "2026-09": { count: 1 } }, categories: ["raub"],
+          tile_index: { pois: [], roads: [] }, tile_size: [0.04, 0.025],
           catalog: { poi_types: {}, sources: [], coverage: [], exhaustive: false },
           zones: { places: [], features: [], geometry_status: "not_applicable" },
           metadata: { zoom_threshold: 13 },
-        },
-      });
-    if (url.includes("/months/"))
-      return route.fulfill({
-        json: {
-          event_ids: ["1"],
-          events: [{
-            id: "1", title: "Test", category: "Diebstahl", month: "2026-09",
-            coordinates: null, location_precision: "unknown", location_label: "",
-            geocode_method: "multiple_official_scenes", poi_mentions: [],
-            source_url: "https://www.presseportal.de/blaulicht/nr/6337",
-          }],
-          hex: { overview: empty, detail: empty },
-          links: [],
-        },
-      });
-    if (url.endsWith("/roads-overview.json")) return route.fulfill({ json: empty });
-    return route.fulfill({ status: 404 });
+        } });
+      }
+      if (url.includes("/months/")) return route.fulfill({ json: {
+        event_ids: ["1"], events: [{ id: "1", title: "Test", category: "raub", month: "2026-09",
+          coordinates: null, location_precision: "unknown", location_label: "", poi_mentions: [],
+          source_url: "https://www.presseportal.de/blaulicht/nr/6337" }],
+        hex: { overview: empty, detail: empty }, links: [],
+      } });
+      if (url.endsWith("/roads-overview.json")) return route.fulfill({ json: empty });
+      return route.fulfill({ status: 404 });
+    });
+    await page.goto("/?");
+    await expect(page.locator("h1")).toContainText("柏林");
+    await expect(page.locator("#stats .big")).toHaveText("1");
+    const hamburg = page.locator("#city-switch option[value='hamburg']");
+    await expect(page.locator("#city-switch optgroup")).toHaveCount(3);
+    await expect(page.locator("#city-switch option")).toHaveCount(14);
+    await expect(page.locator("#city-switch option[value='frankfurt']")).toHaveJSProperty("disabled", true);
+    if (ownerApproved && publicationReady) {
+      await expect(hamburg).toHaveJSProperty("disabled", false);
+      await expect(hamburg).toHaveText("汉堡");
+      await page.locator("#city-switch").selectOption("hamburg");
+      await expect(page).toHaveURL(/\?city=hamburg$/);
+      await expect(page.locator("h1")).toContainText("汉堡");
+      await expect(page.locator("#review-badge")).toBeHidden();
+      await expect(page.locator("#stats .big")).toHaveText("1");
+      await page.locator("#city-switch").selectOption("berlin");
+      await expect(page.locator("h1")).toContainText("柏林");
+      await expect(page.locator("#city-switch")).toHaveValue("berlin");
+    } else {
+      await expect(hamburg).toHaveJSProperty("disabled", true);
+      await expect(hamburg).toHaveText("汉堡 · 制作中");
+    }
   });
+}
 
-  await page.goto("/?city=hamburg");
-  await expect(page.locator("h1")).toContainText("汉堡");
-  await expect(page.locator("#city-switch")).toHaveValue("hamburg");
-  await expect(page.locator("#stats .big")).toHaveText("1");
-  await page.locator("#stats button").click();
-  await expect(page.locator("#drawer-content")).toContainText("原文列出多个地点；逐处展示");
-  await expect(page.locator("#kbo")).toBeHidden();
-  await expect(page.locator("#basemap option[value='aerial']")).toHaveAttribute("disabled", "");
-  await expect(page.locator(".maplibregl-ctrl-attrib")).toContainText("Polizei Hamburg");
-  expect(requested.some((url) => url.includes("/safety/manifest.json"))).toBe(false);
-  expect(requested.every((url) => url.includes("/safety/cities/hamburg/"))).toBe(true);
-});
+for (const [ownerApproved, publicationReady] of [[false, false], [true, true], [true, false]]) {
+  test(`Hamburg data and approval labels agree with manifest ${ownerApproved}/${publicationReady}`, async ({ page }) => {
+    const requested: string[] = [];
+    const empty = { type: "FeatureCollection", features: [] };
+    await page.route("https://tile.openstreetmap.org/**", (route) =>
+      route.fulfill({
+        contentType: "image/png",
+        headers: { "access-control-allow-origin": "*" },
+        body: Buffer.from(
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGN4+fYlAAWCAsAGiqfBAAAAAElFTkSuQmCC",
+          "base64",
+        ),
+      }),
+    );
+    await page.route("http://127.0.0.1:4173/safety/**", (route) => {
+      const url = route.request().url();
+      requested.push(url);
+      if (url.endsWith("/cities/hamburg/manifest.json"))
+        return route.fulfill({
+          json: {
+            schema_version: 2,
+            city: "Hamburg",
+            owner_approved: ownerApproved,
+            publication_ready: publicationReady,
+            generation: "0123456789abcdef-20260928T120000",
+            retrieved_at: "2026-09-28T12:00:00Z",
+            coverage: { discovered: 1, fetched: 1, pending: 0, failed: 0 },
+            months: { "2026-09": { count: 1 } },
+            categories: ["Diebstahl"],
+            tile_index: { pois: [], roads: [] },
+            tile_size: [0.04, 0.025],
+            catalog: { poi_types: {}, sources: [], coverage: [], exhaustive: false },
+            zones: { places: [], features: [], geometry_status: "not_applicable" },
+            metadata: { zoom_threshold: 13 },
+          },
+        });
+      if (url.includes("/months/"))
+        return route.fulfill({
+          json: {
+            event_ids: ["1"],
+            events: [{
+              id: "1", title: "Test", category: "Diebstahl", month: "2026-09",
+              coordinates: null, location_precision: "unknown", location_label: "",
+              geocode_method: "multiple_official_scenes", poi_mentions: [],
+              source_url: "https://www.presseportal.de/blaulicht/nr/6337",
+              source_status: "complete_official_archive_source_and_geometry_reviewed",
+            }],
+            hex: { overview: empty, detail: empty },
+            links: [],
+          },
+        });
+      if (url.endsWith("/roads-overview.json")) return route.fulfill({ json: empty });
+      return route.fulfill({ status: 404 });
+    });
+
+    await page.goto("/?city=hamburg");
+    await expect(page.locator("h1")).toContainText("汉堡");
+    await expect(page.locator("#city-switch")).toHaveValue("hamburg");
+    await expect(page.locator("#stats .big")).toHaveText("1");
+    await page.locator("#stats button").click();
+    await expect(page.locator("#drawer-content")).toContainText("原文列出多个地点；逐处展示");
+    if (ownerApproved && publicationReady) {
+      await expect(page.locator("#review-badge")).toBeHidden();
+      await expect(page.locator("#city-switch option:checked")).toHaveText("汉堡");
+      await expect(page.locator("#drawer-content")).toContainText("所有者已批准当前版本");
+      await expect(page.locator("#drawer-content")).not.toContainText("所有者已检查");
+      await expect(page.locator("#drawer-content")).not.toContainText("等待所有者批准");
+    } else {
+      await expect(page.locator("#review-badge")).toBeVisible();
+      await expect(page.locator("#city-switch option:checked")).toHaveText("汉堡 · 制作中");
+      await expect(page.locator("#drawer-content")).toContainText("等待所有者批准");
+    }
+    await expect(page.locator("#kbo")).toBeHidden();
+    await expect(page.locator("#basemap option[value='aerial']")).toHaveAttribute("disabled", "");
+    await expect(page.locator(".maplibregl-ctrl-attrib")).toContainText("Polizei Hamburg");
+    expect(requested.some((url) => url.includes("/safety/manifest.json"))).toBe(false);
+    expect(requested.every((url) => url.includes("/safety/cities/hamburg/"))).toBe(true);
+  });
+}
 
 test("Munich candidate preview stays on its city data and upstream attribution", async ({ page }) => {
   const requested: string[] = [];

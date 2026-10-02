@@ -1,8 +1,10 @@
 import json
 
+import pytest
 from shapely.geometry import LineString, Point, box, mapping
 
 from crimemapsberlin.city_geometry_index import (
+    native_unnamed_way_object,
     validate_geometry_index,
     write_geometry_index,
 )
@@ -172,3 +174,82 @@ def test_legacy_index_still_requires_valid_digest(tmp_path):
         result, city="dusseldorf", border=border, boundary_metadata=boundary,
         source_metadata=source,
     )["errors"]
+
+
+def _native_unnamed(source, border):
+    return native_unnamed_way_object(
+        source_way={"id": 42, "tags": {"highway": "footway", "layer": "-1", "tunnel": "yes"},
+                    "node_ids": [101, 102, 103],
+                    "geometry": mapping(LineString([(6.76, 51.22), (6.77, 51.23), (6.78, 51.24)]))},
+        source_metadata=source, border=border,
+    )
+
+
+def test_unnamed_native_way_requires_opt_in_and_does_not_invent_name(tmp_path):
+    source, border, boundary, objects = _fixture()
+    row = _native_unnamed(source, border)
+    assert row["names"] == [] and row["roles"] == ["road"]
+    assert row["tags"]["layer"] == "-1"
+    assert row["native_unnamed_way_source_proof"]["source_way"]["node_ids"] == [101, 102, 103]
+    with pytest.raises(ValueError, match="invalid native unnamed way proof"):
+        write_geometry_index(city="dusseldorf", objects=[*objects, row], border=border,
+                             boundary_metadata=boundary, source_metadata=source,
+                             output=tmp_path / "legacy.json")
+    output = tmp_path / "native.json"
+    result = write_geometry_index(city="dusseldorf", objects=[*objects, row], border=border,
+                                 boundary_metadata=boundary, source_metadata=source,
+                                 output=output, pipeline_version=4)
+    assert result["pipeline_version"] == 4
+    assert not any("osm/way/42" in ids for ids in result["name_index"].values())
+    assert validate_geometry_index(json.loads(output.read_text()), city="dusseldorf", border=border,
+                                   boundary_metadata=boundary, source_metadata=source)["passed"]
+    result["pipeline_version"] = 3
+    assert any("native unnamed way proof" in e for e in validate_geometry_index(
+        result, city="dusseldorf", border=border, boundary_metadata=boundary, source_metadata=source)["errors"])
+
+
+@pytest.mark.parametrize("change", ["source_hash", "source_digest", "geometry", "alias", "roles", "tags"])
+def test_unnamed_native_way_readback_binds_source_and_geometry(tmp_path, change):
+    source, border, boundary, _ = _fixture()
+    result = write_geometry_index(city="dusseldorf", objects=[_native_unnamed(source, border)],
+                                 border=border, boundary_metadata=boundary, source_metadata=source,
+                                 output=tmp_path / "native.json", pipeline_version=4)
+    row = result["objects"][0]
+    if change == "source_hash":
+        row["native_unnamed_way_source_proof"]["source_pbf_sha256"] = "b" * 64
+    elif change == "source_digest":
+        row["native_unnamed_way_source_proof"]["source_way"]["node_ids"][1] = 999
+    elif change == "geometry":
+        row["geometry"] = mapping(LineString([(6.76, 51.22), (6.775, 51.235)]))
+    elif change == "alias":
+        row["names"] = ["Guessed bridge path"]
+    elif change == "roles":
+        row["roles"] = ["named_object", "road"]
+    else:
+        row["tags"]["layer"] = "1"
+    assert any("native unnamed way proof" in e for e in validate_geometry_index(
+        result, city="dusseldorf", border=border, boundary_metadata=boundary, source_metadata=source)["errors"])
+
+
+@pytest.mark.parametrize("tags", [
+    {"highway": "platform"}, {"highway": "bus_stop"}, {"highway": "construction"},
+    {"highway": "footway", "construction:highway": "footway"},
+    {"highway": "service", "disused:highway": "service"},
+    {"highway": "pedestrian", "area": "yes"},
+    {"highway": "footway", "public_transport": "platform"},
+    {"highway": "footway", "name": "Already named"},
+])
+def test_unnamed_native_way_rejects_inactive_platform_area_and_named(tags):
+    source, border, _, _ = _fixture()
+    with pytest.raises(ValueError):
+        native_unnamed_way_object(source_way={"id": 42, "tags": tags, "node_ids": [101, 102],
+            "geometry": mapping(LineString([(6.76, 51.22), (6.78, 51.24)]))},
+            source_metadata=source, border=border)
+
+
+def test_unnamed_native_way_rejects_missing_native_nodes():
+    source, border, _, _ = _fixture()
+    with pytest.raises(ValueError, match="complete node sequence"):
+        native_unnamed_way_object(source_way={"id": 42, "tags": {"highway": "motorway_link"},
+            "node_ids": [101], "geometry": mapping(LineString([(6.76, 51.22), (6.78, 51.24)]))},
+            source_metadata=source, border=border)

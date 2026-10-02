@@ -266,6 +266,46 @@ test("reviewed POI context deepens display without becoming a venue incident", (
   });
 });
 
+test("native platform references keep all original nodes and reject any count representative", () => {
+  const points: [number, number][] = [[10, 53.55], [10.001, 53.55], [10.002, 53.55]];
+  const row = report("platforms", { scene_locations: [{
+    label: "Three reviewed platforms", role: "incident", location_precision: "place",
+    geocode_method: "osm_native_platform_points", primary_for_count: true,
+    geometry_usage: "source_native_platform_points_reference_only",
+    coordinates: [10.001, 53.55], geometry: { type: "MultiPoint", coordinates: points },
+  }] });
+  const features = sceneFeatures([row]).features;
+  expect(features).toHaveLength(1);
+  expect(features[0].geometry).toEqual({ type: "MultiPoint", coordinates: points });
+  expect(features[0].properties.primary_for_count).toBe(false);
+  expect([...countableEventIds([row])]).toEqual([]);
+});
+
+test("junction reference points cannot bypass the count gate through a malformed primary flag", () => {
+  const row = report("junction", { scene_locations: [{
+    label: "Native junction reference", role: "incident", location_precision: "point",
+    geocode_method: "osm_junction_reference", primary_for_count: true,
+    geometry_usage: "source_junction_reference_only",
+    geometry: { type: "Point", coordinates: [10, 53.55] },
+  }] });
+  expect([...countableEventIds([row])]).toEqual([]);
+  expect(sceneFeatures([row]).features[0].properties.primary_for_count).toBe(false);
+});
+
+test("multiple POI memberships show a selected subtype and one announcement context", () => {
+  const feature = { type: "Feature" as const, geometry: { type: "Point" as const, coordinates: [10, 53.55] as [number, number] },
+    properties: { id: "osm/node/1", kind: "park", context_kinds: ["park", "school"] } };
+  const bundle = { pois: { type: "FeatureCollection", features: [feature] },
+    catalog: { poi_types: { park: { color: "green" }, school: { color: "blue" } } } } as unknown as Bundle;
+  const links = [1, 2].map(() => ({ event_id: "A", poi_id: "osm/node/1", status: "context_named_object",
+    source_url: "https://example.invalid/source", mention_basis: "source_reviewed_context_only" }));
+  const result = styledPois(bundle, links, new Set(["A"]), new Set(["school"]), true);
+  expect(result.features).toHaveLength(1);
+  expect(result.features[0].properties.display_kind).toBe("school");
+  expect(result.features[0].properties.context_count).toBe(1);
+  expect(result.features[0].properties.count).toBe(0);
+});
+
 test("clicking overlapping scene shapes opens one report card with every scene", async ({ page }) => {
   const png = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGN4+fYlAAWCAsAGiqfBAAAAAElFTkSuQmCC",
@@ -280,6 +320,11 @@ test("clicking overlapping scene shapes opens one report card with every scene",
   const browserRows = [
     report("shared", {
       title: "多地点公告",
+      source_supporting_materials: [{
+        source_url: "https://example.invalid/reviewed-organizer",
+        source_sha256: "a".repeat(64), label: "主办方2026年活动回顾",
+        note: "象征性支票展示与后续实际交接分开；图面日期不作为实际发生日期。",
+      }],
       scene_locations: [
         {
           label: "主案发处", role: "incident", location_precision: "street",
@@ -305,6 +350,31 @@ test("clicking overlapping scene shapes opens one report card with every scene",
             [13.409, 52.510], [13.409, 52.506],
           ]] },
           primary_for_count: false,
+        },
+        {
+          label: "未定位公园", role: "incident", location_precision: "place",
+          geocode_method: "none", coordinates: null, geometry: null,
+          primary_for_count: false,
+        },
+        {
+          label: "尾随起点站台参考", role: "background", location_precision: "place",
+          geocode_method: "osm_station_platform_footprint_reference",
+          geometry_usage: "source_station_platform_footprint_reference_only",
+          geometry: { type: "Polygon", coordinates: [[
+            [13.410, 52.507], [13.412, 52.507], [13.412, 52.509],
+            [13.410, 52.509], [13.410, 52.507],
+          ]] },
+          primary_for_count: false,
+        },
+        {
+          label: "桥梁背景轮廓", role: "background", location_precision: "place",
+          geocode_method: "osm_place_footprint_reference",
+          geometry_usage: "source_footprint_reference_only",
+          geometry: { type: "Polygon", coordinates: [[
+            [13.410, 52.507], [13.412, 52.507], [13.412, 52.509],
+            [13.410, 52.509], [13.410, 52.507],
+          ]] },
+          coordinates: null, primary_for_count: false,
         },
       ],
     }),
@@ -355,12 +425,28 @@ test("clicking overlapping scene shapes opens one report card with every scene",
     return page.locator("#selection").innerText();
   }).toContain("多地点公告");
   await expect(page.locator("#selection .report")).toHaveCount(1);
-  await expect(page.locator("#selection .scene-list li")).toHaveCount(4);
+  await expect(page.locator("#selection .scene-list li")).toHaveCount(7);
+  const supporting = page.locator("#selection .source-supporting-materials");
+  await expect(supporting.locator("summary")).toHaveText("已复核补充资料 · 1项");
+  await supporting.locator("summary").click();
+  await expect(supporting).toContainText("图面日期不作为实际发生日期");
+  await expect(supporting.getByRole("link")).toHaveAttribute("href", "https://example.invalid/reviewed-organizer");
+  const unknownPark = page.locator("#selection .scene-list li").filter({ hasText: "未定位公园" });
+  await expect(unknownPark).toContainText("位置未知");
+  await expect(unknownPark).not.toContainText("场所近似位置");
+  await expect(page.locator("#selection")).toContainText("原生站台轮廓参考；实际站台侧、出口及事件位置未知");
   await expect(page.locator("#selection")).toContainText("主场景");
   await expect(page.locator("#selection")).toContainText("同一公告最多计一次");
+  const bridge = page.locator("#selection .scene-list li").filter({ hasText: "桥梁背景轮廓" });
+  await expect(bridge).toContainText("精确事件位置未知，不生成计数点");
+  const previousScale = await page.locator(".maplibregl-ctrl-scale").innerText();
+  await bridge.getByRole("button", { name: "查看原生场所轮廓参考", exact: true }).click();
+  await expect.poll(() => page.locator(".maplibregl-ctrl-scale").innerText()).not.toBe(previousScale);
+  await expect(page.locator("#stats .big")).toHaveText("2");
+  await expect(page.locator("#month")).toHaveValue("09");
   await page.locator("#category").selectOption("Raub");
   await expect(page.locator("#selection")).not.toContainText("多地点公告");
-  await expect(page.locator("#stats")).toContainText("已定位 0 条 · 未定位 1 条");
+  await expect(page.locator("#stats")).toContainText("可计数点位 0 篇 · 无精确计数点位 1 篇");
   await page.locator("#month").selectOption("08");
   await expect(page.locator("#stats .big")).toHaveText("—");
 });

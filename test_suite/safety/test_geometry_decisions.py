@@ -101,6 +101,58 @@ def _inputs():
     return inventory, index, decisions, box(6.70, 51.15, 6.90, 51.35)
 
 
+@pytest.mark.parametrize("precision,task", [
+    ("place", "checked_point_geocode_required"),
+    ("area", "checked_area_geometry_required"),
+])
+def test_place_footprint_keeps_native_context_without_count_point(precision, task):
+    inventory, index, decisions, border = _inputs()
+    request = inventory["geometry_requests"][1]
+    request.update(precision=precision, geometry_task=task, role="background")
+    index["objects"][3]["names"] = ["Named bridge"]
+    decisions["decisions"][1].update(
+        verdict="resolved", method="osm_place_footprint_reference",
+        osm_object_groups=[["osm/way/4"]],
+    )
+    ledger = compile_geometry_decisions(
+        inventory=inventory, geometry_index=index, decision_envelope=decisions,
+        border=border, include_footprint_count_points=True,
+    )
+    derived = ledger["decisions"][1]["derived_geometry"]
+    assert derived["geometry"] == index["objects"][3]["geometry"]
+    assert derived["geometry_usage"] == "source_footprint_reference_only"
+    assert "count_point" not in derived
+    assert "count_point_method" not in derived
+
+
+@pytest.mark.parametrize("invalid", [
+    "address", "street", "district", "transit", "line", "unnamed", "administrative", "groups",
+])
+def test_place_footprint_rejects_unreviewed_or_incompatible_context(invalid):
+    inventory, index, decisions, border = _inputs()
+    request = inventory["geometry_requests"][1]
+    row = index["objects"][3]
+    row["names"] = ["Named bridge"]
+    choice = decisions["decisions"][1]
+    choice.update(verdict="resolved", method="osm_place_footprint_reference",
+                  osm_object_groups=[["osm/way/4"]])
+    if invalid in {"address", "street", "district"}:
+        request["precision"] = invalid
+    elif invalid == "transit":
+        request["transit_route"] = {"mode": "bus", "line": "1"}
+    elif invalid == "line":
+        choice["osm_object_groups"] = [["osm/way/1"]]
+    elif invalid == "unnamed":
+        row.pop("names")
+    elif invalid == "administrative":
+        row["roles"].append("administrative_boundary")
+    elif invalid == "groups":
+        choice["osm_object_groups"] = [["osm/way/4"], ["osm/way/4"]]
+    with pytest.raises(ValueError):
+        compile_geometry_decisions(inventory=inventory, geometry_index=index,
+                                   decision_envelope=decisions, border=border)
+
+
 def test_geometry_decisions_bind_requests_and_derive_only_selected_osm_geometry():
     inventory, index, decisions, border = _inputs()
     result = compile_geometry_decisions(

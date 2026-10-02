@@ -70,5 +70,5 @@ def test_bus_mode_cannot_reuse_light_rail_tracks():
     stops = [stop(8, (0, 0)), stop(9, (1, 0))]
     for row in stops:
         row["tags"]["bus"] = "yes"
-    with pytest.raises(ValueError, match="subway or tram only"):
+    with pytest.raises(ValueError, match="subway, tram or train only"):
         source_track_segment([track], stops, line="U1", mode="bus")

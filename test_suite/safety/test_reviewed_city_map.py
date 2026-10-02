@@ -249,6 +249,39 @@ def test_prepare_events_keeps_all_scenes_but_counts_only_explicit_primary():
     assert event["scene_locations"][1]["geometry"]["type"] == "LineString"
 
 
+def test_publication_month_filter_keeps_original_event_date_and_phase_details():
+    sources, inventory, geometry, map_ledger = _inputs()
+    incident = inventory["articles"][0]["incidents"][0]
+    incident["event_time"] = {"display": "30.01.2023", "date": "2023-01-30"}
+    incident["details"] = "Previously reviewed details"
+    events, _, _ = reviewed_city_map._prepare_events(
+        city="dusseldorf", source_rows=sources, inventory=inventory,
+        geometry_ledger=geometry, map_ledger=map_ledger, month_basis="publication_month",
+    )
+    assert events[0]["event_date"] == "2023-01-30"
+    assert events[0]["month"] == "2026-09"
+    assert events[0]["source_incidents"] == [incident]
+
+
+@pytest.mark.parametrize("clock", ["2026-03-29T02:30:00", "2026-10-25T02:30:00"])
+def test_explicit_publication_timezone_rejects_nonexistent_or_ambiguous_clocks(clock):
+    with pytest.raises(ValueError, match="ambiguous or nonexistent"):
+        reviewed_city_map._published(clock, timezone_name="Europe/Berlin")
+
+
+def test_display_reference_keeps_native_point_geometry_without_a_generated_count_point():
+    _, inventory, geometry, _ = _inputs()
+    row = geometry["decisions"][0]
+    row["derived_geometry"]["geometry_usage"] = "source_junction_reference_only"
+    location = inventory["articles"][0]["formal_locations"][0]
+    scene = reviewed_city_map._scene(location, row, {}, {}, None)
+    assert scene["coordinates"] is None
+    assert scene["geometry"]["type"] == "Point"
+    assert scene["primary_for_count"] is False
+    with pytest.raises(ValueError, match="cannot be a primary"):
+        reviewed_city_map._scene(location, row, {}, {}, location["location_id"])
+
+
 def test_prepare_events_uses_reviewed_original_incident_date_instead_of_publication_date():
     sources, inventory, geometry, map_ledger = _inputs()
     inventory["articles"][0]["incidents"][0]["event_time"] = {

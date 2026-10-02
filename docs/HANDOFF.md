@@ -1,6 +1,269 @@
 # Handoff and owner decisions
 
-## Current objective
+## Hamburg approved local site (2026-10-02)
+
+This window remains Hamburg only. RG12 revalidated the unchanged D30 candidate and
+current source/native/map inputs, rebound the owner's standing routine authorization,
+and promoted an immutable local generation. Its manifest honestly records OWNER_APPROVED
+and standing_routine_batch_authorization, without claiming a fresh personal inspection.
+The previously sealed D30/RG11/source-review ZIP remain unchanged.
+
+Restore full-semantic-20261001/{release-gate-0012,local-map-release-0001}.
+The latter's preview is a standalone local site with Berlin as the default entrance
+and approved Hamburg switching. All1388 existing Berlin generation files and its
+manifest were copied byte-for-byte; no Berlin source review was changed. Real browser
+checks verify Berlin September153→Hamburg October3/August46→Berlin153→Hamburg;
+approval labels are correct, the unapproved badge is hidden, warning/error logs empty.
+Actual screenshot and DOM proof are saved under local-map-release-0001.
+
+Code head3b6df0f has passing core/browser CI, including30 frontend checks. The earlier
+three native-option matcher failures and missing local Chromium launch evidence are
+retained; neither is relabelled as a pass. Current operational state remains in
+delivery-status.current.json. Local URL http://127.0.0.1:51837/ ; restart with Python's
+HTTP server from preview. Public hosting is not configured by this delivery. Frozen
+494-source analysis/map acceptance is complete; actual coverage/precision gaps remain.
+Nuremberg's completed local batch belongs its separate window and is not reopened here.
+
+## Hamburg D30 current delivery (2026-10-02)
+
+This window owns Hamburg only. The frozen494 current official2026 newsroom sources
+have current full-body LLM reviews;3360 phases/3973 locations are retained,489
+announcements/3335 phases/3947 locations mapped. These are not independent crime counts.
+All87 historical and29 specific source/native question records have individual current
+dispositions,with0 pending candidate corrections;actual historical bytes,identity,
+date,boundary and precision limits remain unknown where unsupported. Six initial pages
+return official410;no historical body hash or withdrawn portrait was fabricated.
+
+Three geometry disclosure notes corrected:6326293 Hammerbrook encounter has no explicit
+safe/medical outcome;6340409 police learned of Berlin hospital treatment rather than
+finding the person there;6338143 park and path are separate references with unknown
+joint investigation extent. All494 source reviews,1077 history rows,2730 derived
+geometry results,307 relations and1851 POI pairs remain unchanged. Geometry2730 means
+decisions,of which2127 have display references and603 explicit gaps;1820 map locations
+unlocated,0 exact count points,109326 native POIs/3596 tiles.
+
+All eight current technical acceptance checks passed. Unchanged production RG11
+recompiled source/native geometry/map bindings and exactly reproduced all3614 candidate
+files;preview bytes equal. Actual D30 browser verifies the three notes,August46 load,
+empty warning/error console. Existing actual month/cache/navigation evidence is reused
+only for unchanged behaviours;current exact-head core/browser CI passed.
+The owner's2026-10-02 standing routine batch authorization is bound to current candidate
+and packet hashes after checks. Do not claim a new personal owner inspection.
+
+Complete local ZIP under owner-evidence-package-0004:
+Hamburg-current-494-review-and-map-D30-20261002-local-only.zip,133337135 bytes,
+5676 archived files hash-verified,SHA256
+cbb65e1da2429f7126f539011e64465c6f472d5662ac5fbeb31f56007d295865.
+Current sources,all phases/locations,map/POI,media evidence and gate included;
+PBF/large native index remain external hash-bound inputs. Media32 read/applied,
+3 historical pixel gaps,2 police-evidence mentions without public attachments retained.
+Old sealed directories and D17 package remain historical.
+
+Restore full-semantic-20261001/{city-acceptance-0007,disclosure-application-0005,
+map-build-0030,release-gate-0011,owner-evidence-package-0004}.
+Authoritative delivery-status.current.json;preview http://127.0.0.1:51836/?city=hamburg .
+The candidate retains its pre-promotion flags;standing authorization is a separate
+approval record. PR#10 remains unmerged and public deployment is not performed.
+Next:shared consumer integration/public deployment;do not restart the delivered frozen
+source batch or reopen Nuremberg's completed local batch here.
+
+## Historical Hamburg D29 checkpoint (2026-10-02)
+
+This window owns Hamburg only. All494 frozen source reviews remain current;489 announcements
+map to3335 phases/3947 locations, not independent crimes. All87 historical question records
+now have individually authored, source-bound dispositions; original contradictions, missing
+historical bytes and unknown locations remain explicit. This does not close the29 separate
+native-identity/historical-source issues or complete full-city acceptance.
+
+Five disclosure fields corrected:6327121 three geometry notes cyclist→46-year-old pedestrian;
+6296450 stale pending relation wording→same-case/age/medical relations already applied;
+6265603 April-weekend wording→May1 plan. Actual background browser verifies three cards,
+publication-month April/June/August59/60/46 loads and an empty warning/error console.
+All494 source bodies/reviews,1077 history rows,2730 derived geometry decisions,307 relation choices,
+1851 POI context pairs and original media links retained. Other486 map records and3602
+nonmonth payloads are byte-identical;all3614 candidate/preview files equal. Runtime50
+source files equal the tested Git version;code checks reused,new data/browser checks run.
+
+Restore full-semantic-20261001/{city-acceptance-0006,disclosure-application-0004,map-build-0029,
+release-gate-0010}. Preview http://127.0.0.1:51835/?city=hamburg . Q6's D25 input snapshot is
+immutable;D29 reuse proof binds all87 dispositions and records intentional historical source
+and current map-note corrections. No historical version or withdrawn portrait was fabricated.
+RG10 revalidates current canonical source/GIS/map/POI inputs and exactly reproduces all3614
+candidate files, also byte-equal to the preview;full-city acceptance remains incomplete.
+Media32 original attachments read/applied,3 historical pixel gaps,2 police-evidence mentions
+without public attachments;0 precise count points. Full-city acceptance/current whole package
+unfinished;standing routine authorization binds after required checks;unpublished.
+Next: the29 specific native/source issues, then whole-city acceptance and current delivery.
+
+## Historical Hamburg D28 checkpoint (2026-10-02)
+
+This window owns Hamburg only; Nuremberg's completed frozen849 local delivery is not
+reopened here.494 frozen bodies are source-reviewed,489 map;3335 phases/3947 locations
+are not independent crime counts.52/87 historical question records disposed:16 dates,
+15 labels,18 counts,2 locality and1 metadata.35 overlapping question records remain.
+
+Six explicit text fields applied:6330386 three geometry notes53/43→53/57;6357051 one
+sharp-weapon mistranslation→possible real gun,not confirmed found;6330731 source phase
+and map note→example membership in each aggregate unknown,no addition.Only6330731
+source review changes;1077 history rows preserve old1076.All494 bodies/other493 source
+reviews,all2730 native shapes,307 relation choices,1851 POI pairs/material links retained.
+Other486 payload records byte-identical;3602 nonmonth files unchanged,3614 candidate/
+preview files equal.Actual browser verifies all six fields in three cards,August/September
+46 loads and empty warning/error console.Runtime50 files and source/web trees match
+the tested Git pipeline;existing code checks reused,new data/browser checks performed.
+
+Restore full-semantic-20261001/{city-acceptance-0006,disclosure-application-0003,map-build-0028}.
+Preview http://127.0.0.1:51834/?city=hamburg .Q6 packet remains immutableD25;current
+overlay/reuse proof bindsD28 and explicitly records the intentional source/note changes.
+Page49/87 progress is the build snapshot;later three dispositions make current52/87.
+Next35 source questions/29 specific native or historical source issues,plus6327121's
+newly observed cyclist-versus-pedestrian geometry wording.Full-city acceptance/current
+whole package unfinished.Media32 original attachments read/applied,3 historical pixel
+gaps,2 police-evidence mentions without public attachments.Standing routine authorization
+binds only after required checks;unpublished.Continue Hamburg only.
+
+## Historical Hamburg D27 disclosure checkpoint (2026-10-02)
+
+This window owns Hamburg only. Nuremberg's separate frozen 849 technical/local delivery Goal
+is complete and human approval is recorded; do not reopen it here. Current Hamburg is D27.
+D25 is the historical material checkpoint; D26 is an unactivated browser draft. All 494
+frozen primary bodies/reviews and 1076 history rows are unchanged; 489 articles map,
+with 3335 phases/3947 locations that are not independent crimes.
+
+Saved 16 LLM date-question dispositions and independently verified 94 current phase times;
+retained source contradictions/unknown dates and explicit planned/later dates. Corrected
+three 6304440 geometry notes from unsupported bar to unspecified venue, plus 6214993's
+map and venue-geometry pending-relationship wording. Its five relations were already
+applied. Actual D26 browser inspection found the second stale disclosure; preserve that
+draft/finding. Actual D27 browser verifies both cards/all five notes, February 44/June 60
+loads, unknown deadline, June map and empty warning/error console.
+
+Other 487 payload records, all 2730 native shapes, 307 relation choices, 1851 POI context
+pairs and original media links remain unchanged. 3602 nonmonth payloads identical;
+3614 candidate/preview files equal. Runtime 50 files equal current Git and code/frontend
+trees unchanged; reuse bound existing code checks, with new current data/browser checks.
+Restore full-semantic-20261001/{city-acceptance-0006,disclosure-application-0002,map-build-0027};
+Q6 input packet remains a historical D25 snapshot and its current-input-overlay binds D27.
+Preview http://127.0.0.1:51833/?city=hamburg . RG8 revalidates the current full canonical
+source/GIS/map/POI chain and exactly reproduces 3614 files; whole-city acceptance remains
+false. Five label-question dispositions also saved after full-body/current-location
+inspection; retain actual name/identity gaps and already completed road-reference subtasks.
+21 of 87 historical question records now have dispositions; 66 remaining are overlapping
+question records, not unread primary bodies or crime counts. 29 specific native/source
+dispositions, remaining question groups, historical media limits and full delivery unfinished.
+Standing routine owner authorization applies after required checks pass; unpublished.
+
+## Historical Hamburg D25 checkpoint
+
+This thread owns Hamburg only; completed Nuremberg batches are not reopened here.
+Hamburg's current local candidate is D25: all 494 frozen sources reviewed,
+489 displayed announcements, 3,335 displayed phases and 3,947 displayed locations.
+These are not crime totals. Restore ignored `source-material-application-0004/`
+and `map-build-0025/`; preview http://127.0.0.1:51831/?city=hamburg .
+D24/RG6 and earlier sealed packets remain immutable historical evidence.
+
+All 26 previously unread media-related primary bodies have now been reread.
+23 source sets / 36 original linked images have been read by the LLM, hash-bound
+and applied. Seven stale reading-state phase notes and one reported-time display
+were explicitly corrected. All phase IDs, date values, evidence, roles, categories,
+locations, 2,730 native geometries, 307 relation choices and 1,851 POI context pairs
+are retained. Source history is 1,076 rows, with all old 1,053 preserved; the other
+471 source reviews are unchanged. 466 map payload records are byte-identical;
+counterpart 6355703 only rebinds prior-source-review hashes.
+
+Actual hidden-browser checks cover 22 panels, 37 visible material links
+(34 new original-image links and three existing links), six publication months
+(59/57/60/54/46/46 announcements), the September local map and an empty warn/error
+console. All seven authored stage notes and the time display render verbatim.
+The scope-uncertain source 6263644 remains unmapped; its two images do not establish
+Hamburg municipality. No image-derived coordinates, identity findings or new
+phases/count points are generated.
+
+Current media reconciliation is `source-material-application-0004/current-media-status.json`:
+all 37 historical reference records survive; 32 exact primary attachments are read
+and applied, three historical media records retain pixel gaps, and two police
+narratives mention evidence without a public attachment identified. The closed
+6309149/6316767 appeal is not reconstructed; the 2025 external media referenced
+by 6330523 remains unread. Whole videos are not claimed read from a few stills.
+
+Source 6352739 reports July 1, 2025 at 10:20, but two original stills print
+June 30 at 20:59:11 and July 1 at 05:34:23. The corresponding phase, timezone and
+camera-clock calibration are not explained. Keep both literal versions, retain
+source-reported date values, disclose unverified actual clock time, and do not
+create another June 30 crime. The current question is bound in
+`source-material-application-0004/current-source-time-questions.json`.
+
+There are 2,127 display references, 603 explicit GIS gaps and zero count points,
+separate from 1,820 unlocated display locations. Native-task status remains 27
+completed subtasks with limits, 114 display limitations and 28 specific open tasks,
+plus the Jenfelder question: 29 specific open questions. The three whole
+Weinligstraße references from D23 remain; the Weinlingstraße body spelling and
+unknown fall/care/ambulance/hospital positions stay explicit. A concrete browser
+follow-up requires replacing unsupported bar wording in three 6304440 geometry
+notes with an unspecified venue; source categories and POI choices already retain
+unknown venue type. Native geometry must stay unchanged.
+
+RG7 revalidates the complete current source/GIS/map/POI chain and exactly
+reproduces all 3,614 candidate files; those files equal the preview. Full-city technical acceptance, remaining
+source-gap reconciliation and the current full evidence package are unfinished;
+Hamburg is unpublished. Standing routine owner-review authorization is bound to
+current batch hashes after the required checks pass; it does not replace source
+review or perform publication. Continue only Hamburg from its current checkpoint.
+
+The following D21 task reconciliation is historical; do not use its count of 30
+as the current D23 queue size.
+
+Current task reconciliation is `city-acceptance-0003/`. Six old material-application
+pending entries are now correctly recorded as applied, with their remaining
+precision/version limits retained. Of 41 historical supporting-URL entries,
+28 have complete captured-text readings, seven have recorded section readings,
+five returned 404, and one supplied no reviewable body. The three non-URL references
+have two complete captured-text readings and one section reading. Child documents,
+interactive maps, primary article media and missing historical versions are not
+implicitly read. All 169 historical native-task rows plus the separate Jenfelder
+question are retained; 30 specific source/identity questions remain open across
+that combined set. The mutable registry now consistently points to D21/RG4 using
+absolute paths; all canonical inputs and sealed packet bytes are unchanged.
+
+The reviewed city assembler now has a separate exact-input owner packet and
+atomic local promotion gate; see [reviewed city release](REVIEWED-CITY-RELEASE.md).
+It revalidates the source/GIS/map/POI chain and every candidate file, requires
+current evidence-bound technical acceptance and explicit owner signoff, and
+retains the previous manifest on failure. This code does not approve Hamburg or
+remove its outstanding full-city acceptance and source-gap disclosures.
+
+## Historical D18 checkpoint
+
+The following D18 evidence is historical; the current candidate is D21 above.
+At D18 the frozen 494-source
+review remains unchanged: 489 displayed announcements, 3,334 phases and 3,947
+locations. Source 6232002 now retains both original Legienstraße platform polygons
+as the following-origin station background reference. The park offence stays
+unlocated; actual exit, platform side and complete station extent stay unknown.
+Only this scene geometry changes; the other 488 announcements and 2,729 compiled
+geometry rows are unchanged. The original platform rings remain byte-identical to
+the prior index and all vertices match the native PBF nodes. Two enriched native
+records do not add POIs to the frozen product or fabricate associations.
+
+There are 2,123 display references, 607 explicit GIS request gaps, zero pending
+GIS requests and zero count points, separately from 1,824 unlocated display
+locations. The candidate retains 109,326 POIs and 1,851 unique announcement–POI
+context pairs. Scene cards without geometry or coordinates now say “位置未知”;
+platform faces explicitly disclose unknown side, exit, event position and whole
+station extent. Actual browser checks cover March's 50 announcements, two drawn
+faces, clicking a face to open all five source scenes, and a working local basemap.
+Source, phase, time, role, category, relation and count choices are unchanged.
+
+Recovery uses `native-legien-footprints-0001/` and `map-build-0018/` under
+`.runtime/review/hamburg/full-semantic-20261001/`.
+D17 and earlier sealed evidence stay preserved. The D17 full-source ZIP in
+`owner-evidence-package-0003/` remains a historical input baseline with SHA-256
+`5eb8f9798fdc1dfc09354936e57c200c374a78d9964c520f925d99bed802fbcb`.
+D18 differences are separate and do not authorize publication. Specific historical
+and native-identity questions, whole-city technical acceptance and current owner
+approval remain incomplete. Unknown geometry must remain explicit and must not be
+resolved by selecting a nearby venue or generating a representative point.
+See [Hamburg progress](HAMBURG-PROGRESS.md).
 
 CrimeMapsBerlin replaces CiviFlux. The owner authorized removal of the former plugin code locally and on GitHub, and renaming the repository. Git history is preserved. The old traffic disruption, digital twin, ontology/PPR and Qwen development plans are superseded for this product.
 

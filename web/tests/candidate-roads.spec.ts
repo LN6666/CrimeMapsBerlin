@@ -291,8 +291,9 @@ test.describe("candidate roads browser", () => {
     page.on("pageerror", (error) => errors.push(error.message));
     await expect(page.locator("#candidate-roads-toggle")).toBeChecked();
     await expect(page.locator("#stats")).toContainText(
-      "已定位 1 条 · 未定位 4 条（其中 3 条可查看道路范围）",
+      "可计数点位 1 篇 · 无精确计数点位 4 篇",
     );
+    await expect(page.locator("#stats")).toContainText("其中 3 条可查看道路范围");
     await expect.poll(() => orangePixels(page)).toBeGreaterThan(100);
     await expect
       .poll(async () => {
@@ -376,8 +377,9 @@ test.describe("candidate roads browser", () => {
     await page.locator("#category").selectOption("Sachbeschädigung");
     await expect(page.locator("#stats .big")).toHaveText("1");
     await expect(page.locator("#stats")).toContainText(
-      "已定位 0 条 · 未定位 1 条（其中 1 条可查看道路范围）",
+      "可计数点位 0 篇 · 无精确计数点位 1 篇",
     );
+    await expect(page.locator("#stats")).toContainText("其中 1 条可查看道路范围");
     await expect.poll(() => orangePixels(page)).toBeLessThan(widePixels);
     await expect.poll(() => orangePixels(page)).toBeGreaterThan(100);
     await clickCenter(page);
@@ -430,7 +432,7 @@ test.describe("candidate roads browser", () => {
     );
     await expect(page.locator("#selection")).toContainText("具体案发位置未知");
     await expect(page.locator("#stats")).toContainText(
-      "已定位 1 条 · 未定位 4 条",
+      "可计数点位 1 篇 · 无精确计数点位 4 篇",
     );
     // Both separated pieces fit; the gap does not invent a connecting road.
     await page.locator("#category").selectOption("Sachbeschädigung");

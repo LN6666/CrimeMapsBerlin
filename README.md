@@ -1,5 +1,14 @@
 # CrimeMapsBerlin
 
+当前窗口只续接汉堡。2026-10-02的D30冻结批次已完成494篇逐篇源审、489公告地图、
+八项整城技术验收及完整本地交付；已绑定所有者既有常规审核授权并推广为已批准的
+本地静态地图。独立交付站点保留柏林默认入口，可直接切换汉堡；尚未部署到公网。
+当前计数、范围与恢复入口见[汉堡进度](docs/HAMBURG-PROGRESS.md)及[交接](docs/HANDOFF.md)。
+
+经逐篇复核的城市候选可生成绑定当前原文、原生几何和全部文件校验值的所有者检查包；
+具体命令见[候选发布门禁](docs/REVIEWED-CITY-RELEASE.md)。技术验收和当前批次的明确所有者
+批准都须有效，才允许切换本地发布清单；现有城市候选不会因此自动批准。
+
 柏林警方公开公告地图：按公布月份筛选、两级六边形统计、分类 POI、50 米小型场所圆，以及可以追溯到原文的附近类型匹配。
 
 CrimeMapsBerlin 是当前产品，替代原 CiviFlux 插件工程；不需要 Qwen、Jev、SUMO 或 QGIS。官方来源抓取和地理计算仍是确定性程序；案件性质、事件数量和地点角色由 LLM 从全部公告原文开始逐篇识别，规则只提供候选并校验证据、来源版本和几何。结果还要交由项目所有者检查、质问和确认，才允许新地图发布。代码迁移见[PR #8](https://github.com/LN6666/CrimeMapsBerlin/pull/8)。旧实现保留在 Git 历史，不属于当前产品。
@@ -23,7 +32,7 @@ uv run python scripts/safety/review_queue.py status
 npm --prefix web run dev
 ```
 
-打开 http://127.0.0.1:5173 。目前公开地图只有柏林；顶部城市选择器按已确定的 14 城、三个仓库 5/5/4 顺序列出，其余城市标为“制作中”，尚无可用地图时不会跳到错误页面。默认标准街道底图，可切换柏林 2026 年航空影像或本地简图；放大后按视野请求 POI。日常执行 `uv run python scripts/safety/update.py`；定时配置和复核门禁见 [更新维护](docs/UPDATES.md)。
+打开 http://127.0.0.1:5173 。默认入口为柏林；顶部城市选择器按已确定的 14 城、三个仓库 5/5/4 顺序列出。静态组装站点只启用通过当前发布门禁的城市，其余保留“制作中”；普通开发入口未提供已批准目录时仍只有柏林可选。已批准的柏林／汉堡本地站点见[汉堡进度](docs/HAMBURG-PROGRESS.md)。默认标准街道底图，可切换柏林 2026 年航空影像或本地简图；放大后按视野请求 POI。日常执行 `uv run python scripts/safety/update.py`；定时配置和复核门禁见 [更新维护](docs/UPDATES.md)。
 
 汉堡可独立建立**本地候选**，不会生成公开地图：
 
@@ -180,6 +189,12 @@ uv run python -m crimemapsberlin.geometry_decisions \
   --boundary .runtime/safety/poi-cities/cities/dusseldorf/boundary.geojson \
   --out .runtime/safety/cities/dusseldorf/geometry-ledger-part-0001.json
 ```
+
+公园可使用 `osm_park_footprint_reference` 保存 LLM 明确选择的原生公园面，包括有完整
+PBF 原始节点证明但没有名称的中间区块。门禁核对原标签、闭合节点、几何、市界和来源
+哈希；它不为无名区块补名称，也不生成公园中心或案件计数点。同一公园的名称对应关系
+仍由 LLM 对照来源说明，园内独立游乐场不会因面积重叠变成警方提到的公园主体。
+方法和当前汉堡候选进度见[原生公园参考](docs/HAMBURG-NATIVE-PARK-REFERENCES.md)。
 
 来源与几何复核全部完成后，还需要由 LLM 从完整原文明确给每个已确认案件分类，并为
 每篇公告选择零个或一个可计数的市内案件/事故地点。程序不会用关键词代替该判断；
