@@ -1,14 +1,26 @@
 # Handoff and owner decisions
 
-Hamburg D20 is compiled from six individually reviewed supporting-source packets;
-the July symbolic cheque stage is separate from the August actual handover, with
-unknown precise July time and no new location/count point. Supporting materials
-carry their own captured-byte/robots/review-packet origins and collapsed browser
-links; primary quotes remain anchors and scalar dates are not imported from photos.
-The other 483 map events, all geometry and POI choices are preserved. Restore from
-ignored `source-material-application-0001/` and `map-build-0020/`. Full city acceptance,
-remaining historical/source gaps and the current owner package remain pending.
 This thread owns Hamburg only; completed Nuremberg batches are not reopened here.
+Hamburg's current local candidate is D21: 494 reviewed source announcements,
+489 displayed announcements, 3,335 displayed phases and 3,947 displayed locations.
+Its 2,730 GIS dispositions retain 2,124 display references and 606 explicit gaps;
+there are zero generated count points. These are not crime totals. Restore from
+ignored `source-material-application-0002/`, `map-build-0021/` and `release-gate-0004/`.
+The exact release reproduction and affected browser cards are checked; full city
+acceptance and current owner approval remain pending. D20 and earlier packets are
+historical and immutable.
+
+Current task reconciliation is `city-acceptance-0003/`. Six old material-application
+pending entries are now correctly recorded as applied, with their remaining
+precision/version limits retained. Of 41 historical supporting-URL entries,
+28 have complete captured-text readings, seven have recorded section readings,
+five returned 404, and one supplied no reviewable body. The three non-URL references
+have two complete captured-text readings and one section reading. Child documents,
+interactive maps, primary article media and missing historical versions are not
+implicitly read. All 169 historical native-task rows plus the separate Jenfelder
+question are retained; 30 specific source/identity questions remain open across
+that combined set. The mutable registry now consistently points to D21/RG4 using
+absolute paths; all canonical inputs and sealed packet bytes are unchanged.
 
 The reviewed city assembler now has a separate exact-input owner packet and
 atomic local promotion gate; see [reviewed city release](REVIEWED-CITY-RELEASE.md).
@@ -17,9 +29,10 @@ current evidence-bound technical acceptance and explicit owner signoff, and
 retains the previous manifest on failure. This code does not approve Hamburg or
 remove its outstanding full-city acceptance and source-gap disclosures.
 
-## Current objective
+## Historical D18 checkpoint
 
-Hamburg D18 supersedes the earlier candidate counts below. The frozen 494-source
+The following D18 evidence is historical; the current candidate is D21 above.
+At D18 the frozen 494-source
 review remains unchanged: 489 displayed announcements, 3,334 phases and 3,947
 locations. Source 6232002 now retains both original Legienstraße platform polygons
 as the following-origin station background reference. The park offence stays
