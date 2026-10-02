@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CrimeMaps neutral native coverage completion receipt v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "policy_version",
+    "retained_original_count",
+    "eligible_native_id_count",
+    "eligible_already_represented_count",
+    "eligible_represented_by_explicit_alias_count",
+    "added_neutral_count",
+    "display_native_object_count",
+    "supported_native_eligibility_coverage_verified",
+    "explicit_aliases_preserved",
+    "existing_native_fields_geometry_preserved",
+    "new_generation_assembly_required",
+    "automatic_source_association_run",
+    "source_links_or_count_points_created",
+    "real_world_facility_completeness_claimed",
+    "publication_ready",
+    "policy_sha256",
+    "retained_original_set_sha256",
+    "eligible_set_sha256",
+    "added_original_set_sha256",
+    "represented_eligible_ids_sha256",
+    "display_category_counts",
+    "added_category_counts",
+    "poi_scope_groups"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "policy_version": {
+      "const": "crimemaps-poi-scope/1.0.0"
+    },
+    "retained_original_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "eligible_native_id_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "eligible_already_represented_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "eligible_represented_by_explicit_alias_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "added_neutral_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "display_native_object_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "supported_native_eligibility_coverage_verified": {
+      "const": true
+    },
+    "explicit_aliases_preserved": {
+      "const": true
+    },
+    "existing_native_fields_geometry_preserved": {
+      "const": true
+    },
+    "new_generation_assembly_required": {
+      "const": true
+    },
+    "automatic_source_association_run": {
+      "const": false
+    },
+    "source_links_or_count_points_created": {
+      "const": false
+    },
+    "real_world_facility_completeness_claimed": {
+      "const": false
+    },
+    "publication_ready": {
+      "const": false
+    },
+    "policy_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "retained_original_set_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "eligible_set_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "added_original_set_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "represented_eligible_ids_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "display_category_counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "added_category_counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "poi_scope_groups": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "label_key",
+          "kinds"
+        ],
+        "properties": {
+          "label_key": {
+            "type": "string"
+          },
+          "kinds": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "description": "Existing features and explicit aliases represent supported native IDs; append only missing neutral IDs. Execute cross-field validator and full feature read-back in addition to schema validation. Does not approve publication or real-world completeness."
+}

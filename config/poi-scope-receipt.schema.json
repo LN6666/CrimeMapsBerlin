@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CrimeMaps POI scope receipt v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "policy_version",
+    "policy_sha256",
+    "background_profile",
+    "poi_count",
+    "background_core_count",
+    "source_only_count",
+    "source_linked_count",
+    "source_poi_pair_count",
+    "input_poi_count",
+    "input_poi_bytes",
+    "poi_bytes",
+    "input_file_sha256",
+    "overlay_file_sha256",
+    "unchanged_files",
+    "removed_files",
+    "retained_feature_set_sha256",
+    "source_links_sha256",
+    "native_geometry_changed",
+    "reviewed_records_changed",
+    "source_month_files_unchanged",
+    "all_protected_ids_retained",
+    "assembly_required",
+    "publication_ready"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "policy_version": {
+      "const": "crimemaps-poi-scope/1.0.0"
+    },
+    "policy_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "retained_feature_set_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source_links_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "input_file_sha256": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    },
+    "overlay_file_sha256": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    },
+    "poi_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "background_core_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_only_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_linked_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_poi_pair_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "input_poi_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "input_poi_bytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "poi_bytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "native_geometry_changed": {
+      "const": false
+    },
+    "reviewed_records_changed": {
+      "const": false
+    },
+    "publication_ready": {
+      "const": false
+    },
+    "source_month_files_unchanged": {
+      "const": true
+    },
+    "all_protected_ids_retained": {
+      "const": true
+    },
+    "assembly_required": {
+      "const": true
+    }
+  }
+}

@@ -78,6 +78,8 @@ def count_location(event: dict) -> dict | None:
             raise ValueError(f"Top-level point without count scene for {event.get('id')}")
         return None
     primary = primaries[0]
+    if str(primary.get("geometry_usage", "")).endswith("reference_only"):
+        raise ValueError(f"Display reference cannot be a count scene for {event.get('id')}")
     point = primary.get("coordinates")
     geometry = primary.get("geometry")
     if geometry is not None and not isinstance(geometry, dict):
@@ -342,6 +344,7 @@ def associate(
     *,
     to_metric=TO_METRIC,
     include_legacy_links: bool = True,
+    validated_context_memberships: dict[str, list[str]] | None = None,
 ):
     """Match to 50m circles or station footprint. Count each report once per POI.
 
@@ -378,6 +381,7 @@ def associate(
     links = []
     seen = set()
     street_links = []
+    reviewed_pairs = {}
     if include_legacy_links:
         for event in events:
             location = count_location(event)
@@ -514,7 +518,11 @@ def associate(
                     raise ValueError(f"Invalid reviewed POI identity for {event.get('id')}")
                 if scene_metric is None and identities is None:
                     continue
-                if scope == "named_object":
+                native_platforms = scene.get("geometry_usage") == "source_native_platform_points_reference_only"
+                native_park = (kind == "park" and scene.get("geocode_method") == "osm_park_footprint_reference"
+                    and scene.get("geometry_usage") == "source_footprint_reference_only"
+                    and bool(scene.get("native_park_sources")))
+                if scope == "named_object" or (scope == "along_geometry" and (native_platforms or native_park)):
                     candidate_indexes = [
                         place_index_by_id[ident]
                         for ident in (identities if identities is not None else scene.get("location_object_ids", []))
@@ -548,14 +556,17 @@ def associate(
                         and context["native_identity_review"].get("source_sha256") == event.get("source_sha256")
                         and literal_named_place_matches(context, place, context["native_identity_review"].get("evidence_quotes", []))
                     )
-                    if not (matches_reviewed_context(kind, place, place_by_id) or explicit_reference or literal_named_place):
+                    # Only the separately hash-validated product may supply
+                    # extra memberships; a display property alone is not proof.
+                    reviewed_membership = (validated_context_memberships is not None
+                        and kind in validated_context_memberships.get(place["id"], [])
+                        and kind in place.get("context_kinds", []))
+                    if not (matches_reviewed_context(kind, place, place_by_id) or explicit_reference or literal_named_place or reviewed_membership):
                         continue
                     pair = event["id"], place["id"]
-                    if pair in seen:
-                        continue
-                    seen.add(pair)
-                    links.append(
-                        {
+                    if pair not in seen:
+                        seen.add(pair)
+                        row = {
                             "event_id": event["id"],
                             "scene_id": scene.get("scene_id"),
                             "poi_id": place["id"],
@@ -565,7 +576,30 @@ def associate(
                             "evidence_quote": context.get("evidence_quote"),
                             **({"native_identity_review": context["native_identity_review"]} if identities is not None else {}),
                         }
-                    )
+                        links.append(row)
+                        if native_platforms:
+                            row.update({k: scene[k] for k in (
+                                "geometry_usage", "actual_platform_side_known", "actual_event_position_known"
+                            ) if k in scene})
+                        if native_park:
+                            row.update(geometry_usage="source_footprint_reference_only",
+                                       actual_event_position_known=False, complete_park_boundary_known=False)
+                        if "context_kinds" in place:
+                            row.update(context_kinds=[], source_context_evidence=[])
+                            reviewed_pairs[pair] = row
+                    row = reviewed_pairs.get(pair)
+                    if row is not None:
+                        evidence = {
+                            "scene_id": scene.get("scene_id"), "kind": kind,
+                            "scope": scope, "radius_m": radius,
+                            "evidence_quote": context.get("evidence_quote"),
+                            "source_sha256": event.get("source_sha256"),
+                            "source_review_sha256": event.get("source_review_sha256"),
+                        }
+                        if kind not in row["context_kinds"]:
+                            row["context_kinds"].append(kind)
+                        if evidence not in row["source_context_evidence"]:
+                            row["source_context_evidence"].append(evidence)
     # Preserve all original geometry/named-identity provenance. Street-address
     # extras enter only after those links, still capped once per announcement.
     for link in street_links:
@@ -583,6 +617,7 @@ def build_months(
     to_metric=TO_METRIC,
     to_wgs=TO_WGS,
     include_legacy_links: bool = True,
+    validated_context_memberships: dict[str, list[str]] | None = None,
 ):
     months = {}
     seen = set()
@@ -609,6 +644,7 @@ def build_months(
         pois,
         to_metric=to_metric,
         include_legacy_links=include_legacy_links,
+        validated_context_memberships=validated_context_memberships,
     ):
         links_by_month[event_months[link["event_id"]]].append(link)
     return {

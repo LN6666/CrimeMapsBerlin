@@ -30,6 +30,7 @@ from shapely.geometry import (
 )
 from shapely.prepared import prep
 
+from .park_footprint_references import valid_native_park_object
 from .poi_cities import (
     POI_CITY_SPECS,
     boundary_for_city,
@@ -39,7 +40,7 @@ from .poi_cities import (
 
 SCHEMA_VERSION = 1
 PIPELINE_VERSION = 3
-SUPPORTED_PIPELINE_VERSIONS = {1, 2, 3, 4, 5, 6, 7}
+SUPPORTED_PIPELINE_VERSIONS = {1, 2, 3, 4, 5, 6, 7, 8}
 NAME_KEYS = ("name", "official_name", "short_name", "alt_name", "loc_name", "old_name")
 TAG_KEYS = {
     *NAME_KEYS,
@@ -234,7 +235,7 @@ def native_unnamed_way_object(*, source_way: dict, source_metadata: dict, border
 
 
 def _valid_native_unnamed_way(row: dict, *, pipeline_version: int, source_metadata: dict, border) -> bool:
-    if pipeline_version not in {4, 5, 6, 7}:
+    if pipeline_version not in {4, 5, 6, 7, 8}:
         return False
     proof = row.get("native_unnamed_way_source_proof")
     if not isinstance(proof, dict) or set(proof) != {
@@ -319,14 +320,19 @@ def native_facility_reference_object(*, source_object: dict, source_cache_sha256
     }
 
 
+def _valid_native_bridge_outline(row, *, pipeline_version, source_metadata, border):
+    from .city_road_bridge_reference import valid_bridge_outline
+    return valid_bridge_outline(row, pipeline_version=pipeline_version, source_metadata=source_metadata, border=border)
+
+
 def _valid_native_facility(row: dict, *, pipeline_version: int, source_metadata: dict, border) -> bool:
     proof = row.get("native_facility_source_proof")
-    if pipeline_version not in {6, 7} or not isinstance(proof, dict) or set(proof) != {
+    if pipeline_version not in {6, 7, 8} or not isinstance(proof, dict) or set(proof) != {
         "schema_version", "source_pbf_sha256", "source_cache_sha256", "source_object_sha256",
         "source_object", "original_geometry_clipped",
     }:
         return False
-    if row.get("native_facility_kind") == "train_station_building" and pipeline_version != 7:
+    if row.get("native_facility_kind") == "train_station_building" and pipeline_version not in {7, 8}:
         return False
     if (proof["schema_version"] != 1 or proof["original_geometry_clipped"] is not False
             or proof["source_pbf_sha256"] != source_metadata["sha256"]
@@ -425,7 +431,7 @@ def native_unnamed_water_area_object(*, source_area: dict, source_metadata: dict
 
 def _valid_native_unnamed_water_area(row: dict, *, pipeline_version: int, source_metadata: dict, border) -> bool:
     proof=row.get("native_unnamed_water_area_source_proof")
-    if pipeline_version not in {5, 6, 7} or not isinstance(proof,dict) or set(proof) != {
+    if pipeline_version not in {5, 6, 7, 8} or not isinstance(proof,dict) or set(proof) != {
         "schema_version","source_pbf_sha256","source_area_sha256","source_area","clipped_to_municipality"}:
         return False
     if (proof["schema_version"] != 1 or proof["clipped_to_municipality"] is not True
@@ -479,7 +485,7 @@ def native_road_vertex_object(*, source_node: dict, source_way: dict,
 
 def _valid_native_road_vertex(row: dict, *, pipeline_version: int, source_metadata: dict, border) -> bool:
     proof = row.get("native_road_vertex_source_proof")
-    if pipeline_version not in {4, 5, 6, 7} or not isinstance(proof, dict) or set(proof) != {
+    if pipeline_version not in {4, 5, 6, 7, 8} or not isinstance(proof, dict) or set(proof) != {
         "schema_version", "source_pbf_sha256", "source_node", "source_node_sha256",
         "source_way", "source_way_sha256", "usage"
     }:
@@ -627,7 +633,9 @@ def write_geometry_index(
             "geometry": mapping(geometry),
         }
         row["geometry_sha256"] = _digest(row["geometry"])
-        if ((not row["names"] or "native_unnamed_way_source_proof" in row or "native_road_vertex_source_proof" in row or "native_unnamed_water_area_source_proof" in row or "native_facility_source_proof" in row)
+        if ((not row["names"] or "native_park_source_proof" in row or "native_unnamed_way_source_proof" in row or "native_road_vertex_source_proof" in row or "native_unnamed_water_area_source_proof" in row or "native_facility_source_proof" in row or "native_bridge_outline_source_proof" in row)
+                and not valid_native_park_object(row, pipeline_version=pipeline_version,
+                                                 source_metadata=source_metadata, border=border)
                 and not _valid_native_unnamed_way(row, pipeline_version=pipeline_version,
                                                  source_metadata=source_metadata, border=border)
                 and not _valid_native_road_vertex(row, pipeline_version=pipeline_version,
@@ -635,7 +643,9 @@ def write_geometry_index(
                 and not _valid_native_unnamed_water_area(row,pipeline_version=pipeline_version,
                                                        source_metadata=source_metadata,border=border)
                 and not _valid_native_facility(row,pipeline_version=pipeline_version,
-                                               source_metadata=source_metadata,border=border)):
+                                               source_metadata=source_metadata,border=border)
+                and not _valid_native_bridge_outline(row,pipeline_version=pipeline_version,
+                                                    source_metadata=source_metadata,border=border)):
             raise ValueError(f"invalid native unnamed way proof: {ident}")
         retained.append(row)
         for name in row["names"]:
@@ -744,7 +754,9 @@ def validate_geometry_index(
         ):
             errors.append(f"names missing: {ident}")
             continue
-        if ((not names or "native_unnamed_way_source_proof" in row or "native_road_vertex_source_proof" in row or "native_unnamed_water_area_source_proof" in row or "native_facility_source_proof" in row)
+        if ((not names or "native_park_source_proof" in row or "native_unnamed_way_source_proof" in row or "native_road_vertex_source_proof" in row or "native_unnamed_water_area_source_proof" in row or "native_facility_source_proof" in row or "native_bridge_outline_source_proof" in row)
+                and not valid_native_park_object(row, pipeline_version=payload.get("pipeline_version"),
+                                                 source_metadata=source_metadata, border=border)
                 and not _valid_native_unnamed_way(row, pipeline_version=payload.get("pipeline_version"),
                                                  source_metadata=source_metadata, border=border)
                 and not _valid_native_road_vertex(row, pipeline_version=payload.get("pipeline_version"),
@@ -752,7 +764,9 @@ def validate_geometry_index(
                 and not _valid_native_unnamed_water_area(row,pipeline_version=payload.get("pipeline_version"),
                                                        source_metadata=source_metadata,border=border)
                 and not _valid_native_facility(row,pipeline_version=payload.get("pipeline_version"),
-                                               source_metadata=source_metadata,border=border)):
+                                               source_metadata=source_metadata,border=border)
+                and not _valid_native_bridge_outline(row,pipeline_version=payload.get("pipeline_version"),
+                                                    source_metadata=source_metadata,border=border)):
             errors.append(f"native unnamed way proof missing or invalid: {ident}")
         roles = row.get("roles")
         if not isinstance(roles, list) or not roles or roles != sorted(set(roles)):

@@ -25,6 +25,7 @@ import {
   safeURL,
   sceneEventIds,
   sceneFeatures,
+  type SceneLocation,
   sceneRoleLabel,
   SCENE_CLICK_LAYERS,
   styledPois,
@@ -238,11 +239,27 @@ function focusRoad(event: PoliceEvent) {
   el<HTMLDialogElement>("drawer").close();
   showSelection();
 }
+function focusReviewedScenes(scenes: SceneLocation[]) {
+  let west=Infinity,east=-Infinity,south=Infinity,north=-Infinity;
+  const visit=(value:unknown):void=>{
+    if(!Array.isArray(value))return;
+    if(value.length>=2 && typeof value[0]==="number" && typeof value[1]==="number"){
+      if(!Number.isFinite(value[0])||!Number.isFinite(value[1])||Math.abs(value[0])>180||Math.abs(value[1])>90)return;
+      west=Math.min(west,value[0]);east=Math.max(east,value[0]);south=Math.min(south,value[1]);north=Math.max(north,value[1]);return;
+    }
+    value.forEach(visit);
+  };
+  for(const scene of scenes)if(scene.geometry && "coordinates" in scene.geometry)visit(scene.geometry.coordinates);
+  if(!Number.isFinite(west))return;
+  map.fitBounds([[west,south],[east,north]],{padding:55,maxZoom:scenes.some(s=>s.static_scene_reference===true)?17:14});
+  el<HTMLDialogElement>("drawer").close();
+}
 function listReports(parent: HTMLElement, ids: string[]) {
   const wanted = new Set(ids);
   for (const e of dynamicText.displayRows(data.events).filter((e) => wanted.has(e.id))) {
     const card = document.createElement("article");
     card.className = "report";
+    card.dataset.sourceId = e.id;
     parent.append(card);
     text(
       "small",
@@ -263,6 +280,39 @@ function listReports(parent: HTMLElement, ids: string[]) {
       text("small", t("report.cityUncertain"), card);
     text("h4", e.title, card);
     if(dynamicText.missingFor(e))text("small",t("report.translationMissing"),card);
+    const publicFields=new Set(e.public_display_fields??[]);
+    if (publicFields.has("map_review_note") && e.map_review_note) text("p", t("source.mapReview",{note:e.map_review_note}), card);
+    if (e.published_at_source_literal) text("small", t("time.publicationLiteral",{date:e.published_at_source_literal}), card);
+    if (e.published_at_timezone_basis === "Europe/Berlin") text("small",t("time.publicationZoneNote"),card);
+    for (const attachment of publicFields.has("source_attachments") ? e.source_attachments ?? [] : []) {
+      const disclosure = document.createElement("details"); card.append(disclosure);
+      text("summary", t("attachment.details",{pages:attachment.page_count}), disclosure);
+      text("p",attachment.note,disclosure);
+      link(disclosure,t("attachment.reviewed"),attachment.source_url);
+    }
+    if (publicFields.has("source_supporting_materials") && e.source_supporting_materials?.length) {
+      const disclosure = document.createElement("details"); disclosure.className="source-supporting-materials";card.append(disclosure);
+      text("summary",t("source.supportingHeading",{count:e.source_supporting_materials.length}),disclosure);
+      for(const material of e.source_supporting_materials){text("p",material.note,disclosure);link(disclosure,material.label,material.source_url);}
+    }
+    for(const claim of publicFields.has("current_claim_overlays") ? e.current_claim_overlays??[] : [])text("p",t("source.claimNote",{note:claim.display_note}),card);
+    for(const history of publicFields.has("historical_source_reviews") ? e.historical_source_reviews??[] : []) {
+      const disclosure=document.createElement("details");disclosure.className="historical-source-review";card.append(disclosure);
+      text("summary",t("source.historyHeading",{count:history.source_incidents.length}),disclosure);
+      link(disclosure,history.title,history.source_url);
+      text("small",t("time.publicationLiteral",{date:history.published_at_source_literal}),disclosure);
+      text("p",history.review_note,disclosure);
+      for(const incident of history.source_incidents) {
+        const stage=document.createElement("section");disclosure.append(stage);
+        text("strong",t("report.originalTime",{times:incident.event_time.display}),stage);text("p",incident.details,stage);
+        for(const location of history.formal_locations.filter(location=>incident.formal_location_ids.includes(location.location_id))){
+          text("small",`${sceneRoleLabel(location.role)} · ${location.label} · ${precisionLabels[location.precision]??t("precision.unknown")}`,stage);
+          text("small",location.poi_review.note,stage);text("small",location.transit_review.note,stage);
+        }
+      }
+    }
+    for(const comparison of publicFields.has("source_reference_comparisons") ? e.source_reference_comparisons??[] : [])text("small",t("source.relationNote",{note:comparison.review_note}),card);
+
     for (const tag of e.reviewed_tags ?? []) {
       const label = reviewedTagLabels[tag.tag];
       if (label)
@@ -299,10 +349,20 @@ function listReports(parent: HTMLElement, ids: string[]) {
             `${scene.transit_route.mode} ${scene.transit_route.line} · ${transitGeometryLabel(scene)}`,
             item,
           );
+        if (scene.geometry_usage === "source_native_platform_points_reference_only")
+          text("small",t("geometry.platformReference",{count:scene.native_platform_count??scene.location_object_ids?.length??0}),item);
+        if (scene.geometry_usage === "source_station_platform_footprint_reference_only")text("small",t("geometry.stationPlatformReference"),item);
+        if (scene.geometry_usage === "official_attachment_horizontal_reference_only")text("small",t("attachment.horizontal"),item);
+        if(scene.source_attachment_url)link(item,t("attachment.source"),scene.source_attachment_url);
+        if(scene.geometry && (scene.geometry_usage?.endsWith("reference_only") || scene.static_scene_reference)){
+          const button=text("button",t("geometry.showReference"),item) as HTMLButtonElement;button.type="button";button.onclick=()=>focusReviewedScenes([scene]);
+        }
         if (scene.geometry_usage === "source_native_collection_reference_only")
           text("small", t("geometry.collectionReference"), item);
         if (scene.geometry_usage === "source_footprint_reference_only")
-          text("small", scene.geocode_method === "official_district_footprint_reference"
+          text("small", scene.geocode_method === "osm_park_footprint_reference"
+            ? t("geometry.parkReference")
+            : scene.geocode_method === "official_district_footprint_reference"
             ? t("geometry.districtReference")
             : scene.geocode_method === "osm_water_footprint_reference"
             ? t("geometry.waterReference")
@@ -498,7 +558,7 @@ function showSelection() {
   } else {
     text(
       "p",
-      poiName(p.kind,data.catalog.poi_types[p.kind]?.label ?? p.kind),
+      poiName(p.display_kind??p.kind,data.catalog.poi_types[p.display_kind??p.kind]?.label ?? p.kind),
       panel,
     ).className = "eyebrow";
     text("h2", p.name, panel);
@@ -857,6 +917,14 @@ async function start() {
       label.append(swatch, document.createTextNode(poiName(key,value.label)));
       el("poi-filters").append(label);
     }
+    if(manifest.metadata.candidate_notice)text("p",String(manifest.metadata.candidate_notice),el("coverage").parentElement!);
+    for(const [field,key] of [["source_reference_review_url","source.reviewDetails"],["historical112_service_review_url","source.serviceHistory"]]) {
+      const path=manifest.metadata[field];
+      if(typeof path==="string" && path.startsWith(`${manifest.generation}/`) && /^[a-zA-Z0-9_.\/-]+$/.test(path)
+          && !path.split("/").some(part=>part==="."||part==="..")) {
+        const a=document.createElement("a");a.textContent=t(key);a.href=`${cityView.dataRoot}/${path}`;a.target="_blank";a.rel="noopener noreferrer";el("coverage").after(a);
+      }
+    }
     const outside = Number(manifest.metadata.known_outside_municipality ?? 0);
     const cityPoints = Number(manifest.metadata.point_entries_in_city ?? 0);
     el("coverage").textContent = manifest.metadata.upstream_provider === "POLIZEIKARTE"
@@ -1046,6 +1114,11 @@ async function start() {
         paint: { "line-color": sceneColor, "line-width": 4 },
       });
       map.addLayer({
+        id: "scene-line-hit", type:"line",source:"scenes",
+        filter:["all",["==",["geometry-type"],"LineString"],["!=",["get","geometry_kind"],"candidate_road"],["!=",["get","geometry_kind"],"transit_route"],["!=",["get","geometry_kind"],"transit_line_reference"]],
+        paint:{"line-width":14,"line-opacity":0},
+      });
+      map.addLayer({
         id: "scene-transit-route",
         type: "line",
         source: "scenes",
@@ -1100,8 +1173,8 @@ async function start() {
         filter: ["==", ["geometry-type"], "Point"],
         paint: {
           "circle-radius": 6,
-          "circle-color": sceneColor,
-          "circle-stroke-color": "#fff",
+          "circle-color": ["case",["==",["get","geometry_usage"],"source_native_platform_points_reference_only"],"#fff",sceneColor],
+          "circle-stroke-color": ["case",["==",["get","geometry_usage"],"source_native_platform_points_reference_only"],"#a16207","#fff"],
           "circle-stroke-width": 2,
         },
       });

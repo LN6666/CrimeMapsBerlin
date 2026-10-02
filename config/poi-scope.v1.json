@@ -1,0 +1,300 @@
+{
+  "schema_version": 1,
+  "policy_version": "crimemaps-poi-scope/1.0.0",
+  "background_profile": "core13-plus-reviewed-source-linked",
+  "cities": [
+    "berlin",
+    "hamburg",
+    "munich",
+    "cologne",
+    "frankfurt",
+    "dusseldorf",
+    "stuttgart",
+    "leipzig",
+    "dortmund",
+    "bremen",
+    "essen",
+    "dresden",
+    "hannover",
+    "nuremberg"
+  ],
+  "layers": {
+    "reviewed_scene": "unchanged_current_source_semantic_geometry_ledger",
+    "source_linked_context": "all_finalized_source_links_and_explicit_native_identity_decisions",
+    "neutral_background": "first_matching_literal_core13_rule"
+  },
+  "background_categories": [
+    "airport",
+    "attraction",
+    "bar",
+    "cafe",
+    "fast_food",
+    "hotel",
+    "marketplace",
+    "nightclub",
+    "park",
+    "parking",
+    "restaurant",
+    "shop",
+    "station"
+  ],
+  "background_rules": [
+    {
+      "kind": "bar",
+      "alternatives": [
+        {
+          "amenity": [
+            "bar",
+            "pub"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "nightclub",
+      "alternatives": [
+        {
+          "amenity": [
+            "nightclub"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "restaurant",
+      "alternatives": [
+        {
+          "amenity": [
+            "restaurant"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "cafe",
+      "alternatives": [
+        {
+          "amenity": [
+            "cafe"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "fast_food",
+      "alternatives": [
+        {
+          "amenity": [
+            "fast_food"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "marketplace",
+      "alternatives": [
+        {
+          "amenity": [
+            "marketplace"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "parking",
+      "alternatives": [
+        {
+          "amenity": [
+            "parking"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "station",
+      "alternatives": [
+        {
+          "amenity": [
+            "bus_station"
+          ]
+        },
+        {
+          "railway": [
+            "station",
+            "halt",
+            "tram_stop"
+          ]
+        },
+        {
+          "building": [
+            "train_station"
+          ]
+        },
+        {
+          "highway": [
+            "bus_stop"
+          ]
+        },
+        {
+          "public_transport": [
+            "platform"
+          ],
+          "bus": [
+            "yes"
+          ]
+        },
+        {
+          "public_transport": [
+            "platform"
+          ],
+          "tram": [
+            "yes"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "airport",
+      "alternatives": [
+        {
+          "aeroway": [
+            "terminal"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "shop",
+      "nonempty_key": "shop",
+      "excluded_values": [
+        "no",
+        "vacant",
+        "closed",
+        "abandoned",
+        "demolished"
+      ]
+    },
+    {
+      "kind": "attraction",
+      "alternatives": [
+        {
+          "tourism": [
+            "attraction",
+            "museum"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "hotel",
+      "alternatives": [
+        {
+          "tourism": [
+            "hotel"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "park",
+      "alternatives": [
+        {
+          "leisure": [
+            "park"
+          ]
+        }
+      ]
+    }
+  ],
+  "source_only_category": "keep_original_kind_and_native_subtypes_no_reclassification",
+  "native_context_rules_sha256": "f5037df47074f1d4398c75ffbc916be1ec8ddfb9917dc3e056057df0bad56815",
+  "native_context_aliases": {
+    "allotment": "allotment_garden",
+    "allotments": "allotment_garden",
+    "garden_colony": "allotment_garden",
+    "arena": "stadium",
+    "sports_stadium": "stadium",
+    "court": "courthouse",
+    "construction": "construction_site",
+    "fuel": "fuel_station",
+    "petrol_station": "fuel_station",
+    "government": "government_office",
+    "government_building": "government_office",
+    "plaza": "square",
+    "public_square": "square",
+    "police": "police_station",
+    "police_office": "police_station",
+    "political_party_office": "political_office",
+    "youth_hostel": "hostel"
+  },
+  "boundary": {
+    "background": "current_checked_native_city_boundary",
+    "clip": "retain_current_clipping_and_native_geometry_provenance",
+    "source_linked": "retain_current_accepted_scope_and_cross_boundary_unknowns",
+    "never_use": "bounding_box_or_centroid_as_city_or_event_boundary"
+  },
+  "identity": {
+    "poi": "osm/type/positive_id",
+    "aliases": "preserve_explicit_native_aliases; never_merge_by_name_or_proximity",
+    "announcement": [
+      "city",
+      "publisher_namespace",
+      "source_id"
+    ],
+    "revisions": "source_url_and_source_sha256_bind_current_review;revision_is_not_an_extra_announcement"
+  },
+  "counting": {
+    "hex": "one_reviewed_primary_source_supported_point_per_unique_announcement_at_each_level;no_point_means_not_locatable",
+    "poi_pairs": "unique_announcement/native_poi_pair_once;context_only",
+    "categories": "one_reviewed_main_category_per_unique_announcement;tags_may_overlap",
+    "background": "unique_retained_native_ID_not_tile_rows",
+    "not_claimed": [
+      "unique_crime_inventory",
+      "true_crime_risk",
+      "venue_offence",
+      "city_wide_completeness"
+    ]
+  },
+  "unknown": {
+    "native_type": "keep_unknown_no_name_or_brand_inference",
+    "scene_geometry": "keep_unknown_no_district_representative_points",
+    "source_context_no_match": "keep_original_unmatched_decision",
+    "attachments": "preserve_native_boundary_and_identity_gaps;no_pixel_generated_geometry"
+  },
+  "geometry": {
+    "canonical": "all_checked_original_native_coordinates_geometry_hashes_and_location_geometry_unchanged",
+    "display_circle": "50m_representation_only;not_venue_extent_or_match_radius",
+    "encoding": "performance_point_radius_v1_after_all_GIS_and_associations;only_unclipped_50m_circles_from_existing_center;native_and_clipped_geometries_unchanged",
+    "native_line_area": "reference_only_does_not_locate_or_count_event",
+    "downsampling": "never_drop_reviewed_scene_or_source_linked_object;neutral_background_render_culling_does_not_change_export_count"
+  },
+  "source_review": {
+    "normal": "current_source_first_literal_evidence_bound_source_semantic_geometry_checks",
+    "munich_exception": "owner_authorized_POLIZEIKARTE_upstream_semantics;name_upstream_and_partial_coverage",
+    "excluded_uncertainty": "existing_uncertain_or_out_of_scope_source_decisions_preserved"
+  },
+  "release": {
+    "immutable_generation_required": true,
+    "scope_receipt_required": true,
+    "normalization_is_not_review_or_approval": true,
+    "required_gates": [
+      "current_source",
+      "semantic",
+      "geometry",
+      "counts",
+      "changed_browser_behavior",
+      "security",
+      "language",
+      "mobile"
+    ],
+    "routine_owner_approval": "standing_authorization_after_required_checks;not_publication"
+  },
+  "prohibited_general_background": [
+    "all_residential_buildings",
+    "all_building_entrances",
+    "all_benches",
+    "all_crossings",
+    "all_generic_offices",
+    "all_extended_context_types"
+  ]
+}

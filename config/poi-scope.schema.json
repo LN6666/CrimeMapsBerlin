@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CrimeMaps POI scope v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "policy_version",
+    "background_profile",
+    "cities",
+    "background_categories",
+    "background_rules",
+    "native_context_rules_sha256",
+    "boundary",
+    "identity",
+    "counting",
+    "unknown",
+    "geometry",
+    "source_review",
+    "release"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "policy_version": {
+      "const": "crimemaps-poi-scope/1.0.0"
+    },
+    "background_profile": {
+      "const": "core13-plus-reviewed-source-linked"
+    },
+    "cities": {
+      "type": "array",
+      "minItems": 14,
+      "maxItems": 14,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "background_categories": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "airport",
+          "attraction",
+          "bar",
+          "cafe",
+          "fast_food",
+          "hotel",
+          "marketplace",
+          "nightclub",
+          "park",
+          "parking",
+          "restaurant",
+          "shop",
+          "station"
+        ]
+      }
+    },
+    "native_context_rules_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "background_rules": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "items": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "alternatives": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
+              }
+            }
+          },
+          "nonempty_key": {
+            "type": "string"
+          },
+          "excluded_values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "alternatives"
+            ]
+          },
+          {
+            "required": [
+              "nonempty_key",
+              "excluded_values"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

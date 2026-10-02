@@ -4,6 +4,41 @@ import type {Locale} from './i18n';
 export interface AddressedText {city:string;source_id:string;source_sha256?:string;field:string;text_sha256:string;translated_text:string;method?:'official_excerpt'|'translated'|'unchanged_native'}
 export interface DynamicTextPack {schema_version:1;locale:Locale;city?:string;month?:string;source_generation:string;texts:Record<string,string>;fields?:AddressedText[];native_text_hashes?:string[]}
 interface TextField {event:PoliceEvent;field:string;original:string}
+const restoredRoots = ['map_review_note','source_supporting_materials','source_attachments',
+ 'current_claim_overlays','historical_source_reviews','source_reference_comparisons'] as const;
+const restoredTextKeys = new Set(['map_review_note','title','label','note','review_note','display_note','details','display']);
+function restoredFields(event:PoliceEvent, add:(path:string,value:unknown)=>void) {
+ const walk=(value:unknown,path:string,key:string):void=>{
+  if(typeof value==='string'){if(restoredTextKeys.has(key))add(path,value);return;}
+  if(Array.isArray(value)){value.forEach((v,i)=>walk(v,`${path}/${i}`,key));return;}
+  if(value && typeof value==='object')for(const [k,v] of Object.entries(value))walk(v,`${path}/${k}`,k);
+ };
+ const publicFields=new Set(event.public_display_fields??[]);
+ for(const root of restoredRoots)if(publicFields.has(root))walk(event[root],`/${root}`,root);
+ if(event.incidents===undefined)event.source_incidents?.forEach((stage,i)=>{
+  add(`/source_incidents/${i}/details`,stage.details);add(`/source_incidents/${i}/event_time/display`,stage.event_time?.display);
+ });
+}
+function translatedRestored(event:PoliceEvent, field:(path:string,value:string)=>string):PoliceEvent {
+ // Work only on the reviewed public display fields, preserving the canonical
+ // source object, identifiers, URLs, hashes, geometry and count choices.
+ const paths=new Set<string>();restoredFields(event,(path,value)=>{if(typeof value==='string'&&value)paths.add(path);});
+ const copy=(value:unknown,path:string):unknown=>{
+  if(typeof value==='string')return paths.has(path)?field(path,value):value;
+  if(Array.isArray(value))return value.map((v,i)=>copy(v,`${path}/${i}`));
+  if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,copy(v,`${path}/${k}`)]));
+  return value;
+ };
+ const result={...event};
+ for(const root of restoredRoots)if(event[root]!==undefined)(result as any)[root]=copy(event[root],`/${root}`);
+ if(event.incidents===undefined && event.source_incidents)result.source_incidents=copy(event.source_incidents,'/source_incidents') as PoliceEvent['source_incidents'];
+ if(event.scene_locations)result.scene_locations=event.scene_locations.map((scene,i)=>{
+  const row={...scene};for(const key of ['poi_review','transit_review','geometry_review','source_relations'] as const)
+   if(scene[key]!==undefined)(row as any)[key]=copy(scene[key],`/scene_locations/${i}/${key}`);
+  return row;
+ });
+ return result;
+}
 function sourceId(event:PoliceEvent):string {return String((event as PoliceEvent&{source_id?:string}).source_id??event.id.split(':').at(-1)??event.id);}
 function fieldsFor(event:PoliceEvent):TextField[] {
  const fields:TextField[]=[];
@@ -15,6 +50,7 @@ function fieldsFor(event:PoliceEvent):TextField[] {
   add(`${path}/label`,scene.label);add(`${path}/details`,scene.details);add(`${path}/event_time/display`,scene.event_time?.display);
   scene.incidents?.forEach((incident,j)=>{add(`${path}/incidents/${j}/details`,incident.details);add(`${path}/incidents/${j}/event_time/display`,incident.event_time?.display);});
  });
+ restoredFields(event,add);
  return fields;
 }
 export function publicTextFields(rows:readonly PoliceEvent[]):string[] {return [...new Set(rows.flatMap(fieldsFor).map(f=>f.original))];}
@@ -34,12 +70,12 @@ export class DynamicTranslations {
  field(event:PoliceEvent,path:string,original:string):string {return this.addressed.get(`${event.id}\0${path}`)??this.text(original);}
  missingFor(event:PoliceEvent):number {return this.missingByEvent.get(event.id)??fieldsFor(event).length;}
  displayRows(rows:readonly PoliceEvent[]):PoliceEvent[] {
-  return rows.map(event=>({...event,title:this.field(event,'/title',event.title),location_label:this.field(event,'/location_label',event.location_label),incidents:event.incidents?.map((stage,i)=>({...stage,details:stage.details?this.field(event,`/incidents/${i}/details`,stage.details):stage.details,event_time:stage.event_time?{...stage.event_time,display:this.field(event,`/incidents/${i}/event_time/display`,stage.event_time.display)}:stage.event_time})),scene_locations:event.scene_locations?.map((scene,i)=>{
+  return rows.map(original=>{const event=translatedRestored(original,(path,value)=>this.field(original,path,value));return ({...event,title:this.field(event,'/title',event.title),location_label:this.field(event,'/location_label',event.location_label),incidents:event.incidents?.map((stage,i)=>({...stage,details:stage.details?this.field(event,`/incidents/${i}/details`,stage.details):stage.details,event_time:stage.event_time?{...stage.event_time,display:this.field(event,`/incidents/${i}/event_time/display`,stage.event_time.display)}:stage.event_time})),scene_locations:event.scene_locations?.map((scene,i)=>{
    const path=`/scene_locations/${i}`;
    return {...scene,label:this.field(event,`${path}/label`,scene.label),details:scene.details?this.field(event,`${path}/details`,scene.details):scene.details,
     event_time:scene.event_time?{...scene.event_time,display:this.field(event,`${path}/event_time/display`,scene.event_time.display)}:scene.event_time,
     incidents:scene.incidents?.map((incident,j)=>({...incident,details:incident.details?this.field(event,`${path}/incidents/${j}/details`,incident.details):incident.details,event_time:incident.event_time?{...incident.event_time,display:this.field(event,`${path}/incidents/${j}/event_time/display`,incident.event_time.display)}:incident.event_time}))};
-  })}));
+  })});});
  }
  async load(rows:readonly PoliceEvent[],manifest:Manifest,client:DataClient,month:string,locale:Locale,signal:AbortSignal,city=manifest.city.toLowerCase()) {
   this.clear();signal.throwIfAborted();const fields=rows.flatMap(fieldsFor);
