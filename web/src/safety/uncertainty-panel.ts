@@ -3,6 +3,7 @@ import { UNCERTAINTY_KINDS, uncertaintyPage, uncertaintyRows, uncertaintyStats, 
 import { ufText, type UFLocale } from "./uncertainty-copy";
 export function mountUncertaintyPanel(container: HTMLElement, options: {
   locale: UFLocale; city: string; translate?: (key: Parameters<typeof ufText>[1], params?: Record<string, string | number>) => string; onSelect?: (sourceId: string) => void;
+  sourceUncertaintyNotice?: string;
 }) {
   const t = (key: Parameters<typeof ufText>[1], params = {}) => options.translate?.(key, params) ?? ufText(options.locale, key, params);
   let rows: UncertaintyRow[] = [], page = 0;
@@ -32,6 +33,8 @@ export function mountUncertaintyPanel(container: HTMLElement, options: {
     if (!p.items.length) add("li", t("unknown.empty"), list).className = "uncertainty-empty";
     for (const r of p.items) {
       const item = add("li", "", list); add("h4", r.title, item);
+      if (r.sourceStatus === "uncertain" && options.sourceUncertaintyNotice)
+        add("p", options.sourceUncertaintyNotice, item).className = "hint";
       const tags = add("div", "", item); tags.className = "uncertainty-tags";
       add("span", t(`unknown.${r.kind}`), tags); add("span", t(`unknown.role.${r.role}`), tags);
       if (r.label) add("p", r.label, item).className = "uncertainty-location";
