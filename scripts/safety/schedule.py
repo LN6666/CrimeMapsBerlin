@@ -1,53 +1,25 @@
-"""Install/remove a user-level macOS timer. No Codex/LLM is involved."""
-
+"""Inspect city cadence without installing the retired daily LaunchAgent."""
 import argparse
-import os
-import plistlib
-import subprocess
-import sys
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-LABEL = "org.crimemapsberlin.update"
-DEST = Path.home() / "Library/LaunchAgents" / f"{LABEL}.plist"
+from cadence import main as inspect_plan
 
 
-def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("action", choices=["install", "remove", "show"])
-    args = p.parse_args()
-    job = dict(
-        Label=LABEL,
-        ProgramArguments=[str(ROOT / ".venv/bin/python"), str(ROOT / "scripts/safety/update.py")],
-        WorkingDirectory=str(ROOT),
-        EnvironmentVariables={"PYTHONPATH": str(ROOT / "src")},
-        StartCalendarInterval={"Hour": 7, "Minute": 15},
-        RunAtLoad=False,
-        StandardOutPath=str(ROOT / ".runtime/safety/scheduled.log"),
-        StandardErrorPath=str(ROOT / ".runtime/safety/scheduled-error.log"),
-        ProcessType="Background",
-        LowPriorityIO=True,
-    )
-    if args.action == "show":
-        print(plistlib.dumps(job).decode())
-        return
-    if sys.platform != "darwin":
-        raise SystemExit("Use cron/systemd on Linux; see docs/UPDATES.md")
-    target = f"gui/{os.getuid()}"
-    if args.action == "remove":
-        subprocess.run(["launchctl", "bootout", target + "/" + LABEL], check=False)
-        DEST.unlink(missing_ok=True)
-        return
-    if not (ROOT / ".venv/bin/python").exists():
-        raise SystemExit("Run uv sync first")
-    DEST.parent.mkdir(parents=True, exist_ok=True)
-    (ROOT / ".runtime/safety").mkdir(parents=True, exist_ok=True)
-    if DEST.exists():
-        subprocess.run(["launchctl", "bootout", target + "/" + LABEL], check=False)
-    DEST.write_bytes(plistlib.dumps(job))
-    subprocess.run(["launchctl", "bootstrap", target, str(DEST)], check=True)
-    print(f"Installed {DEST}: daily 07:15 local time, no immediate run")
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', choices=['show', 'install', 'remove'])
+    parser.add_argument('--state')
+    parser.add_argument('--now')
+    args = parser.parse_args()
+    if args.action != 'show':
+        parser.error('Legacy OS timer management is retired; the owner uses a separate Codex coordination heartbeat. '
+                     'This command does not install, replace or remove any LaunchAgent.')
+    arguments = []
+    for name in ('state', 'now'):
+        value = getattr(args, name)
+        if value is not None:
+            arguments.extend(['--' + name, value])
+    inspect_plan(arguments)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

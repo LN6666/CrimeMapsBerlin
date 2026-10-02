@@ -3,6 +3,7 @@ import gzip
 import importlib.util
 import io
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 import tarfile
 
@@ -18,6 +19,9 @@ def write_acceptance(tmp_path, **changes):
     value = {"schema_version": 1, "city": "essen", "repository": "LN6666/crimemaps-Essen",
              "code_commit": "a" * 40, "release_status": "accepted_for_publication",
              "languages": ["de", "en", "zh"], "artifact_receipt_sha256": "b" * 64,
+             "prelaunch_refresh": {"status": "passed", "city": "essen", "repository": "LN6666/crimemaps-Essen",
+                 "last_successful_source_check": datetime.now(timezone.utc).isoformat(),
+                 "checked_candidate_receipt_sha256": "b" * 64, "evidence_sha256": "f" * 64},
              "checks": {k: {"status": "passed", "evidence_sha256": "c" * 64} for k in release.CHECKS},
              "input_bindings": {k: "d" * 64 for k in release.BINDINGS}}
     value.update(changes)
@@ -43,6 +47,38 @@ def test_detached_acceptance_rejects_mutation_and_unconfigured_services(tmp_path
     with pytest.raises(ValueError, match="trusted"):
         release.acceptance(path, digest, "essen", "LN6666/crimemaps-Essen", "a" * 40)
     with pytest.raises(ValueError, match="Unpassed"):
+        release.acceptance(path, release.sha(path), "essen", "LN6666/crimemaps-Essen", "a" * 40)
+
+
+@pytest.mark.parametrize("change", [
+    {"status": "pending"}, {"city": "berlin"}, {"repository": "LN6666/crimemaps-Berlin"},
+    {"checked_candidate_receipt_sha256": "e" * 64}, {"evidence_sha256": None},
+    {"last_successful_source_check": "2026-10-03T00:00:00"},
+    {"last_successful_source_check": "2026-09-29T23:59:59Z"},
+    {"last_successful_source_check": "2026-10-03T00:00:01Z"},
+    {"last_successful_source_check": "invalid"}, {"last_successful_source_check": None},
+])
+def test_prelaunch_refresh_blocks_invalid_unfinished_stale_and_foreign_receipts(tmp_path, change):
+    refresh = {"status": "passed", "city": "essen", "repository": "LN6666/crimemaps-Essen",
+               "last_successful_source_check": "2026-10-03T00:00:00Z",
+               "checked_candidate_receipt_sha256": "b" * 64, "evidence_sha256": "f" * 64}
+    refresh.update(change)
+    path, digest = write_acceptance(tmp_path, prelaunch_refresh=refresh)
+    with pytest.raises(ValueError):
+        release.acceptance(path, digest, "essen", "LN6666/crimemaps-Essen", "a" * 40,
+                           now=datetime(2026, 10, 3, tzinfo=timezone.utc))
+
+
+def test_prelaunch_refresh_exact_72_hours_and_offset_are_accepted(tmp_path):
+    path, digest = write_acceptance(tmp_path)
+    value = json.loads(path.read_text())
+    value['prelaunch_refresh']['last_successful_source_check'] = '2026-09-30T02:00:00+02:00'
+    path.write_text(json.dumps(value))
+    release.acceptance(path, release.sha(path), "essen", "LN6666/crimemaps-Essen", "a" * 40,
+                       now=datetime(2026, 10, 3, tzinfo=timezone.utc))
+    value.pop('prelaunch_refresh')
+    path.write_text(json.dumps(value))
+    with pytest.raises(ValueError, match='prelaunch'):
         release.acceptance(path, release.sha(path), "essen", "LN6666/crimemaps-Essen", "a" * 40)
 
 
