@@ -1,41 +1,59 @@
 # Handoff and owner decisions
 
 This thread owns Hamburg only; completed Nuremberg batches are not reopened here.
-Hamburg's current local candidate is D24: all 494 frozen sources reviewed,
+Hamburg's current local candidate is D25: all 494 frozen sources reviewed,
 489 displayed announcements, 3,335 displayed phases and 3,947 displayed locations.
-These are not crime totals. Restore ignored `source-material-application-0003/`
-and `map-build-0024/`; the current preview is http://127.0.0.1:51830/?city=hamburg .
-D23/RG5 and earlier sealed packets remain immutable historical evidence.
+These are not crime totals. Restore ignored `source-material-application-0004/`
+and `map-build-0025/`; preview http://127.0.0.1:51831/?city=hamburg .
+D24/RG6 and earlier sealed packets remain immutable historical evidence.
 
-Eight complete primary bodies and original linked images have been read by the
-LLM, hash-bound and applied. All 494 source records, scene/scope choices, 2,730
-native geometries, 307 relation choices and 1,851 POI context pairs are retained.
-The other 480 map records are byte-identical; counterpart 6271927 only rebinds
-two prior-source-review hashes. All existing supporting links and notes survive.
-Actual hidden-browser checks cover eight material panels, 14 visible links,
-five months (59/57/54/46/46 announcements), the September map and an empty
-warning/error console. No image-derived coordinates or new phases are generated.
+All 26 previously unread media-related primary bodies have now been reread.
+23 source sets / 36 original linked images have been read by the LLM, hash-bound
+and applied. Seven stale reading-state phase notes and one reported-time display
+were explicitly corrected. All phase IDs, date values, evidence, roles, categories,
+locations, 2,730 native geometries, 307 relation choices and 1,851 POI context pairs
+are retained. Source history is 1,076 rows, with all old 1,053 preserved; the other
+471 source reviews are unchanged. 466 map payload records are byte-identical;
+counterpart 6355703 only rebinds prior-source-review hashes.
 
-Current media reconciliation is `source-material-application-0003/current-media-status.json`:
-all 37 historical reference records survive; nine exact original attachments are
-read and applied, two police narratives mention evidence without a public media
-attachment, and 26 references remain unread. July symbolic cheque imagery and
-the August 4 image showing 6,180 euros remain distinct; neither proves bank funds
-arrival. Invitations remain planned, and a raster policy map is not a legal vector.
+Actual hidden-browser checks cover 22 panels, 37 visible material links
+(34 new original-image links and three existing links), six publication months
+(59/57/60/54/46/46 announcements), the September local map and an empty warn/error
+console. All seven authored stage notes and the time display render verbatim.
+The scope-uncertain source 6263644 remains unmapped; its two images do not establish
+Hamburg municipality. No image-derived coordinates, identity findings or new
+phases/count points are generated.
+
+Current media reconciliation is `source-material-application-0004/current-media-status.json`:
+all 37 historical reference records survive; 32 exact primary attachments are read
+and applied, three historical media records retain pixel gaps, and two police
+narratives mention evidence without a public attachment identified. The closed
+6309149/6316767 appeal is not reconstructed; the 2025 external media referenced
+by 6330523 remains unread. Whole videos are not claimed read from a few stills.
+
+Source 6352739 reports July 1, 2025 at 10:20, but two original stills print
+June 30 at 20:59:11 and July 1 at 05:34:23. The corresponding phase, timezone and
+camera-clock calibration are not explained. Keep both literal versions, retain
+source-reported date values, disclose unverified actual clock time, and do not
+create another June 30 crime. The current question is bound in
+`source-material-application-0004/current-source-time-questions.json`.
 
 There are 2,127 display references, 603 explicit GIS gaps and zero count points,
 separate from 1,820 unlocated display locations. Native-task status remains 27
 completed subtasks with limits, 114 display limitations and 28 specific open tasks,
-plus one separate Jenfelder question: 29 specific open questions. The three whole
-Weinligstraße references from D23 remain, with the original Weinlingstraße body
-spelling and unknown fall/care/ambulance/hospital positions preserved.
+plus the Jenfelder question: 29 specific open questions. The three whole
+Weinligstraße references from D23 remain; the Weinlingstraße body spelling and
+unknown fall/care/ambulance/hospital positions stay explicit. A concrete browser
+follow-up requires replacing unsupported bar wording in three 6304440 geometry
+notes with an unspecified venue; source categories and POI choices already retain
+unknown venue type. Native geometry must stay unchanged.
 
-RG6 revalidates the source/GIS/map/POI chain and exactly reproduces all 3,614
-candidate files; the preview is byte-identical. Full-city technical
-acceptance, remaining source-gap reconciliation and the current full evidence
-package are unfinished; no Hamburg publication. Standing routine owner-review
-authorization is recorded against current batch hashes only after all required
-checks pass; it does not replace source review or publish data.
+RG7 revalidates the complete current source/GIS/map/POI chain and exactly
+reproduces all 3,614 candidate files; those files equal the preview. Full-city technical acceptance, remaining
+source-gap reconciliation and the current full evidence package are unfinished;
+Hamburg is unpublished. Standing routine owner-review authorization is bound to
+current batch hashes after the required checks pass; it does not replace source
+review or perform publication. Continue only Hamburg from its current checkpoint.
 
 The following D21 task reconciliation is historical; do not use its count of 30
 as the current D23 queue size.
