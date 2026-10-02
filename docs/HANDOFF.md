@@ -1,5 +1,29 @@
 # Handoff and owner decisions
 
+## Hamburg approved local site (2026-10-02)
+
+This window remains Hamburg only. RG12 revalidated the unchanged D30 candidate and
+current source/native/map inputs, rebound the owner's standing routine authorization,
+and promoted an immutable local generation. Its manifest honestly records OWNER_APPROVED
+and standing_routine_batch_authorization, without claiming a fresh personal inspection.
+The previously sealed D30/RG11/source-review ZIP remain unchanged.
+
+Restore full-semantic-20261001/{release-gate-0012,local-map-release-0001}.
+The latter's preview is a standalone local site with Berlin as the default entrance
+and approved Hamburg switching. All1388 existing Berlin generation files and its
+manifest were copied byte-for-byte; no Berlin source review was changed. Real browser
+checks verify Berlin September153→Hamburg October3/August46→Berlin153→Hamburg;
+approval labels are correct, the unapproved badge is hidden, warning/error logs empty.
+Actual screenshot and DOM proof are saved under local-map-release-0001.
+
+Code head3b6df0f has passing core/browser CI, including30 frontend checks. The earlier
+three native-option matcher failures and missing local Chromium launch evidence are
+retained; neither is relabelled as a pass. Current operational state remains in
+delivery-status.current.json. Local URL http://127.0.0.1:51837/ ; restart with Python's
+HTTP server from preview. Public hosting is not configured by this delivery. Frozen
+494-source analysis/map acceptance is complete; actual coverage/precision gaps remain.
+Nuremberg's completed local batch belongs its separate window and is not reopened here.
+
 ## Hamburg D30 current delivery (2026-10-02)
 
 This window owns Hamburg only. The frozen494 current official2026 newsroom sources
