@@ -1,7 +1,7 @@
 {
   "app.title": "CrimeMaps · {city} police reports",
   "app.heading": "{city} · Police reports and places",
-  "app.tagline": "Reports and their surroundings",
+  "app.tagline": "Police reports on the map",
   "app.preview": "Local preview · Not published",
   "app.localApproved": "Local preview · Not published",
   "nav.city": "City",
@@ -765,5 +765,10 @@
   "source.reviewDetails": "Read the supplementary source reviews and their limits",
   "source.serviceHistory": "Read the historical emergency-service context",
   "geometry.showReference": "Show this reference on the map",
-  "report.sourceUncertain": "This announcement has unresolved source questions. The interpretation shown here remains uncertain."
+  "report.sourceUncertain": "This announcement has unresolved source questions. The interpretation shown here remains uncertain.",
+  "external.policeWebsite": "Police website",
+  "app.brandName": "CrimeMaps Germany",
+  "theme.label": "Appearance",
+  "theme.blue": "Blue",
+  "theme.light": "Light"
 }

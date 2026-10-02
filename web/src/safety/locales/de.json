@@ -1,7 +1,7 @@
 {
   "app.title": "CrimeMaps · Polizeimeldungen aus {city}",
   "app.heading": "{city} · Polizeimeldungen und Orte",
-  "app.tagline": "Meldungen und ihr Umfeld",
+  "app.tagline": "Polizeimeldungen auf der Karte",
   "app.preview": "Lokale Vorschau",
   "app.localApproved": "Aktueller Datenstand · Noch nicht veröffentlicht",
   "nav.city": "Stadt",
@@ -765,5 +765,10 @@
   "source.reviewDetails": "Ergänzende Quellenangaben und Einschränkungen ansehen",
   "source.serviceHistory": "Historische Angaben zu den Rettungsdiensten ansehen",
   "geometry.showReference": "Diese Orientierungshilfe auf der Karte anzeigen",
-  "report.sourceUncertain": "Zu dieser Meldung sind noch Fragen zur Quelle offen. Die hier gezeigte Einordnung bleibt unsicher."
+  "report.sourceUncertain": "Zu dieser Meldung sind noch Fragen zur Quelle offen. Die hier gezeigte Einordnung bleibt unsicher.",
+  "external.policeWebsite": "Polizei-Website",
+  "app.brandName": "CrimeMaps Deutschland",
+  "theme.label": "Darstellung",
+  "theme.blue": "Blau",
+  "theme.light": "Hell"
 }

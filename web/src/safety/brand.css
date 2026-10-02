@@ -1,0 +1,49 @@
+#app > header {
+  background: #111b29;
+  color: #f3f0e8;
+  border-bottom-color: #2d3b4d;
+}
+#app > header > div:first-child {
+  flex: 0 1 480px;
+  min-width: min(400px, 100%);
+  max-width: 100%;
+}
+.brand.site-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: min(520px, 100%);
+  min-height: 44px;
+  text-decoration: none;
+  letter-spacing: normal;
+  color: inherit;
+}
+.site-brand:focus-visible {
+  outline: 3px solid #e4bd65;
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+.brand-police {
+  flex: 0 0 64px;
+  width: 64px;
+  height: 72px;
+  object-fit: contain;
+}
+.brand-wordmark { display: block; min-width: 0; flex: 1 1 auto; }
+.brand-title-crop { display: block; position: relative; overflow: hidden; aspect-ratio: 4.15; }
+.brand-title { position: absolute; top: -38%; left: 0; display: block; width: 100%; height: auto; object-fit: contain; }
+.brand-caption {
+  display: block;
+  text-align: center;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+#app > header .toolbar > label { color: inherit; }
+@media (max-width: 760px), (max-width: 1000px) and (max-height: 500px) {
+  #app > header > div:first-child { width: 100%; min-width: 0; max-width: 100%; }
+  .brand.site-brand { width: 100%; gap: 10px; }
+  .brand-police { flex-basis: 52px; width: 52px; height: 60px; }
+  .brand-caption { font-size: .95rem; }
+}

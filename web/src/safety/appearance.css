@@ -1,0 +1,36 @@
+:root:not([data-theme="light"]) {
+  color-scheme: dark;
+  color: #f3f0e8;
+  background: #0d1622;
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root:not([data-theme="light"]) :is(body, .controls, .details, dialog) {
+  color: #f3f0e8;
+  background: #111b29;
+  border-color: #3a4a5f;
+}
+:root:not([data-theme="light"]) :is(.toolbar, .controls, .details, dialog, .basemap-picker, .mobile-navigation)
+  :is(button, select, input:not([type="checkbox"]), textarea) {
+  color: #f3f0e8;
+  background: #20334b;
+  border-color: #596b80;
+}
+:root:not([data-theme="light"]) :is(.toolbar, .controls, .details, dialog, .basemap-picker, .mobile-navigation) button:hover {
+  background: #2c4564;
+}
+:root:not([data-theme="light"]) :is(.controls, .details, dialog, .mobile-navigation) a,
+:root:not([data-theme="light"]) .skip-to-map { color: #8bd2f4; }
+:root:not([data-theme="light"]) :is(.hint, small, .eyebrow, .ends, .scene-legend,
+  .analytics-world-legend, .analytics-world-context, .analytics-world-source) { color: #c6cfd9; }
+:root:not([data-theme="light"]) :is(.report, #stats, .rule, dialog article, .mobile-map-notes) { border-color: #3a4a5f; }
+:root:not([data-theme="light"]) :is(#coverage, .details details, dialog details, .analytics-world-card,
+  .map-label, .basemap-picker, .map-note, .mobile-navigation, .mobile-view-settings > summary,
+  .mobile-basemap-settings > summary, dialog .close, .skip-to-map) {
+  color: #f3f0e8;
+  background: #192638;
+  border-color: #596b80;
+}
+:root:not([data-theme="light"]) :is(.road-caution, #basemap-error) { color: #ffc989; }
+:root:not([data-theme="light"]) :focus-visible { outline-color: #e4bd65; }
+
+:root[data-theme="light"] .mobile-view-settings > summary { color: #18382e; }

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:navigation": "node --test tests/deployment-navigation.test.mjs tests/appearance.test.mjs"
   },
   "dependencies": {
     "maplibre-gl": "^6.11.1"

@@ -13,6 +13,10 @@ maplibregl.setWorkerUrl(workerUrl);
 maplibregl.setWorkerCount(2);
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
+import "./brand.css";
+import "./appearance.css";
+import {mountBrand} from "./brand";
+import {initializeAppearance,mountAppearance} from "./appearance";
 import {
   candidateRoadGeometry,
   candidateRoads,
@@ -111,6 +115,7 @@ const sceneColor: maplibregl.ExpressionSpecification = [
 ];
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
+initializeAppearance();
 app.innerHTML = `<header><div><span class="brand">${currentCity === "berlin" ? "CRIMEMAPSBERLIN" : "CRIMEMAPS.DE"}</span><span id="review-badge" class="review-badge" hidden>${html(t("app.preview"))}</span><h1>${html(t("app.heading",{city:localizedCity}))}</h1></div><div class="toolbar"><label>${html(t("nav.language"))}<select id="language" aria-label="${html(t("nav.language"))}"><option value="de">Deutsch</option><option value="en">English</option><option value="zh">中文</option></select></label><label class="city-switch">${html(t("nav.city"))}<select id="city-switch" aria-label="${html(t("nav.city"))}"></select></label><label>${html(t("nav.year"))}<select id="year" aria-label="${html(t("nav.year"))}"></select></label><label>${html(t("nav.month"))}<select id="month" aria-label="${html(t("nav.month"))}"></select></label><button id="overview">${html(t("nav.overview"))}</button><button id="sources">${html(t("nav.sources"))}</button></div></header>
 <main><aside class="controls"><p class="eyebrow">${html(localizedCity)} / ${html(t("app.publicReports"))}</p><h2>${html(t("app.tagline"))}</h2><p id="coverage">${html(t("map.loadingData"))}</p><nav id="external-maps" class="external-maps" aria-label="${html(t("external.aria"))}"></nav><label class="search-label">${html(t("search.label",{city:localizedCity}))}<input id="search" placeholder="${html(t("search.placeholder",{},cityView.latin))}" autocomplete="off"></label><div id="search-results"></div><label>${html(t("filter.category"))}<select id="category"><option value="all">${html(t("filter.allReports"))}</option></select></label><div class="rule"></div><h3>${html(t("legend.hex"))}</h3><div class="ramp"></div><div class="ends"><span>${html(t("legend.low"))}</span><span>${html(t("legend.high"))}</span></div><p id="resolution"></p><label class="toggle"><input id="hex-toggle" type="checkbox" checked> ${html(t("legend.showHex"))}</label><label class="toggle"><input id="candidate-roads-toggle" type="checkbox" checked> ${html(t("legend.showRoads"))}</label><p class="hint"><span class="road-swatch" aria-hidden="true"></span>${html(t("legend.roadNote"))}</p><div class="scene-legend" aria-label="${html(t("legend.scenesAria"))}"><span><i class="scene-swatch incident"></i>${html(t("legend.incident"))}</span><span><i class="scene-swatch discovery"></i>${html(t("legend.discovery"))}</span><span><i class="scene-swatch operation"></i>${html(t("legend.operation"))}</span><span><i class="scene-swatch context"></i>${html(t("legend.context"))}</span><span><i class="route-swatch"></i>${html(t("legend.transit"))}</span></div><h3>${html(t("legend.pois"))}</h3><div id="poi-filters"></div><label class="toggle"><input id="highlight" type="checkbox" checked> ${html(t("legend.highlight"))}</label><p class="hint">${html(t("legend.highlightNote"))}</p><div class="rule"></div><button id="kbo">${html(t("kbo.button"))}</button><p class="hint">${html(t("kbo.separate"))}</p><p id="freshness" class="hint"></p></aside>
 <section class="map-wrap"><div id="map" aria-label="${html(t("map.aria",{city:localizedCity}))}"></div><div class="map-label"><span class="dot"></span><span id="map-status" role="status" aria-live="polite">${html(t("map.preparing"))}</span></div><div class="basemap-picker"><label>${html(t("map.basemap"))}<select id="basemap" aria-label="${html(t("map.basemap"))}" disabled><option value="vector">${html(t("basemap.vector"))}</option><option value="street">${html(t("basemap.street"))}</option><option value="aerial">${html(t("basemap.aerial"))}</option><option value="local">${html(t("basemap.local"))}</option></select></label><div id="basemap-error" role="status" hidden><span></span><button id="basemap-fallback">${html(t("basemap.fallback"))}</button></div></div><div class="map-note">${html(t("map.poiNote"))}</div><p class="hint basemap-language-note">${html(t("basemap.languageNote"))}</p></section>
@@ -118,6 +123,8 @@ app.innerHTML = `<header><div><span class="brand">${currentCity === "berlin" ? "
 <dialog id="drawer"><button id="close-dialog" class="close">${html(t("action.close"))}</button><div id="drawer-content"></div></dialog>`;
 const el = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
+mountBrand(app.querySelector<HTMLElement>(".brand")!);
+mountAppearance(app.querySelector<HTMLElement>(".toolbar")!, {label:t("theme.label"),blue:t("theme.blue"),light:t("theme.light")});
 el<HTMLSelectElement>("language").value=locale;
 el("language").onchange=()=>{const url=new URL(location.href);url.searchParams.set("lang",el<HTMLSelectElement>("language").value);url.searchParams.set("month",monthKey());location.assign(url.href);};
 const citySelect = el<HTMLSelectElement>("city-switch");
@@ -160,6 +167,7 @@ function link(parent: HTMLElement, label: string, url: string) {
   a.rel = "noopener noreferrer";
 }
 link(el("external-maps"), `POLIZEIKARTE ${localizedCity} ↗`, cityView.externalUrl);
+link(el("external-maps"), `${t("external.policeWebsite")} ↗`, cityView.officialPoliceUrl);
 if (!cityView.kbo) {
   el("kbo").hidden = true;
   el("kbo").nextElementSibling?.remove();

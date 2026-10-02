@@ -1,10 +1,11 @@
 import { assetPath, repositoryCity, cityIds, cityDestination } from "./deployment";
 import type { CityId } from "./deployment";
+import officialPolice from '../../../config/official-police-websites.json' with {type:'json'};
 export interface City { id: CityId; name: string; href?: string; }
 interface MapView {
  id: CityId; manifestCity: string; name: string; latin: string; center: [number, number];
  manifestPath: string; dataRoot: string; example: string; aerial: boolean; kbo: boolean;
- policeUrl: string; policeName: string; externalUrl: string;
+ policeUrl: string; policeName: string; externalUrl: string; officialPoliceUrl: string;
 }
 const settings: Record<CityId, {name: string; native: string; center: [number,number]; source: string; police: string; upstream: string}> = {
  berlin: {name:"柏林",native:"Berlin",center:[13.411,52.508],source:"https://www.berlin.de/polizei/polizeimeldungen/",police:"Polizei Berlin",upstream:"berlin"},
@@ -27,7 +28,7 @@ export const mapViews = Object.fromEntries(cityIds.map(id => {
  return [id, {id, manifestCity:s.native,name:s.name,latin:s.native.toLocaleUpperCase("de"),center:s.center,
  manifestPath:assetPath("/safety/manifest.json"),dataRoot:assetPath("/safety"),
  example:s.native,aerial:id === "berlin", kbo:id === "berlin",policeUrl:s.source,policeName:s.police,
- externalUrl:`https://polizeikarte.de/${s.upstream}`}];
+ externalUrl:`https://polizeikarte.de/${s.upstream}`, officialPoliceUrl:officialPolice.cities[id].url}];
 })) as Record<CityId,MapView>;
 // A query cannot change this repository's city or make it load another city's data.
 export function requestedMapView(_search: string) { return mapViews[repositoryCity]; }

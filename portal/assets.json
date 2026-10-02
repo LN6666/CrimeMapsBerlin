@@ -1,0 +1,227 @@
+[
+  {
+    "path": "portal-assets/brand/crime-map-de.png",
+    "sha256": "6e7312ed87794ef74bdf022bf93382d91c5244864e4ed782676893cdf8fedbfd",
+    "bytes": 454699
+  },
+  {
+    "path": "portal-assets/brand/crime-map-en.png",
+    "sha256": "7866e6e9f1750a99a252b01fcb88e819051d47b897748a0ff276af47b4b34053",
+    "bytes": 480297
+  },
+  {
+    "path": "portal-assets/brand/police-eagle.png",
+    "sha256": "f64f6cd2ac6e9735d9746b7eeb2480039a7d5c8da7d33ea3d50fea909cc241ff",
+    "bytes": 49849
+  },
+  {
+    "path": "portal-assets/cityscapes/berlin-night.jpg",
+    "sha256": "8bbbc5799090ee45195d1f528aae50b55d5ddc37697e761288575fa111928bab",
+    "bytes": 336665
+  },
+  {
+    "path": "portal-assets/cityscapes/berlin.jpg",
+    "sha256": "d530cab787f1e66c80c758c20bc9d849bedaba49171ebda2d1db5b9e75fbea59",
+    "bytes": 361833
+  },
+  {
+    "path": "portal-assets/cityscapes/bremen-night.jpg",
+    "sha256": "131bdc8b7807ee67a6f2e933640905ca536102f8688ddec003dbe7db1b2303d1",
+    "bytes": 455310
+  },
+  {
+    "path": "portal-assets/cityscapes/bremen.jpg",
+    "sha256": "2066137eb7e00d1f4de7be56d4dda181766448c103dae0b89f42bb6be48d1932",
+    "bytes": 451407
+  },
+  {
+    "path": "portal-assets/cityscapes/cologne-night.jpg",
+    "sha256": "f4b2ba5b97676163c90c9ddc31959025baefbe1a0c908ebc95a9ed3c2b7e599a",
+    "bytes": 400185
+  },
+  {
+    "path": "portal-assets/cityscapes/cologne.jpg",
+    "sha256": "59f39c3f978455fbb95de89633ff7e59797e60544af98c7171f627a30d9f68e2",
+    "bytes": 396832
+  },
+  {
+    "path": "portal-assets/cityscapes/dortmund-night.jpg",
+    "sha256": "5638e9276530953c0cb0c25c1321e6fe554f402906f201c6469cb70998082ee6",
+    "bytes": 355812
+  },
+  {
+    "path": "portal-assets/cityscapes/dortmund.jpg",
+    "sha256": "5f39f4d61d0190f05f22821fe45d2a16cbbc76605edea0c95b227033200da15b",
+    "bytes": 330928
+  },
+  {
+    "path": "portal-assets/cityscapes/dresden-night.jpg",
+    "sha256": "78e03175cb12cac6857d6446cbb96b7a604a63874dc8ed1b8827172911b94abf",
+    "bytes": 373672
+  },
+  {
+    "path": "portal-assets/cityscapes/dresden.jpg",
+    "sha256": "d95d1d3833ed6c19def08f5db51beb3d11f5bba324877c7a498f9342ff3e95a8",
+    "bytes": 367273
+  },
+  {
+    "path": "portal-assets/cityscapes/dusseldorf-night.jpg",
+    "sha256": "ece33f0c0039f326d809dd9e36940cbdecfdfdfe13d41e4ce5b5dc280f74b2c8",
+    "bytes": 305916
+  },
+  {
+    "path": "portal-assets/cityscapes/dusseldorf.jpg",
+    "sha256": "36e2929d10584bf1733e347173b9fc31d9f2f375104632769b24852f1cfc4b3f",
+    "bytes": 315325
+  },
+  {
+    "path": "portal-assets/cityscapes/essen-night.jpg",
+    "sha256": "1e113e8c8b7853c5cdc87b4f1dfb9937d5ff52069547786d69d48d794d1f5386",
+    "bytes": 377381
+  },
+  {
+    "path": "portal-assets/cityscapes/essen.jpg",
+    "sha256": "f9f955c005d0bd1b8d725a85608effdb4310c5dd39cf6fad84f548275eace41e",
+    "bytes": 350567
+  },
+  {
+    "path": "portal-assets/cityscapes/frankfurt-night.jpg",
+    "sha256": "748885d229405dd9d908f2e05192e4bf4609598e7bae0d540b3115c520fdb464",
+    "bytes": 368793
+  },
+  {
+    "path": "portal-assets/cityscapes/frankfurt.jpg",
+    "sha256": "fb25bc74a12693767a6986401c527de9e99ff991c174f0d131acab947ab37369",
+    "bytes": 387399
+  },
+  {
+    "path": "portal-assets/cityscapes/hamburg-night.jpg",
+    "sha256": "8b1dd91fe7437aef9e441fc8959e4f2412d2bb9c7c94d1cb8c2b4eb91c1ac120",
+    "bytes": 346334
+  },
+  {
+    "path": "portal-assets/cityscapes/hamburg.jpg",
+    "sha256": "044edd21af4601e9798f398baf789e5b26496865122666814453c27f826b18fb",
+    "bytes": 379829
+  },
+  {
+    "path": "portal-assets/cityscapes/hannover-night.jpg",
+    "sha256": "847885f5d8650434aa007a61c026492b08679dd1becadff0b0d75c5564f30191",
+    "bytes": 375970
+  },
+  {
+    "path": "portal-assets/cityscapes/hannover.jpg",
+    "sha256": "a61a51b43337fea3e2fd12e3f8ebac043975de400452dc0003f23c851073a5f7",
+    "bytes": 413795
+  },
+  {
+    "path": "portal-assets/cityscapes/leipzig-night.jpg",
+    "sha256": "62f808d62344914a70f9cfc56483f5c7f824153eaf0c5eb39f38e2671fb54e7f",
+    "bytes": 276229
+  },
+  {
+    "path": "portal-assets/cityscapes/leipzig.jpg",
+    "sha256": "2080b1770b181c7ba6c917d3ecfc04d03b2adc50e989ad2cdca17d36e273b78a",
+    "bytes": 283861
+  },
+  {
+    "path": "portal-assets/cityscapes/munich-night.jpg",
+    "sha256": "2fbe3bf37c02c245218e160757593bd1442fd28c209a790c33aeaa8eaf4c335e",
+    "bytes": 385706
+  },
+  {
+    "path": "portal-assets/cityscapes/munich.jpg",
+    "sha256": "2c5abbcd562f98ab8d8e048e390cd2d13ad4f57d4d595ea01e1aaab50f40d0a4",
+    "bytes": 428458
+  },
+  {
+    "path": "portal-assets/cityscapes/nuremberg-night.jpg",
+    "sha256": "2f45415b4e1a78f0ef2888840efd8d22b3260bc09f4858894fef72e32e80fa95",
+    "bytes": 387825
+  },
+  {
+    "path": "portal-assets/cityscapes/nuremberg.jpg",
+    "sha256": "3684c67aed78e225e03a8da878eb55f2a9729e55430db4170da1b3bc17537a1f",
+    "bytes": 429800
+  },
+  {
+    "path": "portal-assets/cityscapes/stuttgart-night.jpg",
+    "sha256": "aebdad1a2c59ff2714826f9f1c8b5d9a7762ecc7eaba3407966c1a793d74e039",
+    "bytes": 265948
+  },
+  {
+    "path": "portal-assets/cityscapes/stuttgart.jpg",
+    "sha256": "01028f02004bb31c883522928d6e0130ddb1f417a0c25b01bc6b2ae3ab6ab410",
+    "bytes": 298478
+  },
+  {
+    "path": "portal-assets/icons/berlin.png",
+    "sha256": "4c046428ea90c8cf4e166a857ed1239917fdf01d01ebe2718b145b284a4f86c4",
+    "bytes": 2496
+  },
+  {
+    "path": "portal-assets/icons/bremen.png",
+    "sha256": "eb7ac94156ca47ff4e97fb67354c259ace41a7840bd5ab0f85fa976204a1cd7b",
+    "bytes": 2837
+  },
+  {
+    "path": "portal-assets/icons/cologne.png",
+    "sha256": "555735343910466bac8e7f8492578142a71412e161228f72dcb0ae095074fa5f",
+    "bytes": 2523
+  },
+  {
+    "path": "portal-assets/icons/dortmund.png",
+    "sha256": "3b712a429dbdd1258bcd06f6bb0e83cb4ec8642fa55a1b1b1d8333a4cb34c6bc",
+    "bytes": 2488
+  },
+  {
+    "path": "portal-assets/icons/dresden.png",
+    "sha256": "60cf8caa820ab7aecca08e503aae1245333093163a84f06a03f40825d3a3e363",
+    "bytes": 2571
+  },
+  {
+    "path": "portal-assets/icons/dusseldorf.png",
+    "sha256": "789912a30b676fc6d24310a88f274af3ae9080054ac7444b7868be91f6dbbb1d",
+    "bytes": 2125
+  },
+  {
+    "path": "portal-assets/icons/essen.png",
+    "sha256": "f53a46e243c9233554dac582b05b7b78e774e6fbdac60e90efa1750593752075",
+    "bytes": 2719
+  },
+  {
+    "path": "portal-assets/icons/frankfurt.png",
+    "sha256": "9407332b6907fc4d749f38f68d138f84e3ff11bae92531462b5033d2043c4ec6",
+    "bytes": 2543
+  },
+  {
+    "path": "portal-assets/icons/hamburg.png",
+    "sha256": "18c8771adc389f0a8ed794244f666f57c9a5bf4d2a8f805085e45361e9b7772c",
+    "bytes": 2612
+  },
+  {
+    "path": "portal-assets/icons/hannover.png",
+    "sha256": "0885bc8a8710211e9103ca93915eecbf5f9f37843b063e4a17ef29a128d75804",
+    "bytes": 2562
+  },
+  {
+    "path": "portal-assets/icons/leipzig.png",
+    "sha256": "f7b919606adbf388ed2c2e58fb46415ab9b54e908b3cc93565fbb88baa3e7962",
+    "bytes": 2507
+  },
+  {
+    "path": "portal-assets/icons/munich.png",
+    "sha256": "bee0aaebabb873724280a1bc68b34f6b1c7739ace1ae91b5656df6d9d7b4b349",
+    "bytes": 2659
+  },
+  {
+    "path": "portal-assets/icons/nuremberg.png",
+    "sha256": "c55c8415977752df6f5ed5ff039fac1386ee5e20ada3125727936a4195354349",
+    "bytes": 2469
+  },
+  {
+    "path": "portal-assets/icons/stuttgart.png",
+    "sha256": "f0cbd6bfedff3d4cefe3f16c860b3e566efad49037292bfae9ca7ffd09767214",
+    "bytes": 2063
+  }
+]
