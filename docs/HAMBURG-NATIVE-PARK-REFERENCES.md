@@ -13,6 +13,23 @@
 这一限制。POI 的公园身份关联仅使用明确选定的原始面，不把内嵌游乐场或相邻公园
 当作警方所指的同一公园；它仍是来源语境关联，不是场所涉案认定。
 
+## 具名场所背景轮廓
+
+具名非交通载体场所另可使用 `osm_place_footprint_reference`：只接受逐篇复核后的
+`place` 或 `area` 请求，以及已校验、具名、非行政区的原生多边形。一组明确选择的
+OSM 对象形成背景轮廓，不接受门址、街道、行政区或公交线路请求，不生成代表点或
+计数点。地点文本和 OSM 名称的对应仍由 LLM 保存证据及推断，程序不修正原文拼写。
+原有街道精度方法与公园原生证明方法保留各自限制。
+
+汉堡 6256758 中双 n 的 Robert-Schumann-Brücke 原文保持。LSBG 的
+[交通说明](https://lsbg.hamburg.de/rodigallee/detallierte-verkehrsfuehrung-rodigallee)
+给出同一 Jüthornstraße 路线上单 n 的 Robert-Schuman-Brücke，
+[市政公园资料](https://www.hamburg.de/politik-und-verwaltung/behoerden/bukea/themen/hamburgs-gruen/parkanlagen/wandsbeker-gehoelz-276926)
+也给出桥名及另一侧 Schlossstraße。两份页面的 robots、实际正文和哈希保存在本地；
+LLM 结合原生桥道路与 Jüthornstraße 的共享节点推断身份，不声称警方已正式更正。
+桥面 way 378920751 的 41 个原始节点坐标及环顺序已核对；只显示桥梁背景范围，
+不表示整个桥面都是检查覆盖范围，也不定位当日车道、醉驾者或其他道路的车辆。
+
 ## 汉堡公园补修候选 D16（历史检查点）
 
 冻结来源共 494 篇，全部已有当前全文 LLM 决定。489 篇进入地图，保留 3,334 个阶段和

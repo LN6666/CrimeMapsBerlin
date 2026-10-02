@@ -46,6 +46,7 @@ METHODS = {
     "osm_transit_road_reference_segment",
     "osm_transit_line_reference",
     "osm_named_footprint_reference",
+    "osm_place_footprint_reference",
     "osm_unidentified_transit_segment",
     "osm_transit_segment",
     "osm_transit_road_segment",
@@ -242,6 +243,22 @@ def _derived_geometry_without_static_reference(
                 raise ValueError("named footprint reference needs checked named non-administrative polygons")
             # Preserve the reviewed native bridge/square footprint, never an
             # invented centreline or a synthetic event/count point.
+            geometry = unary_union(geometries)
+        elif method == "osm_place_footprint_reference":
+            if not (
+                (task == "checked_point_geocode_required" and precision == "place")
+                or (task == "checked_area_geometry_required" and precision == "area")
+            ) or request.get("transit_route") is not None:
+                raise ValueError("place footprint reference needs a reviewed non-transit place/area")
+            if len(object_groups) != 1 or any(
+                geometry.geom_type not in {"Polygon", "MultiPolygon"}
+                or "named_object" not in row.get("roles", [])
+                or "administrative_boundary" in row.get("roles", [])
+                or not row.get("names")
+                for row, geometry in zip(selected, geometries, strict=True)
+            ):
+                raise ValueError("place footprint reference needs checked named non-administrative polygons")
+            # Native named context does not establish an event at its centre.
             geometry = unary_union(geometries)
         elif method == "osm_line":
             line_matches_review = (
@@ -612,7 +629,7 @@ def _derived_geometry_without_static_reference(
         result["geometry_usage"] = "carrier_line_reference_only"
         result["complete_transit_line"] = False
         result["actual_transit_extent_known"] = False
-    elif method == "osm_named_footprint_reference":
+    elif method in {"osm_named_footprint_reference", "osm_place_footprint_reference"}:
         result["geometry_usage"] = "source_footprint_reference_only"
     elif method == "osm_non_transit_footprint_reference":
         result["geometry_usage"] = "source_footprint_reference_only"
