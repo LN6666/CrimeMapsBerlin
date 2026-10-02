@@ -361,6 +361,16 @@ test("clicking overlapping scene shapes opens one report card with every scene",
           ]] },
           primary_for_count: false,
         },
+        {
+          label: "桥梁背景轮廓", role: "background", location_precision: "place",
+          geocode_method: "osm_place_footprint_reference",
+          geometry_usage: "source_footprint_reference_only",
+          geometry: { type: "Polygon", coordinates: [[
+            [13.410, 52.507], [13.412, 52.507], [13.412, 52.509],
+            [13.410, 52.509], [13.410, 52.507],
+          ]] },
+          coordinates: null, primary_for_count: false,
+        },
       ],
     }),
     report("other", {
@@ -410,13 +420,20 @@ test("clicking overlapping scene shapes opens one report card with every scene",
     return page.locator("#selection").innerText();
   }).toContain("多地点公告");
   await expect(page.locator("#selection .report")).toHaveCount(1);
-  await expect(page.locator("#selection .scene-list li")).toHaveCount(6);
+  await expect(page.locator("#selection .scene-list li")).toHaveCount(7);
   const unknownPark = page.locator("#selection .scene-list li").filter({ hasText: "未定位公园" });
   await expect(unknownPark).toContainText("位置未知");
   await expect(unknownPark).not.toContainText("场所近似位置");
   await expect(page.locator("#selection")).toContainText("原生站台轮廓参考；实际站台侧、出口及事件位置未知");
   await expect(page.locator("#selection")).toContainText("主场景");
   await expect(page.locator("#selection")).toContainText("同一公告最多计一次");
+  const bridge = page.locator("#selection .scene-list li").filter({ hasText: "桥梁背景轮廓" });
+  await expect(bridge).toContainText("精确事件位置未知，不生成计数点");
+  const previousScale = await page.locator(".maplibregl-ctrl-scale").innerText();
+  await bridge.getByRole("button", { name: "查看原生场所轮廓参考", exact: true }).click();
+  await expect.poll(() => page.locator(".maplibregl-ctrl-scale").innerText()).not.toBe(previousScale);
+  await expect(page.locator("#stats .big")).toHaveText("2");
+  await expect(page.locator("#month")).toHaveValue("09");
   await page.locator("#category").selectOption("Raub");
   await expect(page.locator("#selection")).not.toContainText("多地点公告");
   await expect(page.locator("#stats")).toContainText("可计数点位 0 篇 · 无精确计数点位 1 篇");

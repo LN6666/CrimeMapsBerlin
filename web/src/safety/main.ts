@@ -355,10 +355,13 @@ function listReports(parent: HTMLElement, ids: string[]) {
           const focus = text("button", "查看附件补证范围参考", item);
           focus.onclick = () => focusReviewedScenes(e, [scene]);
         }
-        if (scene.geometry_usage === "source_footprint_reference_only")
+        if (scene.geometry_usage === "source_footprint_reference_only") {
           text("small", scene.actual_non_transit_extent_known === false
             ? "原生地名轮廓参考；实际非公交轨迹及精确事件位置未知，不生成计数点。"
             : "原生地名轮廓参考；精确事件位置未知，不生成计数点。", item);
+          const focus = text("button", "查看原生场所轮廓参考", item);
+          focus.onclick = () => focusReviewedScenes(e, [scene]);
+        }
         if (scene.geometry_usage === "source_road_reference_only" && !scene.transit_route)
           text("small", `${transitGeometryLabel(scene)}；不生成精确案发或计数点。`, item);
         if (scene.static_scene_reference === true && scene.geometry) {
