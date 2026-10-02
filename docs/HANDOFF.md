@@ -1,6 +1,33 @@
 # Handoff and owner decisions
 
-## Hamburg D27 current disclosure correction checkpoint (2026-10-02)
+## Hamburg D28 current checkpoint (2026-10-02)
+
+This window owns Hamburg only; Nuremberg's completed frozen849 local delivery is not
+reopened here.494 frozen bodies are source-reviewed,489 map;3335 phases/3947 locations
+are not independent crime counts.52/87 historical question records disposed:16 dates,
+15 labels,18 counts,2 locality and1 metadata.35 overlapping question records remain.
+
+Six explicit text fields applied:6330386 three geometry notes53/43→53/57;6357051 one
+sharp-weapon mistranslation→possible real gun,not confirmed found;6330731 source phase
+and map note→example membership in each aggregate unknown,no addition.Only6330731
+source review changes;1077 history rows preserve old1076.All494 bodies/other493 source
+reviews,all2730 native shapes,307 relation choices,1851 POI pairs/material links retained.
+Other486 payload records byte-identical;3602 nonmonth files unchanged,3614 candidate/
+preview files equal.Actual browser verifies all six fields in three cards,August/September
+46 loads and empty warning/error console.Runtime50 files and source/web trees match
+the tested Git pipeline;existing code checks reused,new data/browser checks performed.
+
+Restore full-semantic-20261001/{city-acceptance-0006,disclosure-application-0003,map-build-0028}.
+Preview http://127.0.0.1:51834/?city=hamburg .Q6 packet remains immutableD25;current
+overlay/reuse proof bindsD28 and explicitly records the intentional source/note changes.
+Page49/87 progress is the build snapshot;later three dispositions make current52/87.
+Next35 source questions/29 specific native or historical source issues,plus6327121's
+newly observed cyclist-versus-pedestrian geometry wording.Full-city acceptance/current
+whole package unfinished.Media32 original attachments read/applied,3 historical pixel
+gaps,2 police-evidence mentions without public attachments.Standing routine authorization
+binds only after required checks;unpublished.Continue Hamburg only.
+
+## Historical Hamburg D27 disclosure checkpoint (2026-10-02)
 
 This window owns Hamburg only. Nuremberg's separate frozen 849 technical/local delivery Goal
 is complete and human approval is recorded; do not reopen it here. Current Hamburg is D27.
