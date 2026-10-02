@@ -5,6 +5,10 @@ import {mountUncertaintyPanel} from "./uncertainty-panel";
 import {mountFeedbackPanel} from "./feedback";
 import {mountAnalytics} from "./analytics";
 import "./analytics.css";
+import {mountContentTagLauncher} from "./content-tag-launcher";
+import {CONTENT_TAG_COPY} from "./content-tag-copy";
+import {loadSavedStatistics} from "./statistics-loader";
+import "./content-tag-launcher.css";
 import {installMobileLayout} from "./mobile-layout";
 import {t,locale,localeCode,number,date,html,cityName,poiName,sourceContextName,languageURL} from "./i18n";
 import * as maplibregl from "maplibre-gl";
@@ -48,7 +52,7 @@ import { Basemaps, basemapLabels } from "./basemaps";
 import type { BasemapId } from "./basemaps";
 import { externalMaps, externalMapsDirectory } from "./external-maps";
 import { cityGroups, requestedMapView } from "./cities";
-import { cityDestination, requestedMonth } from "./deployment";
+import { assetPath, cityIds, cityDestination, requestedMonth } from "./deployment";
 
 const cityView = requestedMapView(window.location.search);
 const currentCity = cityView.id;
@@ -181,9 +185,43 @@ const methodsPanel=mountAnnouncementMethods(el("methods-panel"),{t,locale,catego
 const uncertaintyPanel=mountUncertaintyPanel(el("uncertainty-panel"),{locale,city:currentCity,translate:t,sourceUncertaintyNotice:t("report.sourceUncertain"),onSelect:(id)=>{const p=openDialog(t("report.scenes"));listReports(p,[id]);}});
 const feedbackPanel=mountFeedbackPanel(el("feedback-panel"),{locale,city:currentCity,translate:t});
 const analyticsPanel=mountAnalytics(el("analytics-panel"),{language:locale,city:currentCity,translate:(key,params)=>t(key,params)});
+// Establish the collapsed mobile layout before measuring the statistics anchor.
 let data: Bundle;
 let map: maplibregl.Map;
 const mobileLayout=installMobileLayout(app,{labels:{filters:t("mobile.filters"),showFilters:t("mobile.showFilters"),hideFilters:t("mobile.hideFilters"),map:t("mobile.map"),details:t("mobile.details"),skipToMap:t("mobile.skipToMap")},onLayoutChange:()=>map?.resize()});
+const statisticsNames = Object.fromEntries(cityIds.map(city => [city, cityName(city, city)]));
+statisticsNames.all14 = {zh:"14城合计",en:"14-city total",de:"Gesamt: 14 Städte"}[locale];
+const statisticsReportUrls: Record<string, string> = {};
+// Build this UI only into artifacts that actually contain the checked saved-statistics assets.
+// Keeping it outside the app avoids adding a row to the map's grid layout.
+const statisticsPanel = import.meta.env.VITE_SAVED_STATISTICS === "true" ? mountContentTagLauncher(document.body, {locale, copy:CONTENT_TAG_COPY[locale],
+  eagleUrl:new URL("../../../assets/brand/police-eagle.png", import.meta.url).href,
+  boundsElement:app.querySelector<HTMLElement>(".map-wrap")!, id:"ai-statistics",
+  staticReportUrls:statisticsReportUrls}) : undefined;
+let statisticsRequest = new AbortController();
+let statisticsReady = false;
+async function loadStatistics() {
+  if (statisticsReady || !statisticsPanel) return;
+  if (statisticsRequest.signal.aborted) statisticsRequest = new AbortController();
+  const signal = statisticsRequest.signal;
+  try {
+    const snapshot = await loadSavedStatistics(currentCity, manifest.generation,
+      Object.values(manifest.months).reduce((sum, month) => sum + month.count, 0), signal);
+    if (signal.aborted) return;
+    for (const key of Object.keys(statisticsReportUrls)) delete statisticsReportUrls[key];
+    if (snapshot.binding.static_reports_checked)
+      for (const key of [...cityIds, "all14"])
+        statisticsReportUrls[key] = assetPath(`/statistics/static-reports/${key}.html`);
+    statisticsPanel.setSummaries(snapshot.ordinary, statisticsNames, currentCity);
+    statisticsPanel.setMacroSummaries(snapshot.macro);
+    statisticsPanel.setCachedBriefs(snapshot.windows, snapshot.briefs);
+    statisticsReady = true;
+  } catch {
+    if (signal.aborted) return;
+    // An absent/stale optional overlay leaves the map usable and shows the existing unavailable copy.
+    try { statisticsPanel.setSummaries([], statisticsNames, currentCity); } catch { /* cleared before validation */ }
+  }
+}
 let basemaps: Basemaps;
 let activeHex: FC = empty();
 let activePois: FC = empty();
@@ -888,6 +926,7 @@ async function start() {
     ))
       el("review-badge").hidden = false;
     client = new DataClient(manifest, cityView.dataRoot);
+    void loadStatistics();
     data = {
       ...manifest,
       schema_version: 1,
@@ -1355,8 +1394,9 @@ async function start() {
     el("map-status").textContent = t("map.notReady");
   }
 }
-window.addEventListener("pageshow",(event)=>{el<HTMLSelectElement>("language").value=locale;if(event.persisted&&loaded){map.resize();void loadMonth();void loadViewport();}});
+window.addEventListener("pageshow",(event)=>{el<HTMLSelectElement>("language").value=locale;if(event.persisted&&loaded){map.resize();void loadMonth();void loadViewport();void loadStatistics();}});
 window.addEventListener("pagehide", (event) => {
+  statisticsRequest.abort();
   if(event.persisted){monthRequest.abort();viewportRequest.abort();clearTimeout(viewportTimer);return;}
   searchRequest.abort();
   monthRequest.abort();
@@ -1367,6 +1407,7 @@ window.addEventListener("pagehide", (event) => {
   uncertaintyPanel.destroy();
   feedbackPanel.destroy();
   analyticsPanel.destroy();
+  statisticsPanel?.destroy();
   mobileLayout.destroy();
   basemaps?.dispose();
   map?.remove();

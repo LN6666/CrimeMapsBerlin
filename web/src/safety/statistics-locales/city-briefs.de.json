@@ -1,0 +1,17 @@
+{
+  "title": "KI-Einschätzung zur Stadt",
+  "period": "Zeitraum der Einschätzung",
+  "periods": [
+    "2026 bis heute",
+    "Letzte 7 Tage",
+    "Letzte 30 Tage",
+    "Letzte 90 Tage"
+  ],
+  "date": "Veröffentlichungsdatum der Meldung · Berliner Ortszeit",
+  "counts": "Dieser Zeitraum umfasst {records} Meldungen; bei {evaluated} sind alle acht gesellschaftlichen Kategorien geprüft.",
+  "unknown": "Bei weiteren {unknown} Meldungen fehlt das Veröffentlichungsdatum. Sie sind in keinem der vier Zeiträume enthalten.",
+  "preview": "Die Prüfung ist noch unvollständig. Diese Einschätzung bezieht sich auf das bisher geprüfte Material.",
+  "pending": "Kategorien noch in Prüfung",
+  "model": "Gemini 3.5 Flash Lite · Gespeicherte Einschätzung",
+  "saved": "Eine Prüfung auf neue Daten ist alle drei Tage vorgesehen. Sind geprüfte neue Daten verfügbar, werden die Einschätzungen aktualisiert. Beim Lesen wird keine KI-Anfrage gestellt."
+}

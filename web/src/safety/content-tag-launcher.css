@@ -1,0 +1,66 @@
+.content-tag-widget { --ct-blue:#075da0; --ct-ink:#183044; --ct-paper:#fff; --ct-line:#cbdce8; color:var(--ct-ink); font-family:inherit; }
+.content-tag-anchor { position:fixed; z-index:40; width:88px; }
+.content-tag-eagle { display:flex; flex-direction:column; align-items:center; gap:5px; width:88px; padding:8px 4px; border:1px solid var(--ct-line); border-radius:22px; background:var(--ct-paper); color:var(--ct-blue); box-shadow:0 6px 24px #18304422; cursor:grab; touch-action:none; user-select:none; }
+.content-tag-eagle:active { cursor:grabbing; }
+.content-tag-eagle img { display:block; width:58px; height:58px; object-fit:contain; pointer-events:none; }
+.content-tag-launcher-label { font-size:12px; font-weight:700; line-height:1.2; }
+.content-tag-eagle:focus-visible, .content-tag-drawer button:focus-visible { outline:3px solid #48a9e6; outline-offset:3px; }
+.content-tag-bubble { position:absolute; bottom:calc(100% + 9px); left:50%; transform:translateX(-50%); white-space:nowrap; padding:7px 12px; border-radius:12px; color:#fff; background:var(--ct-blue); font-size:14px; font-weight:700; box-shadow:0 3px 12px #18304422; opacity:0; visibility:hidden; pointer-events:none; }
+.content-tag-bubble::after { content:""; position:absolute; top:100%; left:50%; margin-left:-5px; border:5px solid transparent; border-top-color:var(--ct-blue); }
+.content-tag-anchor:hover .content-tag-bubble, .content-tag-anchor:focus-within .content-tag-bubble { opacity:1; visibility:visible; }
+.content-tag-anchor[data-tooltip-below="true"] .content-tag-bubble { top:calc(100% + 9px); bottom:auto; }
+.content-tag-anchor[data-tooltip-below="true"] .content-tag-bubble::after { top:auto; bottom:100%; border-top-color:transparent; border-bottom-color:var(--ct-blue); }
+.content-tag-help { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.content-tag-drawer { position:fixed; z-index:45; right:16px; top:88px; bottom:24px; width:min(490px,calc(100vw - 32px)); border:1px solid var(--ct-line); border-radius:20px; background:var(--ct-paper); box-shadow:0 12px 48px #18304433; overflow:auto; overscroll-behavior:contain; }
+.content-tag-drawer[hidden] { display:none; }
+.content-tag-drawer > header { display:flex; align-items:center; justify-content:space-between; gap:12px; position:sticky; top:0; z-index:1; padding:16px 18px; border-bottom:1px solid var(--ct-line); background:var(--ct-paper); }
+.content-tag-drawer h2 { font-size:20px; margin:0; }
+.content-tag-drawer button { color:var(--ct-blue); background:#ecf5fc; border:1px solid var(--ct-line); border-radius:10px; padding:8px 12px; font:inherit; cursor:pointer; }
+.content-tag-preview, .content-tag-highlights, .content-tag-body { margin:0; padding:14px 18px; }
+.content-tag-preview { font-weight:600; font-size:14px; padding-bottom:0; }
+.content-tag-availability { margin:12px 18px 6px; font-size:13px; }
+.content-tag-report-link { display:block; margin:8px 18px; color:var(--ct-blue); font-size:14px; font-weight:600; }
+.content-tag-report-link[hidden] { display:none; }
+.macro-tag-panel h3 { margin:0 0 10px; font-size:16px; }
+.content-tag-behavior-details { margin-top:18px; font-size:13px; }
+.content-tag-scope { display:flex; flex-direction:column; gap:6px; padding:14px 18px 0; font-size:13px; }
+.content-tag-scope[hidden] { display:none; }
+.content-tag-scope select { padding:9px; background:var(--ct-paper); color:var(--ct-ink); border:1px solid var(--ct-line); border-radius:9px; font:inherit; }
+.content-tag-highlights { display:flex; flex-wrap:wrap; gap:6px; padding-bottom:0; }
+.content-tag-highlights p { margin:0; border-radius:8px; padding:6px 8px; background:#ecf5fc; color:var(--ct-blue); font-size:12px; }
+.content-tag-panel { font-size:13px; line-height:1.6; }
+.content-tag-panel p { margin:0 0 10px; }
+.content-tag-panel table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+.content-tag-panel caption { font-weight:700; text-align:left; padding:8px 0; }
+.content-tag-panel th, .content-tag-panel td { text-align:left; padding:8px; border-bottom:1px solid var(--ct-line); }
+.content-tag-panel thead { background:#ecf5fc; }
+.content-tag-panel th[scope="row"] { min-width:115px; }
+@media (max-width:620px) {
+  .content-tag-anchor, .content-tag-eagle { width:76px; }
+  .content-tag-eagle { border-radius:18px; padding:7px 3px; }
+  .content-tag-eagle img { width:48px; height:48px; }
+  .content-tag-drawer { top:auto; bottom:max(8px,env(safe-area-inset-bottom)); left:8px; right:8px; width:auto; max-height:72dvh; border-radius:20px 20px 12px 12px; }
+  .content-tag-drawer > header { padding:12px 14px; }
+}
+@media (hover:none) { .content-tag-bubble { display:none; } }
+.content-tag-city-brief{margin:10px 0;padding:14px;border:1px solid #bdd7ec;border-radius:12px;background:#edf6ff;color:#16374e}
+.content-tag-city-brief h3{margin:0 0 10px;font-size:17px}.content-tag-city-brief label{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px}
+.content-tag-city-brief select{max-width:100%;padding:7px;border:1px solid #9ebbd0;border-radius:7px;background:white;color:#16374e}
+.content-tag-city-brief p{font-size:12px;line-height:1.7;margin:8px 0}.content-tag-city-brief .content-tag-brief-prose{font-size:16px;font-weight:600}
+.content-tag-city-brief small{display:block;font-size:11px;line-height:1.6;color:#46647b}
+
+/* Follow the map's mobile typography; keep long translated labels in the drawer. */
+.content-tag-drawer .content-tag-close { width:44px; height:44px; min-height:44px; flex:0 0 44px; padding:0; font-size:24px; line-height:1; }
+@media (max-width:760px), (max-width:1000px) and (max-height:500px) {
+  .content-tag-drawer > header { min-height:0; flex-wrap:nowrap; }
+  .content-tag-drawer h2 { min-width:0; font-size:1.25rem; line-height:1.3; overflow-wrap:anywhere; }
+  .content-tag-drawer .content-tag-scope { font-size:.875rem; line-height:1.5; }
+  .content-tag-drawer select { min-width:0; max-width:100%; min-height:44px; font-size:1rem; line-height:1.5; }
+  .content-tag-drawer .content-tag-city-brief { margin:12px 14px; padding:14px; }
+  .content-tag-city-brief h3 { font-size:1.25rem; line-height:1.35; }
+  .content-tag-city-brief label { display:flex; flex-direction:column; align-items:stretch; font-size:.875rem; line-height:1.5; }
+  .content-tag-city-brief p, .content-tag-city-brief small { font-size:.875rem; line-height:1.6; overflow-wrap:anywhere; }
+  .content-tag-city-brief .content-tag-brief-prose { font-size:1rem; line-height:1.55; }
+  .content-tag-availability, .content-tag-all-months, .content-tag-panel, .content-tag-behavior-details { font-size:.875rem; line-height:1.6; }
+  .content-tag-drawer summary { min-height:44px; padding-block:8px; }
+}

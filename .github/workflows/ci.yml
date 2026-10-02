@@ -35,4 +35,5 @@ jobs:
       - run: npm --prefix web ci
       - run: npm --prefix web run build
       - run: npm --prefix web run test:navigation
+      - run: npm --prefix web run test:statistics
       - run: cd web && npx playwright install --with-deps chromium && npm test

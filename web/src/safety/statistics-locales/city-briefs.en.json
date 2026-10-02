@@ -1,0 +1,17 @@
+{
+  "title": "AI city brief",
+  "period": "Brief period",
+  "periods": [
+    "2026 to date",
+    "Last 7 days",
+    "Last 30 days",
+    "Last 90 days"
+  ],
+  "date": "By announcement publication date · Dates in Berlin local time",
+  "counts": "This period includes {records} announcements; {evaluated} have been assessed for all eight social categories.",
+  "unknown": "Publication dates are missing for another {unknown} records, which are excluded from these periods.",
+  "preview": "Review coverage is still incomplete. This brief describes the material assessed so far.",
+  "pending": "Awaiting label review",
+  "model": "Gemini 3.5 Flash Lite · Saved brief",
+  "saved": "Update checks are scheduled every three days. Briefs are refreshed when verified new batches are available. Reading a brief makes no AI request."
+}

@@ -70,7 +70,7 @@ class StaticHTML(HTMLParser):
         if tag == "meta" and attrs.get("http-equiv", "").lower() == "content-security-policy":
             policy = attrs.get("content", "")
             directives = dict((p.strip().split(None, 1) + [""])[:2] for p in policy.split(";") if p.strip())
-            if directives.get("script-src") not in {"'self'", "'self' https://challenges.cloudflare.com"} or directives.get("object-src") != "'none'" or directives.get("base-uri") != "'none'":
+            if directives.get("script-src") not in {"'none'", "'self'", "'self' https://challenges.cloudflare.com"} or directives.get("object-src") != "'none'" or directives.get("base-uri") != "'none'":
                 raise ValueError("Missing restrictive executable-content CSP")
             self.csp = True
         if tag == "script":
