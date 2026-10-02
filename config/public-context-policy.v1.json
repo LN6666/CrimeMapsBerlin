@@ -1,0 +1,387 @@
+{
+  "policy_version": "crimemaps-public-context-labels/1.0.0",
+  "scope_policy_version": "crimemaps-poi-scope/1.0.0",
+  "allowlist": {
+    "airport": {
+      "label_key": "poi.airport"
+    },
+    "allotment_garden": {
+      "label_key": "poi.allotment_garden"
+    },
+    "apartments": {
+      "label_key": "poi.apartments"
+    },
+    "arena": {
+      "label_key": "poi.arena"
+    },
+    "association_premises": {
+      "label_key": "poi.association_premises"
+    },
+    "atm": {
+      "label_key": "poi.atm"
+    },
+    "attraction": {
+      "label_key": "poi.attraction"
+    },
+    "bags_and_leather_goods_shop": {
+      "label_key": "poi.bags_and_leather_goods_shop"
+    },
+    "bakery": {
+      "label_key": "poi.bakery"
+    },
+    "bank": {
+      "label_key": "poi.bank"
+    },
+    "bar": {
+      "label_key": "poi.bar"
+    },
+    "bench": {
+      "label_key": "poi.bench"
+    },
+    "beverages_shop": {
+      "label_key": "poi.beverages_shop"
+    },
+    "bicycle_shop": {
+      "label_key": "poi.bicycle_shop"
+    },
+    "bus_station": {
+      "label_key": "poi.bus_station"
+    },
+    "bus_stop": {
+      "label_key": "poi.bus_stop"
+    },
+    "business_park": {
+      "label_key": "poi.business_park"
+    },
+    "business_site": {
+      "label_key": "poi.business_site"
+    },
+    "business_yard": {
+      "label_key": "poi.business_yard"
+    },
+    "cafe": {
+      "label_key": "poi.cafe"
+    },
+    "camp_site": {
+      "label_key": "poi.camp_site"
+    },
+    "cannabis_shop": {
+      "label_key": "poi.cannabis_shop"
+    },
+    "car_dealer": {
+      "label_key": "poi.car_dealer"
+    },
+    "care_facility": {
+      "label_key": "poi.care_facility"
+    },
+    "cemetery": {
+      "label_key": "poi.cemetery"
+    },
+    "chamber_of_commerce": {
+      "label_key": "poi.chamber_of_commerce"
+    },
+    "chapel": {
+      "label_key": "poi.chapel"
+    },
+    "chemist": {
+      "label_key": "poi.chemist"
+    },
+    "church": {
+      "label_key": "poi.church"
+    },
+    "cinema": {
+      "label_key": "poi.cinema"
+    },
+    "city_hall": {
+      "label_key": "poi.city_hall"
+    },
+    "clinic": {
+      "label_key": "poi.clinic"
+    },
+    "clothes": {
+      "label_key": "poi.clothes"
+    },
+    "clothes_shop": {
+      "label_key": "poi.clothes_shop"
+    },
+    "clothing_container": {
+      "label_key": "poi.clothing_container"
+    },
+    "community_centre": {
+      "label_key": "poi.community_centre"
+    },
+    "concert_hall": {
+      "label_key": "poi.concert_hall"
+    },
+    "construction_site": {
+      "label_key": "poi.construction_site"
+    },
+    "container_inspection": {
+      "label_key": "poi.container_inspection"
+    },
+    "court": {
+      "label_key": "poi.court"
+    },
+    "courthouse": {
+      "label_key": "poi.courthouse"
+    },
+    "cultural_association": {
+      "label_key": "poi.cultural_association"
+    },
+    "department_store": {
+      "label_key": "poi.department_store"
+    },
+    "district_townhall": {
+      "label_key": "poi.district_townhall"
+    },
+    "drug_support_service": {
+      "label_key": "poi.drug_support_service"
+    },
+    "drugstore": {
+      "label_key": "poi.drugstore"
+    },
+    "electronics": {
+      "label_key": "poi.electronics"
+    },
+    "electronics_shop": {
+      "label_key": "poi.electronics_shop"
+    },
+    "exhibition_centre": {
+      "label_key": "poi.exhibition_centre"
+    },
+    "fast_food": {
+      "label_key": "poi.fast_food"
+    },
+    "ferry_terminal": {
+      "label_key": "poi.ferry_terminal"
+    },
+    "fitness_centre": {
+      "label_key": "poi.fitness_centre"
+    },
+    "fuel": {
+      "label_key": "poi.fuel"
+    },
+    "gambling": {
+      "label_key": "poi.gambling"
+    },
+    "gastronomy": {
+      "label_key": "poi.gastronomy"
+    },
+    "grocery": {
+      "label_key": "poi.grocery"
+    },
+    "healthcare": {
+      "label_key": "poi.healthcare"
+    },
+    "hospital": {
+      "label_key": "poi.hospital"
+    },
+    "hotel": {
+      "label_key": "poi.hotel"
+    },
+    "ice_cream": {
+      "label_key": "poi.ice_cream"
+    },
+    "industrial_company": {
+      "label_key": "poi.industrial_company"
+    },
+    "industrial_site": {
+      "label_key": "poi.industrial_site"
+    },
+    "jeweller": {
+      "label_key": "poi.jeweller"
+    },
+    "jewellery": {
+      "label_key": "poi.jewellery"
+    },
+    "jewelry": {
+      "label_key": "poi.jewelry"
+    },
+    "kindergarten": {
+      "label_key": "poi.kindergarten"
+    },
+    "kiosk": {
+      "label_key": "poi.kiosk"
+    },
+    "mall": {
+      "label_key": "poi.mall"
+    },
+    "marketplace": {
+      "label_key": "poi.marketplace"
+    },
+    "medical_practice": {
+      "label_key": "poi.medical_practice"
+    },
+    "memorial": {
+      "label_key": "poi.memorial"
+    },
+    "monument": {
+      "label_key": "poi.monument"
+    },
+    "museum": {
+      "label_key": "poi.museum"
+    },
+    "music_school": {
+      "label_key": "poi.music_school"
+    },
+    "nightclub": {
+      "label_key": "poi.nightclub"
+    },
+    "office": {
+      "label_key": "poi.office"
+    },
+    "optician": {
+      "label_key": "poi.optician"
+    },
+    "park": {
+      "label_key": "poi.park"
+    },
+    "park_reference": {
+      "label_key": "poi.park_reference"
+    },
+    "parking": {
+      "label_key": "poi.parking"
+    },
+    "parking_garage": {
+      "label_key": "poi.parking_garage"
+    },
+    "pedestrian_square": {
+      "label_key": "poi.pedestrian_square"
+    },
+    "pharmacy": {
+      "label_key": "poi.pharmacy"
+    },
+    "pitch": {
+      "label_key": "poi.pitch"
+    },
+    "playground": {
+      "label_key": "poi.playground"
+    },
+    "police": {
+      "label_key": "poi.police"
+    },
+    "police_academy": {
+      "label_key": "poi.police_academy"
+    },
+    "police_headquarters": {
+      "label_key": "poi.police_headquarters"
+    },
+    "police_office": {
+      "label_key": "poi.police_office"
+    },
+    "police_station": {
+      "label_key": "poi.police_station"
+    },
+    "prison": {
+      "label_key": "poi.prison"
+    },
+    "pub": {
+      "label_key": "poi.pub"
+    },
+    "public_square": {
+      "label_key": "poi.public_square"
+    },
+    "rail_station": {
+      "label_key": "poi.rail_station"
+    },
+    "rest_area": {
+      "label_key": "poi.rest_area"
+    },
+    "restaurant": {
+      "label_key": "poi.restaurant"
+    },
+    "school": {
+      "label_key": "poi.school"
+    },
+    "security_company": {
+      "label_key": "poi.security_company"
+    },
+    "shipyard": {
+      "label_key": "poi.shipyard"
+    },
+    "shisha_bar": {
+      "label_key": "poi.shisha_bar"
+    },
+    "shop": {
+      "label_key": "poi.shop"
+    },
+    "shopping_centre": {
+      "label_key": "poi.shopping_centre"
+    },
+    "shopping_mall": {
+      "label_key": "poi.shopping_mall"
+    },
+    "skatepark": {
+      "label_key": "poi.skatepark"
+    },
+    "social_support_facility": {
+      "label_key": "poi.social_support_facility"
+    },
+    "sports_pitch": {
+      "label_key": "poi.sports_pitch"
+    },
+    "square": {
+      "label_key": "poi.square"
+    },
+    "stadium": {
+      "label_key": "poi.stadium"
+    },
+    "station": {
+      "label_key": "poi.station"
+    },
+    "station_entrance": {
+      "label_key": "poi.station_entrance"
+    },
+    "supermarket": {
+      "label_key": "poi.supermarket"
+    },
+    "swimming_pool": {
+      "label_key": "poi.swimming_pool"
+    },
+    "theatre": {
+      "label_key": "poi.theatre"
+    },
+    "toilets": {
+      "label_key": "poi.toilets"
+    },
+    "townhall": {
+      "label_key": "poi.townhall"
+    },
+    "tram_station": {
+      "label_key": "poi.tram_station"
+    },
+    "tram_station_entrance": {
+      "label_key": "poi.tram_station_entrance"
+    },
+    "tram_station_reference": {
+      "label_key": "poi.tram_station_reference"
+    },
+    "tram_stop": {
+      "label_key": "poi.tram_stop"
+    },
+    "tram_stop_reference": {
+      "label_key": "poi.tram_stop_reference"
+    },
+    "university": {
+      "label_key": "poi.university"
+    },
+    "warehouse": {
+      "label_key": "poi.warehouse"
+    },
+    "zoo": {
+      "label_key": "poi.zoo"
+    }
+  },
+  "generic_label_key": "sourceContext.generic",
+  "fallback_for_unsupported_kind": true,
+  "raw_kind_is_internal_only": true,
+  "source_label_details_evidence_quote_preserved": true,
+  "changes_source_context_semantics_or_matching": false,
+  "approved_label_catalog_basis": "Existing deliberately authored public POI type labels with all three locale resources; excludes control labels. This does not approve new source/native identity or category decisions.",
+  "label_snapshot_file_sha256": {
+    "/Users/liangjuanning/Documents/ChatGPT/CiviFlux/.runtime/review/public-launch-20261003/language-en/en.json": "27d1c5c20ee39619d9026953be9fd2e7e11ed0ca17535985e38f8fbc0ae08a6b",
+    "/Users/liangjuanning/Documents/ChatGPT/CiviFlux/.runtime/review/public-launch-20261003/language-de/de.json": "dc7ca7c67739af8e0a20865328bba8209bfbe2d634a18c6fc9d0088f180059c0",
+    "/Users/liangjuanning/Documents/ChatGPT/CiviFlux/.runtime/review/public-launch-20261003/language-zh/zh.json": "968167ffd1e84cf05f8978c52b0668793d88c4d1384ec6b5ccb00e0ba618fba2"
+  },
+  "missing_three_locale_labels": []
+}

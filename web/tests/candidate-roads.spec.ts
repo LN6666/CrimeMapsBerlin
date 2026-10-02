@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixture";
 import type { Page } from "@playwright/test";
 import type { LineString, MultiLineString } from "geojson";
 import {
@@ -39,7 +39,7 @@ function report(id: string, changes: Partial<PoliceEvent> = {}): PoliceEvent {
   return {
     id,
     title: id,
-    category: "Raub",
+    category: "raub",
     month: "2026-09",
     event_date: null,
     coordinates: null,
@@ -66,7 +66,7 @@ const rows = [
   report("Wide road A"),
   report("Wide road B"),
   report("Disconnected road", {
-    category: "Sachbeschädigung",
+    category: "sachbeschaedigung",
     geocode_method: "disconnected_street_review",
     candidate_road_geometry: disconnected,
   }),
@@ -200,7 +200,7 @@ async function mockData(page: Page) {
           retrieved_at: "2026-09-27T12:00:00Z",
           coverage: { discovered: 5, fetched: 5, pending: 0, failed: 0 },
           months: { "2026-09": { count: 5 } },
-          categories: ["Raub", "Sachbeschädigung"],
+          categories: ["raub", "sachbeschaedigung"],
           tile_index: { pois: [], roads: [] },
           tile_size: [0.04, 0.025],
           catalog: {
@@ -278,7 +278,7 @@ async function clickCenter(page: Page, offsetY = 0) {
 test.describe("candidate roads browser", () => {
   test.beforeEach(async ({ page }) => {
     await mockData(page);
-    await page.goto("/");
+    await page.goto("/?lang=zh");
     await expect(page.locator("#stats .big")).toHaveText("5");
   });
 
@@ -291,7 +291,7 @@ test.describe("candidate roads browser", () => {
     page.on("pageerror", (error) => errors.push(error.message));
     await expect(page.locator("#candidate-roads-toggle")).toBeChecked();
     await expect(page.locator("#stats")).toContainText(
-      "已定位 1 条 · 未定位 4 条（其中 3 条可查看道路范围）",
+      "1条已定位；4条未定位，其中3条可查看道路参照范围",
     );
     await expect.poll(() => orangePixels(page)).toBeGreaterThan(100);
     await expect
@@ -300,12 +300,12 @@ test.describe("candidate roads browser", () => {
         await clickCenter(page, 5);
         return page.locator("#selection").innerText();
       })
-      .toContain("2 条待定位道路公告");
+      .toContain("2条具体道路位置未知的公告");
     await expect(page.locator("#selection")).toContainText("Wide road A");
     await expect(page.locator("#selection")).toContainText("Wide road B");
-    await expect(page.locator("#selection")).toContainText("具体案发位置未知");
+    await expect(page.locator("#selection")).toContainText("具体事件位置未知");
     await expect(page.locator("#selection")).toContainText(
-      "未计入六边形或 POI 关联",
+      "不计入六边形，也不用于关联具体场所",
     );
     const sources = page.locator("#selection a");
     await expect(sources).toHaveCount(2);
@@ -325,7 +325,7 @@ test.describe("candidate roads browser", () => {
       await expect(page.locator(".maplibregl-ctrl-scale")).toHaveText(scale);
       await clickCenter(page);
       await expect(page.locator("#selection h2")).toHaveText(
-        "2 条待定位道路公告",
+        "2条具体道路位置未知的公告",
       );
     }
     await page.locator("#candidate-roads-toggle").uncheck();
@@ -338,20 +338,20 @@ test.describe("candidate roads browser", () => {
         await clickCenter(page);
         return page.locator("#selection").innerText();
       })
-      .toContain("1 条已收录警情");
+      .toContain("1条公告");
     await expect(page.locator("#selection")).not.toContainText("Wide road A");
     await expect(page.locator("#stats .big")).toHaveText("5");
     await page.locator("#basemap").selectOption("local");
     await expect(page.locator("#candidate-roads-toggle")).not.toBeChecked();
     await clickCenter(page);
-    await expect(page.locator("#selection h2")).toHaveText("1 条已收录警情");
+    await expect(page.locator("#selection h2")).toHaveText("1条公告");
     await page.locator("#candidate-roads-toggle").check();
     await expect
       .poll(async () => {
         await clickCenter(page);
         return page.locator("#selection").innerText();
       })
-      .toContain("2 条待定位道路公告");
+      .toContain("2条具体道路位置未知的公告");
     expect(requests.filter((url) => url.includes("/months/"))).toHaveLength(0);
     expect(requests.filter((url) => url.includes("/pois/"))).toHaveLength(0);
     expect(errors).toEqual([]);
@@ -361,36 +361,36 @@ test.describe("candidate roads browser", () => {
   test("category and month filters replace the batched road ranges", async ({
     page,
   }) => {
-    await page.locator("#category").selectOption("Raub");
+    await page.locator("#category").selectOption("raub");
     await expect(page.locator("#stats .big")).toHaveText("4");
     await expect(page.locator("#stats")).toContainText(
-      "其中 2 条可查看道路范围",
+      "其中2条可查看道路参照范围",
     );
     await expect
       .poll(async () => {
         await clickCenter(page);
         return page.locator("#selection").innerText();
       })
-      .toContain("2 条待定位道路公告");
+      .toContain("2条具体道路位置未知的公告");
     const widePixels = await orangePixels(page);
-    await page.locator("#category").selectOption("Sachbeschädigung");
+    await page.locator("#category").selectOption("sachbeschaedigung");
     await expect(page.locator("#stats .big")).toHaveText("1");
     await expect(page.locator("#stats")).toContainText(
-      "已定位 0 条 · 未定位 1 条（其中 1 条可查看道路范围）",
+      "0条已定位；1条未定位，其中1条可查看道路参照范围",
     );
     await expect.poll(() => orangePixels(page)).toBeLessThan(widePixels);
     await expect.poll(() => orangePixels(page)).toBeGreaterThan(100);
     await clickCenter(page);
     await expect(page.locator("#selection")).not.toContainText("Wide road");
     await expect(page.locator("#selection")).not.toContainText(
-      "待定位道路公告",
+      "具体道路位置未知的公告",
     );
     await page.locator("#month").selectOption("08");
     await expect(page.locator("#stats .big")).toHaveText("—");
     await expect.poll(() => orangePixels(page)).toBe(0);
     await clickCenter(page);
     await expect(page.locator("#selection")).not.toContainText(
-      "待定位道路公告",
+      "具体道路位置未知的公告",
     );
     await page.locator("#month").selectOption("09");
     await expect(page.locator("#stats .big")).toHaveText("1");
@@ -401,7 +401,7 @@ test.describe("candidate roads browser", () => {
         await clickCenter(page);
         return page.locator("#selection").innerText();
       })
-      .toContain("2 条待定位道路公告");
+      .toContain("2条具体道路位置未知的公告");
   });
 
   test("unmapped drawer focuses the entire disconnected range and retains unknown scene wording", async ({
@@ -419,21 +419,21 @@ test.describe("candidate roads browser", () => {
     const card = page
       .locator("#drawer .report")
       .filter({ hasText: "Disconnected road" });
-    await expect(card).toContainText("本地道路数据包含不连续片段");
-    await expect(card).toContainText("匹配街区范围：Mitte");
+    await expect(card).toContainText("本地道路数据包含不连续的路段");
+    await expect(card).toContainText("匹配的地点范围：Mitte");
     await card.locator(".road-focus").click();
     await expect(page.locator("#drawer")).not.toBeVisible();
     await expect(page.locator("#candidate-roads-toggle")).toBeChecked();
     await expect(page.locator("#selection")).toContainText("Disconnected road");
     await expect(page.locator("#selection h2")).toHaveText(
-      "1 条待定位道路公告",
+      "1条具体道路位置未知的公告",
     );
-    await expect(page.locator("#selection")).toContainText("具体案发位置未知");
+    await expect(page.locator("#selection")).toContainText("具体事件位置未知");
     await expect(page.locator("#stats")).toContainText(
-      "已定位 1 条 · 未定位 4 条",
+      "1条已定位；4条未定位",
     );
     // Both separated pieces fit; the gap does not invent a connecting road.
-    await page.locator("#category").selectOption("Sachbeschädigung");
+    await page.locator("#category").selectOption("sachbeschaedigung");
     await expect(page.locator("#stats .big")).toHaveText("1");
     await expect
       .poll(async () => {
@@ -450,7 +450,7 @@ test.describe("candidate roads browser", () => {
     await expect(page.locator(".maplibregl-ctrl-scale")).not.toHaveText("50 m");
     await clickCenter(page);
     await expect(page.locator("#selection")).not.toContainText(
-      "待定位道路公告",
+      "具体道路位置未知的公告",
     );
   });
 });

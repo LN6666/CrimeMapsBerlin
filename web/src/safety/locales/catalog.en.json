@@ -1,0 +1,100 @@
+{
+  "source-01": {
+    "source_url": "https://www.berlin.de/polizei/polizeimeldungen/fakten-hintergruende/artikel.1078268.php",
+    "source_summary_sha256": "8b27f7ec5d5c17d71b0281ac8bcd0e9110bea73ff6b8eaeb49b0edf9e754e960",
+    "summary_en": "Seven police-designated areas are listed. They are areas, not a list of businesses.",
+    "checked_source_snapshot_date": "2026-09-27",
+    "translation_status": "reviewed_auxiliary_translation"
+  },
+  "source-02": {
+    "source_url": "https://www.polizei-beratung.de/themen-und-tipps/diebstahl/taschendiebstahl/",
+    "source_summary_sha256": "2a23110e49cdee03750e53ded35e145cea2f35370a3234da914fef5ff77565a3",
+    "summary_en": "Advice on preventing pickpocketing in crowded transport, shopping and event settings. It does not identify individual venues as crime hotspots.",
+    "checked_source_snapshot_date": "2026-09-27",
+    "translation_status": "reviewed_auxiliary_translation"
+  },
+  "source-03": {
+    "source_url": "https://www.college.police.uk/support-forces/practices/problem-solving-prevent-night-time-economy-related-serious-violence-mcdonalds-restaurants",
+    "source_summary_sha256": "6b048c710b87c43fe241f6313af765a8da65ff07a4367bd207cbcb32f73fce2b",
+    "summary_en": "A study of night-time violence at two city-centre fast-food outlets. Its findings cannot be extended to the whole brand.",
+    "checked_source_snapshot_date": "2026-09-27",
+    "translation_status": "reviewed_auxiliary_translation"
+  },
+  "source-04": {
+    "source_url": "https://www.gmp.police.uk/news/greater-manchester/news/news/2025/july/operation-which-reduced-rape-by-50-and-robbery-by-39-on-peter-street-to-expand-citywide-this-summer/",
+    "source_summary_sha256": "cf30ea42f6c8faddb17424a84b393f2bbac35fe2a7c8ed1ec495b7d49eda612b",
+    "summary_en": "Police work concerning night-time violence in the city centre.",
+    "checked_source_snapshot_date": "2026-09-27",
+    "translation_status": "reviewed_auxiliary_translation"
+  },
+  "source-05": {
+    "source_url": "https://www.police-nationale.interieur.gouv.fr/actualite/transports-en-commun-a-lyon-des-patrouilles-de-policiers-pour-renforcer-securite",
+    "source_summary_sha256": "67a4fd1864e0bb3e9541d95c1c1dd7b9c37ccf59e64bc6b109583bd8f91ad3b7",
+    "summary_en": "Police work on pickpocketing and snatch theft in the transport network.",
+    "checked_source_snapshot_date": "2026-09-27",
+    "translation_status": "reviewed_auxiliary_translation"
+  },
+  "source-06": {
+    "source_url": "https://mossos.gencat.cat/es/consells_de_seguretat/persones/mobilitatsegura/transports-publics/",
+    "source_summary_sha256": "faea460ebee1340ff4368126baef83a132902f17b4d2a386ee86249c1c22e16b",
+    "summary_en": "Pickpocketing advice for stations, platforms, escalators and boarding areas.",
+    "checked_source_snapshot_date": "2026-09-27",
+    "translation_status": "reviewed_auxiliary_translation"
+  },
+  "source-07": {
+    "source_url": "https://www.politie.nl/informatie/waar-moet-ik-op-mijn-hoede-zijn-voor-zakkenrollers.html",
+    "source_summary_sha256": "7619afef00e87a3e5b8531c51ddefe346709ef0aad3fbb81b892038a068cfe7c",
+    "summary_en": "Advice covers markets, transport, airports, attractions and hotel lobbies.",
+    "checked_source_snapshot_date": "2026-09-27",
+    "translation_status": "reviewed_auxiliary_translation"
+  },
+  "source-08": {
+    "source_url": "https://politi.dk/politikredse/koebenhavns-politi/nattelivszoner",
+    "source_summary_sha256": "d36271f93419306634cfbc43f39b63aa2811a133bb2c85362f5daeba03c4bdb9",
+    "summary_en": "Four designated nightlife areas are recorded in the checked source snapshot. It states an extension to 31 May 2027. This system differs from Berlin’s kbO areas.",
+    "checked_source_snapshot_date": "2026-09-27",
+    "translation_status": "reviewed_auxiliary_translation"
+  },
+  "source-09": {
+    "source_url": "https://polisen.se/om-polisen/polisens-arbete/utsatta-omraden/",
+    "source_summary_sha256": "e2fbea0e5e4a68240a8858dd72f5b26c517d8200d8c6ca0a33d411143cc70de6",
+    "summary_en": "The 2025 area list includes a downloadable map. It concerns criminal influence on communities, not a visitor’s probability of becoming a victim.",
+    "checked_source_snapshot_date": "2026-09-27",
+    "translation_status": "reviewed_auxiliary_translation"
+  },
+  "source-10": {
+    "source_url": "https://www.police.be/5998/fr/actualites/stop-pickpockets-suivre-son-intuition",
+    "source_summary_sha256": "b95d827a45f2ddac0302edc418f83ed110b544ffbebb6c52a0aad9648cfbabe0",
+    "summary_en": "A 2021 source discusses prevention and enforcement at five main stations identified from police statistics. It is historical material.",
+    "checked_source_snapshot_date": "2026-09-27",
+    "translation_status": "reviewed_auxiliary_translation"
+  },
+  "source-11": {
+    "source_url": "https://www.police.be/5337/actualites/ameliorer-la-securite-dans-les-parkings",
+    "source_summary_sha256": "3350d5d771ca66c760e9146bcf7326ac308b6cbbfe49a369f9c65978ed98fdbe",
+    "summary_en": "Advice on theft and damage in public car parks. It does not identify a particular car park as a crime hotspot.",
+    "checked_source_snapshot_date": "2026-09-27",
+    "translation_status": "reviewed_auxiliary_translation"
+  },
+  "source-12": {
+    "source_url": "https://www.polizei.gv.at/sbg/start19c0.html?ctrl=3734335266674d385951343d&nwid=4e4b43634338376b622b343d&nwo=48",
+    "source_summary_sha256": "ad4cd51db5a887494a9b9962afc341261a0557d355504edbddfb3edc3e394230",
+    "summary_en": "A 2022 reminder about pickpocketing at stations, on platforms and inside trains.",
+    "checked_source_snapshot_date": "2026-09-27",
+    "translation_status": "reviewed_auxiliary_translation"
+  },
+  "source-13": {
+    "source_url": "https://questure.poliziadistato.it/it/Napoli/articolo/2571643d421e13fb8663533496",
+    "source_summary_sha256": "b3ea5f7a419b8cbc68b3ded83270560555a643a030739f1cfa4334d418ec82c0",
+    "summary_en": "Police work at stations and on railways during Easter 2023, with a specific reference to Napoli Centrale.",
+    "checked_source_snapshot_date": "2026-09-27",
+    "translation_status": "reviewed_auxiliary_translation"
+  },
+  "source-14": {
+    "source_url": "https://poliisi.fi/-/suojaudu-taskuvarkailta",
+    "source_summary_sha256": "919765f6a1ac87af0c9ffb7fb4f12bf618360eb6f0e827887ad3a84c4b9c0fd2",
+    "summary_en": "Pickpocketing advice for events, restaurants, bars and transport connections.",
+    "checked_source_snapshot_date": "2026-09-27",
+    "translation_status": "reviewed_auxiliary_translation"
+  }
+}

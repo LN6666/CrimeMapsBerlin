@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "cities": [
+    {
+      "city": "berlin",
+      "publisher_label": "Polizei Berlin",
+      "source_url": "https://www.berlin.de/polizei/polizeimeldungen/",
+      "publisher_namespace": "https://www.berlin.de/polizei/polizeimeldungen/",
+      "source_kind": "official_archive",
+      "data_basis": "official_announcements",
+      "time_basis": "publication_month",
+      "coverage": "selected_frozen_or_supported_subset; no city crime denominator",
+      "artifact_city_names": [
+        "berlin",
+        "Berlin"
+      ]
+    },
+    {
+      "city": "hamburg",
+      "publisher_label": "Polizei Hamburg",
+      "source_url": "https://www.presseportal.de/blaulicht/nr/6337",
+      "publisher_namespace": "https://www.presseportal.de/blaulicht/nr/6337",
+      "source_kind": "police_authored_newsroom",
+      "data_basis": "official_announcements",
+      "time_basis": "publication_month",
+      "coverage": "selected_frozen_or_supported_subset; no city crime denominator",
+      "artifact_city_names": [
+        "hamburg",
+        "Hamburg"
+      ]
+    },
+    {
+      "city": "munich",
+      "publisher_label": "POLIZEIKARTE",
+      "source_url": "https://polizeikarte.de",
+      "publisher_namespace": "https://polizeikarte.de",
+      "source_kind": "accepted_upstream",
+      "data_basis": "polizeikarte_entries",
+      "time_basis": "upstream_occurrence_month",
+      "coverage": "selected_frozen_or_supported_subset; no city crime denominator",
+      "artifact_city_names": [
+        "munich",
+        "München"
+      ]
+    },
+    {
+      "city": "cologne",
+      "publisher_label": "Polizei Köln",
+      "source_url": "https://koeln.polizei.nrw/presse/pressemitteilungen",
+      "publisher_namespace": "https://koeln.polizei.nrw/presse/pressemitteilungen",
+      "source_kind": "official_archive",
+      "data_basis": "official_announcements",
+      "time_basis": "publication_month",
+      "coverage": "selected_frozen_or_supported_subset; no city crime denominator",
+      "artifact_city_names": [
+        "cologne",
+        "Köln"
+      ]
+    },
+    {
+      "city": "frankfurt",
+      "publisher_label": "Polizeipräsidium Frankfurt am Main",
+      "source_url": "https://www.presseportal.de/blaulicht/nr/4970",
+      "publisher_namespace": "https://www.presseportal.de/blaulicht/nr/4970",
+      "source_kind": "police_authored_newsroom",
+      "data_basis": "official_announcements",
+      "time_basis": "publication_month",
+      "coverage": "selected_frozen_or_supported_subset; no city crime denominator",
+      "artifact_city_names": [
+        "frankfurt",
+        "Frankfurt am Main"
+      ]
+    },
+    {
+      "city": "dusseldorf",
+      "publisher_label": "Polizei Düsseldorf",
+      "source_url": "https://www.presseportal.de/blaulicht/nr/13248",
+      "publisher_namespace": "https://www.presseportal.de/blaulicht/nr/13248",
+      "source_kind": "police_authored_newsroom",
+      "data_basis": "official_announcements",
+      "time_basis": "publication_month",
+      "coverage": "selected_frozen_or_supported_subset; no city crime denominator",
+      "artifact_city_names": [
+        "dusseldorf",
+        "Düsseldorf"
+      ]
+    },
+    {
+      "city": "stuttgart",
+      "publisher_label": "Polizeipräsidium Stuttgart",
+      "source_url": "https://www.presseportal.de/blaulicht/nr/110977",
+      "publisher_namespace": "https://www.presseportal.de/blaulicht/nr/110977",
+      "source_kind": "police_authored_newsroom",
+      "data_basis": "official_announcements",
+      "time_basis": "publication_month",
+      "coverage": "selected_frozen_or_supported_subset; no city crime denominator",
+      "artifact_city_names": [
+        "stuttgart",
+        "Stuttgart"
+      ]
+    },
+    {
+      "city": "leipzig",
+      "publisher_label": "Polizeidirektion Leipzig",
+      "source_url": "https://www.medienservice.sachsen.de/medien/?search%5Binstitution_ids%5D%5B%5D=10976",
+      "publisher_namespace": "https://www.medienservice.sachsen.de/medien/?search%5Binstitution_ids%5D%5B%5D=10976",
+      "source_kind": "official_media_archive",
+      "data_basis": "official_announcements",
+      "time_basis": "publication_month",
+      "coverage": "selected_frozen_or_supported_subset; no city crime denominator",
+      "artifact_city_names": [
+        "leipzig",
+        "Leipzig"
+      ]
+    },
+    {
+      "city": "dortmund",
+      "publisher_label": "Polizei Dortmund",
+      "source_url": "https://dortmund.polizei.nrw/presse/pressemitteilungen",
+      "publisher_namespace": "https://dortmund.polizei.nrw/presse/pressemitteilungen",
+      "source_kind": "native_police_archive",
+      "data_basis": "official_announcements",
+      "time_basis": "publication_month",
+      "coverage": "selected_frozen_or_supported_subset; no city crime denominator",
+      "artifact_city_names": [
+        "dortmund",
+        "Dortmund"
+      ]
+    },
+    {
+      "city": "bremen",
+      "publisher_label": "Polizei Bremen",
+      "source_url": "https://www.presseportal.de/blaulicht/nr/35235",
+      "publisher_namespace": "https://www.presseportal.de/blaulicht/nr/35235",
+      "source_kind": "police_authored_newsroom",
+      "data_basis": "official_announcements",
+      "time_basis": "publication_month",
+      "coverage": "selected_frozen_or_supported_subset; no city crime denominator",
+      "artifact_city_names": [
+        "bremen",
+        "Bremen"
+      ]
+    },
+    {
+      "city": "essen",
+      "publisher_label": "Polizei Essen",
+      "source_url": "https://essen.polizei.nrw/presse/pressemitteilungen",
+      "publisher_namespace": "https://essen.polizei.nrw/presse/pressemitteilungen",
+      "source_kind": "police_native_archive",
+      "data_basis": "official_announcements",
+      "time_basis": "publication_month",
+      "coverage": "selected_frozen_or_supported_subset; no city crime denominator",
+      "artifact_city_names": [
+        "essen",
+        "Essen"
+      ]
+    },
+    {
+      "city": "dresden",
+      "publisher_label": "Polizeidirektion Dresden",
+      "source_url": "https://www.medienservice.sachsen.de/medien/?search%5Binstitution_ids%5D%5B%5D=10997",
+      "publisher_namespace": "https://www.medienservice.sachsen.de/medien/?search%5Binstitution_ids%5D%5B%5D=10997",
+      "source_kind": "official_media_archive",
+      "data_basis": "official_announcements",
+      "time_basis": "publication_month",
+      "coverage": "selected_frozen_or_supported_subset; no city crime denominator",
+      "artifact_city_names": [
+        "dresden",
+        "Dresden"
+      ]
+    },
+    {
+      "city": "hannover",
+      "publisher_label": "Polizeidirektion Hannover",
+      "source_url": "https://www.presseportal.de/blaulicht/nr/66841",
+      "publisher_namespace": "https://www.presseportal.de/blaulicht/nr/66841",
+      "source_kind": "police_linked_newsroom",
+      "data_basis": "official_announcements",
+      "time_basis": "publication_month",
+      "coverage": "selected_frozen_or_supported_subset; no city crime denominator",
+      "artifact_city_names": [
+        "hannover",
+        "Hannover"
+      ]
+    },
+    {
+      "city": "nuremberg",
+      "publisher_label": "Polizeipräsidium Mittelfranken",
+      "source_url": "https://www.presseportal.de/blaulicht/nr/6013",
+      "publisher_namespace": "https://www.presseportal.de/blaulicht/nr/6013",
+      "source_kind": "police_authored_newsroom",
+      "data_basis": "official_announcements",
+      "time_basis": "publication_month",
+      "coverage": "selected_frozen_or_supported_subset; no city crime denominator",
+      "artifact_city_names": [
+        "nuremberg",
+        "Nürnberg",
+        "Nuremberg"
+      ]
+    }
+  ]
+}

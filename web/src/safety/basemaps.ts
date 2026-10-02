@@ -1,15 +1,18 @@
+import {addVectorBasemap,removeVectorBasemap} from "./vector-basemap";
+import {t} from "./i18n";
 import type { ErrorEvent, Map, RasterSourceSpecification } from "maplibre-gl";
 
-export type BasemapId = "street" | "aerial" | "local";
+export type BasemapId = "street" | "aerial" | "local" | "vector";
 
 export const basemapLabels: Record<BasemapId, string> = {
-  street: "标准街道",
-  aerial: "航空影像（2026）",
-  local: "本地简图",
+  vector:t("basemap.vector"),
+  street: t("basemap.street"),
+  aerial: t("basemap.aerial"),
+  local: t("basemap.local"),
 };
 
 export function rasterSource(
-  id: Exclude<BasemapId, "local">,
+  id: Exclude<BasemapId, "local" | "vector">,
 ): RasterSourceSpecification {
   if (id === "street")
     return {
@@ -53,7 +56,8 @@ export class Basemaps {
     this.selected = id;
     this.rendered = id;
     this.failed = false;
-    if (id !== "local") {
+    if(id==="vector")addVectorBasemap(this.map);
+    else if (id !== "local") {
       const sourceId = `basemap-${id}`;
       this.map.addSource(sourceId, rasterSource(id));
       this.map.addLayer(
@@ -76,6 +80,7 @@ export class Basemaps {
   }
 
   private removeRaster() {
+    removeVectorBasemap(this.map);
     for (const id of ["basemap-street", "basemap-aerial"]) {
       if (this.map.getLayer(id)) this.map.removeLayer(id);
       if (this.map.getSource(id)) this.map.removeSource(id);

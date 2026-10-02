@@ -28,6 +28,16 @@ header {
   font-size: 11px;
   color: #258366;
 }
+.review-badge {
+  margin-left: 12px;
+  border: 1px solid #c47d23;
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: #8b4f0d;
+  background: #fff7e8;
+  font-size: 11px;
+  font-weight: 700;
+}
 h1 {
   font-size: 21px;
   margin: 2px 0;
@@ -48,6 +58,9 @@ h4 {
   display: flex;
   gap: 12px;
   align-items: end;
+}
+.city-switch select {
+  min-width: 150px;
 }
 label {
   display: block;
@@ -195,6 +208,48 @@ p {
   color: #92501c;
   font-size: 12px;
 }
+.scene-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 8px;
+  margin: 12px 0;
+  font-size: 11px;
+  color: #52665e;
+}
+.scene-swatch {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 5px;
+}
+.scene-swatch.incident { background: #b43d4b; }
+.scene-swatch.discovery { background: #2874a6; }
+.scene-swatch.operation { background: #986223; }
+.scene-swatch.context { background: #677785; }
+.route-swatch {
+  display: inline-block;
+  width: 18px;
+  height: 3px;
+  margin-right: 6px;
+  vertical-align: middle;
+  background: repeating-linear-gradient(90deg, #6d4bc3 0 7px, transparent 7px 11px);
+}
+.scene-heading {
+  font-weight: 700;
+  margin-top: 10px;
+}
+.scene-list {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 8px;
+}
+.scene-list li {
+  border-left: 3px solid #cddad2;
+  padding: 3px 0 5px 9px;
+  margin: 7px 0;
+  font-size: 12px;
+}
+.scene-list strong { display: block; }
 .report .road-focus {
   display: block;
   margin: 9px 0;
@@ -341,7 +396,7 @@ dialog article button {
 dialog p {
   font-size: 13px;
 }
-details {
+.details details, dialog details {
   margin: 15px 0;
   padding: 10px;
   background: #f3f6f3;
@@ -350,75 +405,210 @@ summary {
   cursor: pointer;
   font-size: 12px;
 }
-@media (max-width: 1000px) {
-  main {
-    grid-template-columns: 230px 1fr;
-  }
-  .details {
-    position: absolute;
-    right: 12px;
-    bottom: 110px;
-    width: 260px;
-    max-height: 40vh;
-    border: 1px solid #d8e1da;
-    border-radius: 10px;
-    z-index: 2;
-  }
-  header {
-    padding: 12px;
-    height: 110px;
-  }
-  main {
-    height: calc(100vh - 110px);
-  }
-  h1 {
-    font-size: 17px;
-  }
-  .toolbar {
-    gap: 5px;
-  }
-  .toolbar button {
-    font-size: 11px;
-  }
+
+/* Header height follows translated text and font scaling. Grid children may shrink. */
+html { scroll-padding-top: calc(var(--mobile-navigation-height, 54px) + 6px); }
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
 }
-@media (max-width: 620px) {
-  header {
-    height: auto;
-    display: block;
+header {
+  height: auto;
+  min-height: 90px;
+  flex: 0 0 auto;
+  gap: 12px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  flex-wrap: wrap;
+}
+header > div, .toolbar > *, main > *, .controls, .details { min-width: 0; }
+.toolbar { flex-wrap: wrap; }
+main {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  grid-template-columns: 270px minmax(0, 1fr) 300px;
+}
+h1, h2, h3, h4, p, small, label, summary, .report, .review-badge,
+.feedback-status, .feedback-receipt { overflow-wrap: anywhere; }
+.review-badge { display: inline-block; }
+.review-badge[hidden] { display: none; }
+select, input, textarea, button { max-width: 100%; }
+textarea { width: 100%; font: inherit; }
+button, select, summary, .city-map-links a { min-height: 44px; }
+button { white-space: normal; }
+.toggle { min-height: 44px; align-items: center; }
+.toggle input { flex: 0 0 auto; width: 22px; height: 22px; }
+.report a, .external-maps a { display: inline-flex; align-items: center; min-height: 44px; }
+.external-maps button { min-height: 44px; }
+.controls, .details, dialog {
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+}
+.map-label, .map-note { pointer-events: none; }
+.map-label > span { min-width: 0; overflow-wrap: anywhere; }
+.basemap-picker { top: calc(24px + var(--map-label-height, 44px)); }
+.map-note { max-width: calc(100% - 88px); }
+.maplibregl-ctrl-group button { width: 44px; height: 44px; }
+.maplibregl-ctrl-attrib { overflow-wrap: anywhere; }
+.maplibregl-ctrl-attrib-button { min-height: 24px; }
+.mobile-navigation { display: none; }
+.mobile-view-settings { display: contents; }
+.mobile-view-settings > summary { display: none; }
+.mobile-basemap-settings > summary { display: none; }
+.mobile-map-notes { display: none; }
+.skip-to-map {
+  position: fixed;
+  top: -200px;
+  left: max(12px, env(safe-area-inset-left));
+  z-index: 20;
+  background: white;
+  padding: 12px;
+  min-height: 44px;
+  border: 2px solid #207a5c;
+}
+.skip-to-map:focus { top: max(8px, env(safe-area-inset-top)); }
+:focus-visible { outline: 3px solid #207a5c; outline-offset: 3px; }
+.map-wrap:focus, .details:focus { outline-offset: -3px; }
+dialog {
+  max-height: calc(100vh - 32px);
+  max-height: calc(var(--mobile-visible-height, 100dvh) - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+dialog .close { position: sticky; top: 0; background: white; z-index: 1; }
+.city-map-links { grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); }
+.scene-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+[hidden] { display: none !important; }
+
+@media (max-width: 1000px) {
+  header { padding-inline: 12px; }
+  h1 { font-size: 19px; }
+  .toolbar { gap: 8px; }
+  main { grid-template-columns: 230px minmax(0, 1fr); grid-template-rows: minmax(260px, 1fr) minmax(120px, .45fr); }
+  .details {
+    position: static;
+    grid-column: 1 / -1;
+    width: auto;
+    max-height: none;
+    border-left: 0;
+    border-top: 1px solid #d8e1da;
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
   }
+  .controls, .details { padding: 16px; }
+}
+
+@media (max-width: 760px), (max-width: 1000px) and (max-height: 500px) {
+  :root { font-size: 100%; line-height: 1.55; }
+  #app { height: auto; min-height: 100vh; min-height: 100dvh; }
+  header { display: block; min-height: 0; padding: max(8px, env(safe-area-inset-top)) 12px 10px; }
+  .brand { font-size: .75rem; letter-spacing: .12em; }
+  .review-badge { font-size: .875rem; margin-left: 8px; padding: 0 6px; }
+  h1 { font-size: 1.25rem; line-height: 1.3; margin: 4px 0 0; }
+  h2 { font-size: 1.25rem; line-height: 1.35; }
+  h3, h4 { font-size: 1rem; line-height: 1.4; }
+  label, summary, .hint, small, .eyebrow, .ends, .scene-legend, .scene-list li, .road-caution,
+  .report .road-focus, .external-maps a, .external-maps button,
+  .report small, #stats p, .map-label, #basemap-error, #basemap-error button { font-size: .875rem; line-height: 1.5; }
+  button, input, select, textarea, #coverage, #stats button, #search-results button, .report p, dialog p { font-size: 1rem; line-height: 1.5; }
+  .toggle { font-size: 1rem; line-height: 1.5; }
+  .mobile-view-settings { display: block; margin: 10px 0 0; padding: 0; min-width: 0; border: 0; background: none; }
+  .mobile-view-settings > summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 8px 12px; min-height: 44px; cursor: pointer; list-style: none;
+    border: 1px solid #cbd8d0; border-radius: 8px; background: #f6f8f5;
+    font-size: 1rem; font-weight: 600; line-height: 1.5;
+  }
+  .mobile-view-settings > summary::-webkit-details-marker { display: none; }
+  .mobile-view-settings > summary > span:first-child { min-width: 0; overflow-wrap: normal; }
+  .mobile-disclosure-icon { flex: 0 0 auto; }
+  .mobile-view-settings[open] .mobile-disclosure-icon { transform: rotate(180deg); }
   .toolbar {
-    margin-top: 8px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 10px;
   }
-  main {
+  .toolbar .city-switch { grid-column: 1 / -1; }
+  .city-switch select, select { min-width: 0; width: 100%; }
+  /* 16px inputs avoid automatic focus zoom in mobile Safari. Browser zoom stays available. */
+  input[type="text"], input:not([type]), textarea, select { font-size: 1rem; min-height: 44px; }
+  main { display: flex; flex-direction: column; flex: 0 0 auto; }
+  .mobile-layout-ready .mobile-navigation {
+    display: grid;
+    grid-template-columns: minmax(0, .9fr) minmax(0, .7fr) minmax(0, 1.4fr);
+    gap: 6px;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    padding: 6px 12px;
+    background: #fff;
+    border-bottom: 1px solid #d8e1da;
+  }
+  .mobile-navigation a {
     display: flex;
-    flex-direction: column;
-    height: auto;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    margin: 0;
+    padding: 8px 4px;
+    border: 1px solid #cbd8d0;
+    border-radius: 7px;
+    overflow-wrap: anywhere;
   }
-  .controls {
-    height: 240px;
-    flex-shrink: 0;
+  .mobile-navigation button { padding: 8px 4px; }
+  .mobile-navigation button, .mobile-navigation a { font-size: 1rem; line-height: 1.5; }
+  .controls { height: auto; flex-shrink: 0; padding: 0; border-right: 0; }
+  .mobile-filter-content {
+    max-height: 65vh;
+    max-height: calc(var(--mobile-visible-height, 100dvh) * .65);
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    padding: 16px;
+    border-bottom: 1px solid #d8e1da;
   }
   .map-wrap {
     height: 65vh;
+    height: clamp(300px, calc(var(--mobile-visible-height, 100dvh) * .65), 680px);
     flex-shrink: 0;
+    scroll-margin-top: 6px;
   }
-  .map-label {
-    left: 12px;
-    top: 12px;
-    max-width: calc(100% - 24px);
+  .map-label { left: 12px; top: 12px; padding: 6px 10px; max-width: calc(100% - 24px); }
+  .basemap-picker { left: 12px; top: calc(18px + var(--map-label-height, 44px)); max-width: calc(100% - 24px); width: min(220px, calc(100% - 24px)); }
+  .basemap-picker { width: auto; max-width: calc(100% - 72px); padding: 0; }
+  .mobile-basemap-settings { margin: 0; padding: 0; border: 0; background: none; }
+  .mobile-basemap-settings > summary { display: block; min-height: 44px; padding: 10px 12px; font-size: .875rem; line-height: 24px; cursor: pointer; }
+  .mobile-basemap-content { padding: 4px 12px 12px; }
+  .mobile-basemap-content label { font-size: .875rem; }
+  .maplibregl-ctrl-attrib { font-size: .75rem; }
+  .maplibregl-ctrl-attrib.maplibregl-compact { min-width: 44px; min-height: 44px; border-radius: 22px; }
+  .maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show) { width: 44px; padding: 0; }
+  .maplibregl-ctrl-attrib-button { width: 44px; height: 44px; min-height: 44px; background-repeat: no-repeat; background-position: center; }
+  .maplibregl-ctrl-scale { font-size: .75rem; }
+  .mobile-map-notes { display: block; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid #d8e1da; }
+  .mobile-map-notes .map-note, .mobile-map-notes .basemap-language-note {
+    position: static; max-width: none; margin: 0 0 8px; padding: 0;
+    font-size: .875rem; line-height: 1.5; background: none; pointer-events: auto;
   }
-  .basemap-picker {
-    left: 12px;
-    top: 72px;
-    max-width: calc(100% - 24px);
-  }
-  .details {
-    position: static;
-    width: 100%;
-    max-height: none;
-  }
-  h2 {
-    font-size: 17px;
-  }
+  .maplibregl-ctrl-bottom-left { bottom: 30px; }
+  .maplibregl-ctrl-bottom-right { padding-bottom: env(safe-area-inset-bottom); }
+  .details { position: static; width: 100%; max-height: none; overflow: visible; padding: 16px; scroll-margin-top: 6px; }
+  .details { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+  dialog { width: calc(100% - 24px); padding: 16px; border-radius: 10px; }
+  .feedback-panel textarea { min-height: 120px; scroll-margin-block: 70px; }
+}
+
+/* A short keyboard viewport is not a wide landscape viewport. */
+@media (min-width: 760px) and (max-width: 1000px) and (max-height: 500px) {
+  .toolbar { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .toolbar .city-switch { grid-column: auto; }
+}
+@media (max-width: 1000px) and (max-height: 500px) {
+  .map-wrap { height: clamp(250px, calc(var(--mobile-visible-height, 100dvh) * .8), 420px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }

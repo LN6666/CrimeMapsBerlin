@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "city": "berlin",
+  "repository": "crimemaps-Berlin",
+  "base_path": "/crimemaps-Berlin/",
+  "artifact_budget_bytes": 900000000,
+  "publication_ready": false
+}

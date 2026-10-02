@@ -78,7 +78,8 @@ def discover(db, records, now):
             """INSERT INTO reports(id,url,title,published,district,first_seen)
             VALUES(:id,:url,:title,:published,:district,:now)
             ON CONFLICT(id) DO UPDATE SET url=excluded.url,title=excluded.title,
-            published=excluded.published,district=excluded.district""",
+            published=excluded.published,
+            district=COALESCE(NULLIF(excluded.district,''),reports.district)""",
             {**r, "now": now},
         )
     db.commit()

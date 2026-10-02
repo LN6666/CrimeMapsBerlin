@@ -1,0 +1,7 @@
+.analytics-summary { font-size: .82rem; line-height: 1.5; padding: .6rem; max-width: 100%; overflow-wrap: anywhere; }
+.analytics-summary h2 { font-size: .9rem; margin: 0; }
+.analytics-summary p { margin: .4rem 0; }
+.analytics-summary details > summary { cursor: pointer; min-height: 44px; padding: .4rem 0; box-sizing: border-box; }
+.analytics-summary ul { padding-left: 1.2rem; margin: .4rem 0; }
+.analytics-summary button { min-height: 44px; max-width: 100%; padding: .45rem .65rem; white-space: normal; }
+.analytics-challenge { max-width: 100%; min-width: 0; }
