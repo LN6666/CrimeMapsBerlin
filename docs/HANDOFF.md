@@ -1,14 +1,30 @@
 # Handoff and owner decisions
 
 This thread owns Hamburg only; completed Nuremberg batches are not reopened here.
-Hamburg's current local candidate is D21: 494 reviewed source announcements,
+Hamburg's current local candidate is D23: 494 reviewed source announcements,
 489 displayed announcements, 3,335 displayed phases and 3,947 displayed locations.
-Its 2,730 GIS dispositions retain 2,124 display references and 606 explicit gaps;
+Its 2,730 GIS dispositions retain 2,127 display references and 603 explicit gaps;
 there are zero generated count points. These are not crime totals. Restore from
-ignored `source-material-application-0002/`, `map-build-0021/` and `release-gate-0004/`.
-The exact release reproduction and affected browser cards are checked; full city
-acceptance and current owner approval remain pending. D20 and earlier packets are
+ignored `native-name-application-0002/` and `map-build-0023/`; exact release
+verification is being saved separately in `release-gate-0005/`. The affected
+browser card and native-vertex checks passed; full city
+acceptance and current owner approval remain pending. D21 and earlier packets are
 historical and immutable.
+
+The source heading of announcement 6285920 explicitly names Weinligstraße while
+its body uses Weinlingstraße. Both source spellings remain. Three scenes now use
+the whole named road as a display reference, retaining all 24 native vertices on
+three OSM ways. Exact fall/care/ambulance positions and hospitals remain unknown;
+no count point or POI association is added. One stale care-phase explanation is
+corrected. The other 493 source decisions, 488 map records, 2,727 geometries,
+307 relationship choices and 1,851 POI context pairs are preserved. D22 is an
+unactivated draft whose browser finding is retained. Current native-task bindings
+are saved in `native-name-application-0002/current-native-task-reconciliation.json`:
+27 completed subtasks with limits, 114 display limits and 28 specific open tasks,
+plus the separate open Jenfelder question, giving 29 specific open questions.
+
+The following D21 task reconciliation is historical; do not use its count of 30
+as the current D23 queue size.
 
 Current task reconciliation is `city-acceptance-0003/`. Six old material-application
 pending entries are now correctly recorded as applied, with their remaining
