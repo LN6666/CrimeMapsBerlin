@@ -501,6 +501,10 @@ dialog .close { position: sticky; top: 0; background: white; z-index: 1; }
   .controls, .details { padding: 16px; }
 }
 
+@media (max-width: 360px) {
+  .brand.site-brand .brand-wordmark { max-width: 180px; }
+}
+
 @media (max-width: 760px), (max-width: 1000px) and (max-height: 500px) {
   :root { font-size: 100%; line-height: 1.55; }
   #app { height: auto; min-height: 100vh; min-height: 100dvh; }
@@ -523,7 +527,9 @@ dialog .close { position: sticky; top: 0; background: white; z-index: 1; }
     font-size: 1rem; font-weight: 600; line-height: 1.5;
   }
   .mobile-view-settings > summary::-webkit-details-marker { display: none; }
-  .mobile-view-settings > summary > span:first-child { min-width: 0; overflow-wrap: normal; }
+  .mobile-view-settings > summary > span:first-child { display: flex; flex: 1; gap: 6px; min-width: 0; }
+  .mobile-view-city { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .mobile-view-period { flex: 0 0 auto; white-space: nowrap; }
   .mobile-disclosure-icon { flex: 0 0 auto; }
   .mobile-view-settings[open] .mobile-disclosure-icon { transform: rotate(180deg); }
   .toolbar {
