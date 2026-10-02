@@ -1,5 +1,38 @@
 # Handoff and owner decisions
 
+## Hamburg D27 current disclosure correction checkpoint (2026-10-02)
+
+This window owns Hamburg only. Nuremberg's separate frozen 849 technical/local delivery Goal
+is complete and human approval is recorded; do not reopen it here. Current Hamburg is D27.
+D25 is the historical material checkpoint; D26 is an unactivated browser draft. All 494
+frozen primary bodies/reviews and 1076 history rows are unchanged; 489 articles map,
+with 3335 phases/3947 locations that are not independent crimes.
+
+Saved 16 LLM date-question dispositions and independently verified 94 current phase times;
+retained source contradictions/unknown dates and explicit planned/later dates. Corrected
+three 6304440 geometry notes from unsupported bar to unspecified venue, plus 6214993's
+map and venue-geometry pending-relationship wording. Its five relations were already
+applied. Actual D26 browser inspection found the second stale disclosure; preserve that
+draft/finding. Actual D27 browser verifies both cards/all five notes, February 44/June 60
+loads, unknown deadline, June map and empty warning/error console.
+
+Other 487 payload records, all 2730 native shapes, 307 relation choices, 1851 POI context
+pairs and original media links remain unchanged. 3602 nonmonth payloads identical;
+3614 candidate/preview files equal. Runtime 50 files equal current Git and code/frontend
+trees unchanged; reuse bound existing code checks, with new current data/browser checks.
+Restore full-semantic-20261001/{city-acceptance-0006,disclosure-application-0002,map-build-0027};
+Q6 input packet remains a historical D25 snapshot and its current-input-overlay binds D27.
+Preview http://127.0.0.1:51833/?city=hamburg . RG8 revalidates the current full canonical
+source/GIS/map/POI chain and exactly reproduces 3614 files; whole-city acceptance remains
+false. Five label-question dispositions also saved after full-body/current-location
+inspection; retain actual name/identity gaps and already completed road-reference subtasks.
+21 of 87 historical question records now have dispositions; 66 remaining are overlapping
+question records, not unread primary bodies or crime counts. 29 specific native/source
+dispositions, remaining question groups, historical media limits and full delivery unfinished.
+Standing routine owner authorization applies after required checks pass; unpublished.
+
+## Historical Hamburg D25 checkpoint
+
 This thread owns Hamburg only; completed Nuremberg batches are not reopened here.
 Hamburg's current local candidate is D25: all 494 frozen sources reviewed,
 489 displayed announcements, 3,335 displayed phases and 3,947 displayed locations.
