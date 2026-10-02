@@ -1,5 +1,12 @@
 # Handoff and owner decisions
 
+The reviewed city assembler now has a separate exact-input owner packet and
+atomic local promotion gate; see [reviewed city release](REVIEWED-CITY-RELEASE.md).
+It revalidates the source/GIS/map/POI chain and every candidate file, requires
+current evidence-bound technical acceptance and explicit owner signoff, and
+retains the previous manifest on failure. This code does not approve Hamburg or
+remove its outstanding full-city acceptance and source-gap disclosures.
+
 ## Current objective
 
 Hamburg D18 supersedes the earlier candidate counts below. The frozen 494-source

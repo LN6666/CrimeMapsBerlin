@@ -1,5 +1,7 @@
 # Changelog
 
+- Add a reviewed-city owner packet and atomic local release gate. Revalidate current official source reviews, actual PBF hashes, native geometry and map choices, acceptance evidence, and every candidate byte before accepting exact owner signoff. Preserve prior publications on failures and show approval labels only when both manifest approval flags are true. No real city is automatically approved or published.
+
 ## Unreleased
 
 - Complete Nuremberg explicit LLM map-semantic drafts: all original 408 announcements classified; 398 current in-city/mixed drafts retain 729 scenes and eighteen eligible announcement count references, with zero pending. Correct ten source-backed article scopes to uncertain without deleting bodies/scenes/classifications. Preserve all 1,561 byte-identical geometry requests and native geometries, rebind inventory/ledger digests, and retain the pre-correction checkpoint. Ninety unique full bodies were reread for concrete questions. Revalidate all 849 stored decisions, evidence, five draft parts and 45 current checksums. Fifteen source uncertainties, formal event-count compilation, browser map and owner approval remain open; runtime data stays ignored.
