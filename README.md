@@ -1,4 +1,9 @@
-<p><img src="docs/assets/city-icon.png" width="112" height="112" alt="Berlin city icon: simplified Brandenburg Gate in ivory on navy"></p>
+<!-- crimemaps:visual-home:start -->
+<p><img src="assets/brand/police-eagle.png" width="72" height="72" alt="CrimeMaps project emblem: navy eagle with police cap"> <img src="docs/assets/city-icon.png" width="64" height="64" alt="Berlin city icon: simplified Brandenburg Gate in ivory on navy"></p>
+<p><img src="assets/brand/crime-map-en.github.svg" width="320" alt="CrimeMaps Germany"> <img src="assets/brand/crime-map-de.github.svg" width="320" alt="CrimeMaps Deutschland"></p>
+<p><img src="docs/assets/cityscape.jpg" width="420" alt="Berlin: AI city illustration: day"> <img src="docs/assets/cityscape-night.jpg" width="420" alt="Berlin: AI city illustration: night"></p>
+<p><sub>AI city illustrations, daytime and nighttime. They do not depict reported events.</sub></p>
+<!-- crimemaps:visual-home:end -->
 
 # CrimeMaps Berlin: police announcements on a map
 
@@ -45,6 +50,10 @@ A label such as ‘possible hate crime’ is an AI-assisted lead based on explic
 <a id="sources"></a>
 
 ## Sources and coverage
+
+<!-- crimemaps:police-website:start -->
+[Police website](https://www.berlin.de/polizei/)
+<!-- crimemaps:police-website:end -->
 
 Report source: [Polizei Berlin](https://www.berlin.de/polizei/polizeimeldungen/).
 
