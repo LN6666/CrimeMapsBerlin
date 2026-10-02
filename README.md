@@ -104,9 +104,18 @@ For security issues, see [SECURITY.md](SECURITY.md). If the repository shows ‘
 
 <a id="stats"></a>
 
-## Visits by country
+## Map page views by country or region
 
-Live visit collection is not connected. No country totals are shown until the service returns real aggregate data. Opening this README or its chart does not add a map page view.
+<picture>
+  <source media="(max-width:640px)" srcset="docs/assets/visitors-by-country.en.mobile.svg">
+  <img src="docs/assets/visitors-by-country.en.svg" alt="Visit statistics not enabled: grey world map and empty country or region ranking" role="img" width="840">
+</picture>
+
+Visit statistics are not enabled yet. The grey world map and empty ranking show that no visit figures are available. Opening this README or its image does not add a map page view.
+
+Once enabled, the card will show only map page views that users agree to record, grouped by country or region. These totals cannot tell you how many different people visited. Groups with fewer than 20 views are hidden or combined, and figures are rounded down to the nearest ten. Light blue means fewer published views, dark blue means more, and grey means no public figure is available. Opening this README or its image does not add a map page view.
+
+Once statistics are enabled, check the update time in the image. GitHub may show an older saved copy. The figures are cumulative, rounded totals as of that update time.
 
 <a id="cities"></a>
 

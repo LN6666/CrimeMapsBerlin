@@ -14,8 +14,8 @@ test('GET does not POST or load challenge; language switch is local and accessib
  page.on('request',r=>{if(r.url().includes('/v1/stats'))reads++;if(r.url().includes('/v1/events'))writes++;if(r.url().includes('challenges.cloudflare.com'))challenge++;});
  await fakeBackend(page);await page.goto('/?configured=1');
  await expect(page.getByRole('status').first()).toHaveText('Counted page views: 40');
- await page.getByText('Page views by country',{exact:true}).click();
- await expect(page.getByText('Germany: 20',{exact:true})).toBeVisible();
+ await page.getByText('Page views by country or region',{exact:true}).click();
+ await expect(page.locator('[data-region=DE]')).toContainText('Germany');await expect(page.locator('[data-region=DE] strong')).toHaveText('20');
  await page.getByRole('button',{name:'Language',exact:true}).click();await expect(page.getByRole('status').first()).toHaveText('Gezählte Seitenaufrufe: 40');
  await page.getByRole('button',{name:'Language',exact:true}).click();await expect(page.getByRole('status').first()).toHaveText('已计入的页面浏览次数：40');
  expect(reads).toBe(1);expect(writes).toBe(0);expect(challenge).toBe(0);
@@ -30,6 +30,7 @@ test('failures and malicious stats fail honestly without creating zeroes or HTML
 });
 test('privacy preference disables collection before challenge script',async({page})=>{
  await page.addInitScript(()=>Object.defineProperty(navigator,'globalPrivacyControl',{value:true}));await fakeBackend(page);await page.goto('/?configured=1');
+ await page.locator('details > summary').click();
  await expect(page.getByText('Your browser’s privacy setting prevents this page view from being counted.')).toBeVisible();
  await expect(page.getByRole('button',{name:'Count this page view'})).toBeHidden();
 });
@@ -42,7 +43,7 @@ test('consent sends one bounded event without country, IP, cookies or credential
   events.push({body:route.request().postDataJSON(),headers:route.request().headers()});return route.fulfill({status:202,headers:allow,body:'{"accepted":true}'});
  });
  await page.goto('/?configured=1');await expect(page.getByRole('button',{name:'Count this page view'})).toBeEnabled();
- await page.getByRole('button',{name:'Count this page view'}).click();await expect(page.getByText('This page view was counted.')).toBeVisible();
+ await page.locator('details > summary').click();await page.getByRole('button',{name:'Count this page view'}).click();await expect(page.getByText('This page view was counted.')).toBeVisible();
  expect(events).toHaveLength(1);expect(events[0].body).toEqual({event:'pageview',path:'/crimemaps-Berlin/',token:'local-test-token'});expect(events[0].headers.cookie).toBeUndefined();expect(events[0].headers.referer).toBeUndefined();
  await expect(page.getByRole('button',{name:'Count this page view'})).toBeHidden();expect(await page.evaluate(()=>localStorage.length)).toBe(0);
 });

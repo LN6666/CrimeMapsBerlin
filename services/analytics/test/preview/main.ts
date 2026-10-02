@@ -3,8 +3,12 @@ import '../../../../web/src/safety/analytics.css';
 const query=new URLSearchParams(location.search);
 const lang=(query.get('lang')??'en') as 'en'|'de'|'zh';
 const fixture=query.get('fixture');
+const city=query.get('namespace')??'berlin';
+const banner=document.querySelector('#fixture-label');if(banner)banner.textContent=({en:'LOCAL DEMO — synthetic counts, not real traffic; no live collection.',de:'LOKALE DEMO — Beispielzahlen, kein echter Verkehr; keine Live-Erfassung.',zh:'本地演示：数字为测试样例，不是真实流量；未接通统计服务。'} as const)[lang];
 if(fixture) {
-  const stats={schema_version:1,city:'berlin',status:'live',metric:'accepted_opt_in_pageviews',total_pv:40,countries:[{code:'DE',pv:20},{code:'OTHER',pv:20}],generated_at:'2026-10-03T00:00:00.000Z',unique_visitors_measured:false,privacy:{minimum_sample:20,rounding:10}};
+  const stats={schema_version:1,city,status:'live',metric:'accepted_opt_in_pageviews',total_pv:40 as number|null,countries:[{code:'DE',pv:20},{code:'OTHER',pv:20}],generated_at:'2026-10-03T00:00:00.000Z',unique_visitors_measured:false,privacy:{minimum_sample:20,rounding:10}};
+  if(fixture==='demo'){stats.total_pv=4730;stats.countries=[{code:'JP',pv:2300},{code:'CN',pv:1200},{code:'US',pv:720},{code:'SG',pv:190},{code:'HK',pv:100},{code:'KR',pv:100},{code:'TW',pv:80},{code:'OTHER',pv:40}];}
+  if(fixture==='low'){stats.total_pv=null;stats.countries=[];}
   const counter=document.createElement('p');counter.id='requests';document.body.append(counter);
   const event=document.createElement('p');event.id='last-event';document.body.append(event);
   let reads=0,writes=0,challenges=0,cancelled=0;
@@ -25,7 +29,7 @@ if(fixture) {
   if(fixture==='privacy')Object.defineProperty(navigator,'globalPrivacyControl',{value:true});
 }
 const configured=query.get('configured')==='1'||(!!fixture&&fixture!=='unconnected');
-const component=mountAnalytics(document.querySelector<HTMLElement>('#analytics')!,{city:'berlin',language:lang,endpoint:configured?'https://analytics.invalid':undefined,siteKey:configured?'local-fixture-public-key':undefined});
+const component=mountAnalytics(document.querySelector<HTMLElement>('#analytics')!,{city,language:lang,endpoint:configured?'https://analytics.invalid':undefined,siteKey:configured&&(query.get('consent')==='1'||!fixture)?'local-fixture-public-key':undefined});
 let language=lang;
 document.querySelector('#language')?.addEventListener('click',()=>{language=language==='en'?'de':language==='de'?'zh':'en';component.setLanguage(language);});
 document.querySelector('#destroy')?.addEventListener('click',()=>component.destroy());
