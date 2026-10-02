@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "city": "berlin",
+  "repository": "crimemaps-Berlin",
+  "police_check_interval_hours": 72,
+  "map_poi_cadence": "calendar_month",
+  "timezone": "Europe/Berlin",
+  "dedupe_successful_month": true,
+  "initial_import_separate": true,
+  "reuse_checked_initial_snapshot_for_its_month": true,
+  "changed_sources_and_affected_locations_only": true,
+  "external_basemap_cache": "provider-controlled",
+  "publication_requires_existing_checked_release_gates": true,
+  "retain_previous_good_release_on_failure": true,
+  "legacy_daily_direct_build_retired": true,
+  "operational_timers_enabled": false,
+  "operational_adapters_ready": false,
+  "coordination_heartbeat_created": true,
+  "first_publication_refresh_required": true,
+  "prelaunch_source_check_max_age_hours": 72
+}

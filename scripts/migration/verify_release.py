@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from contextlib import contextmanager
+from datetime import datetime, timezone, timedelta
 import gzip
 import hashlib
 import json
@@ -61,7 +62,27 @@ def sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def acceptance(path: Path, expected_sha: str, city: str, repository: str, commit: str) -> dict:
+def fresh_prelaunch(value: dict, city: str, repository: str, receipt_sha: str, now: datetime) -> None:
+    refresh = value.get("prelaunch_refresh")
+    if (not isinstance(refresh, dict) or refresh.get("status") != "passed"
+            or refresh.get("city") != city or refresh.get("repository") != repository
+            or refresh.get("checked_candidate_receipt_sha256") != receipt_sha
+            or not isinstance(refresh.get("evidence_sha256"), str)
+            or not re.fullmatch(r"[0-9a-f]{64}", refresh["evidence_sha256"])):
+        raise ValueError("Checked city-bound prelaunch refresh evidence is required")
+    try:
+        checked = datetime.fromisoformat(refresh["last_successful_source_check"].replace("Z", "+00:00"))
+    except (KeyError, TypeError, AttributeError, ValueError) as exc:
+        raise ValueError("Invalid prelaunch source-check timestamp") from exc
+    if checked.tzinfo is None or checked.utcoffset() is None or now.tzinfo is None or now.utcoffset() is None:
+        raise ValueError("Prelaunch source-check timestamps must include a timezone")
+    age = now.astimezone(timezone.utc) - checked.astimezone(timezone.utc)
+    if age < timedelta(0) or age > timedelta(hours=72):
+        raise ValueError("Prelaunch source check is future-dated or older than 72 hours")
+
+
+def acceptance(path: Path, expected_sha: str, city: str, repository: str, commit: str,
+               *, now: datetime | None = None) -> dict:
     if not re.fullmatch(r"[0-9a-f]{64}", expected_sha) or sha(path) != expected_sha:
         raise ValueError("Acceptance differs from the trusted repository digest")
     value = json.loads(path.read_text())
@@ -86,6 +107,8 @@ def acceptance(path: Path, expected_sha: str, city: str, repository: str, commit
         raise ValueError("Current scientific and presentation inputs must be bound")
     if not re.fullmatch(r"[0-9a-f]{64}", value.get("artifact_receipt_sha256", "")):
         raise ValueError("Detached artifact receipt digest missing")
+    fresh_prelaunch(value, city, repository, value["artifact_receipt_sha256"],
+                    now if now is not None else datetime.now(timezone.utc))
     return value
 
 

@@ -1,66 +1,37 @@
-# Updates without LLM calls
+# Checked city updates
 
-## Routine commands
+Official police announcements are checked every **72 hours**, including new announcements and source revisions. Stored map geometry and background POIs are refreshed once per calendar month in **Europe/Berlin**, including roads, buildings and administrative boundaries. Initial import is separate: an accepted initial snapshot can count for its own month. Only a successful, checked snapshot advances the month marker; failed attempts do not skip later retries.
 
-```sh
-export PYTHONPATH="$PWD/src"
-uv run python scripts/safety/update.py
-# Full archive discovery plus bounded body fetching
-uv run python scripts/safety/update.py --full --limit 1500
-```
+The owner has created an active Codex coordination heartbeat for all 14 cities, every three days at 09:00 Asia/Tokyo. The host and app must be available. This coordination schedule is not a city-specific unattended collector or a promise of publication within three days. The first successful coordinated 14-city refresh remains pending. `config/update-cadence.json` keeps local OS timers and an unattended city worker disabled; this repository does not install an extra timer.
 
-Default update: inspect the first two official archive pages, fetch new articles, revisit recently published articles, rotate previously fetched articles older than seven days. On Sundays it scans all archive index pages. It processes up to 250 eligible article requests per run. Full initial import is separate. Source requests are serial, at least one second apart, with a 25-second timeout; same-origin redirects only. Robots.txt must be successfully fetched and permit requests.
+The former daily 07:15 LaunchAgent, shared Berlin-only label and direct collection/build wrapper are retired. `update.py` exits before source collection, extraction, status changes or a map build unless asked for a read-only plan. `schedule.py install` and `remove` also exit without changing any existing LaunchAgent.
 
-SQLite commits after each article. Canonical numeric `pressemitteilung` IDs prevent duplication when an article moves into a year subdirectory. HTTP ETag/Last-Modified save unchanged response bodies where supported. A SHA-256 of normalized article text detects revisions even when HTTP validators are absent. A separate hash-only revision ledger records changes; old full text is not duplicated.
-
-Failures use a persisted retry-after with exponential backoff from five minutes to one day. An error does not erase a previous good report. Parser failures remain visible and do not silently generate empty events. Local lock files prevent simultaneous scheduled and manual collection.
-
-The current-year archive is discovered automatically. Previously stored years remain in SQLite. Historical years not previously collected must be explicitly imported with `collector --year YEAR --full`; the pipeline does not claim missing years are covered.
-
-## Scheduling
-
-macOS, daily at **07:15 in the machine's local time zone**:
+## Inspect the policy
 
 ```sh
+uv run python scripts/safety/cadence.py
 uv run python scripts/safety/schedule.py show
-uv run python scripts/safety/schedule.py install
-uv run python scripts/safety/schedule.py remove
+uv run python scripts/safety/update.py --plan
+# Optional checked local state and a deterministic, timezone-aware inspection time:
+uv run python scripts/safety/cadence.py --state /absolute/path/to/update-state.json --now 2026-10-03T00:00:00Z
 ```
 
-The installer creates a user LaunchAgent pointing at this checkout's `.venv`; no administrator privileges and no Codex/LLM run. It does not immediately fetch. If the computer is asleep/offline the job cannot provide continuous coverage; inspect the status on return. Moving the checkout requires reinstalling the timer.
+These commands only read configuration/state and print eligibility. They do not fetch, publish, install jobs or create runtime state. The planner verifies the lowercase city ID against this repository's identity. Announcement eligibility uses elapsed UTC hours, independent of daylight saving time; monthly eligibility uses Berlin's calendar month.
 
-Linux example, after setting an absolute checkout path:
+## Collection, review and release
 
-```cron
-15 7 * * * cd /absolute/CrimeMapsBerlin && PYTHONPATH=src .venv/bin/python scripts/safety/update.py >> .runtime/safety/scheduled.log 2>&1
-```
+Use each city's existing deterministic source acquisition entrypoint and accepted checkpoints. Reuse unchanged source, location and scientific review evidence. Review new or revised announcements and materially affected location matches; translate new public fields in German, English and Chinese, and run the affected source, semantic, geometry, count and browser checks. Keep acquisition, normalization, geocoding, metric geometry, packaging and publication separate. The old Berlin collector wrapper is not a universal 14-city worker.
 
-OSM refresh is separate to avoid downloading ~100 MB daily:
+Official archive coverage and article revisions must remain explicit. Respect robots.txt, bounded serial rates, retries and local checkpoints. Use native official archives if an intermediary feed is incomplete. A missing, unavailable or failed source check blocks claims of current coverage. A police announcement is not necessarily one crime or a complete crime inventory.
 
-```sh
-uv run python scripts/safety/fetch_osm.py --refresh
-uv run python scripts/safety/extract_pbf.py
-uv run python scripts/safety/build.py
-```
+On failure, preserve the previous good candidate and release; retain local checkpoints and visible errors. Do not remove SQLite state to recover from a transient failure. Preserve source URLs, article IDs, revision hashes, source-bound historical location evidence and unknown geometry when present-day businesses change. Changed OSM inputs may be downloaded through the existing checked acquisition process where supported; unchanged background POIs do not need a new AI review. Third-party basemap tile updates and HTTP caching remain provider-controlled.
 
-On upgrading from the initial street-only index, `update.py` rebuilds the local indexes once from the existing checksum-verified PBF (extraction version 2). This can take several minutes and also creates `localities.json` and `addresses.json`. Subsequent daily runs reuse them; they do not repeatedly extract/download OSM or call a model. A failed extraction/build leaves the previous published manifest available.
+Record three separate dates: `last_successful_source_check`, `last_announcement_publication` and `last_map_poi_snapshot`. Collection or an artifact build must never advance the publication date. `record_success` only returns a proposed copy of checked state: its caller retains the external hash-bound evidence and persists state after success. An accepted snapshot's actual timestamp determines its successful month. Runtime state, raw reports, downloads, generated city data, private review evidence and credentials stay outside Git. Historical backups remain outside the current public site, and each city artifact stays within its size budget.
 
-## Inspect and recover
+## Required before first public launch
 
-- `.runtime/safety/update-status.json`: latest completed scheduled update counts.
-- `.runtime/safety/build-audit.json`: discovered/fetched/pending/errors, mapped/unlocated and output generation.
-- `.runtime/safety/review-queue.json`: source URL, extracted name candidates and reason for abstaining.
-- `.runtime/safety/geocode-comparison.json`: local before/after comparison, if `audit_geocodes.py` was run; article hashes must be unchanged. Never equate a mapped count with a correctness rate.
-- `.runtime/safety/police.sqlite`: durable state; back it up locally with SQLite's backup API.
-- `.runtime/safety/scheduled*.log`: schedule stdout/stderr.
-- `runs` rows without `finished` indicate interruption or source-level failure. The last published manifest remains usable.
+Before publishing the 14 city sites, catch up every official source from its accepted checkpoint through the latest available entries and revisions. Reuse unchanged review evidence, then save a checked per-city update receipt and isolated candidate. At final publication preflight, all 14 receipts must be complete and each latest successful source check must be no more than **72 hours old**. If preparation crosses that window, check only subsequent changes; do not repeat the full historical import.
 
-To resume, rerun the same command. Do not delete SQLite to recover from a transient failure. If HTML changes, save a minimal anonymized fixture and repair `listings` or `article_text`; do not weaken the non-empty-content guard. Investigate repeated failures and unexpectedly low mapping rates before publishing claims about coverage.
+The detached release acceptance includes a `prelaunch_refresh` object with `status: passed`, the city and full repository identity, `last_successful_source_check` as an aware ISO timestamp, a `checked_candidate_receipt_sha256` matching the final artifact receipt, and a hash-bound `evidence_sha256` for the checked refresh receipt. The release verifier rejects missing, stale, future, naive or foreign-city refresh evidence. This requirement is in addition to the existing 15 product checks and bound scientific/presentation inputs.
 
-Publication retains old generation directories for active readers. Periodically remove generations no longer referenced by any open/deployed session; retain at least current and previous. No automatic deletion of evidence is performed.
-
-No automatic public deployment or raw-data upload is included. Static hosting must configure gzip/Brotli for JSON/JS, short caching for `manifest.json`, and immutable caching for generation paths. Code CI never crawls the live police site.
-
-Article-level HTTP 404/410 and other refresh failures are retained as source status. The map marks an unavailable/stale original instead of presenting cached content as freshly verified. Refresh success clears the failure state. Article removal is not interpreted as proof that the original event did not happen.
-
-An open browser checks the small manifest every five minutes while visible. When a new generation appears, it offers a refresh button; it does not silently discard the user's selected report. Network failure leaves the loaded snapshot readable.
+Apply standing routine owner approval to the checked current batch hashes after the required checks pass. No additional routine approval question is needed. The active coordination heartbeat and configured cadence do not enable Pages, bypass release checks or establish completed source coverage. First-publication refresh and actual public deployment remain pending until their recorded checks pass.
