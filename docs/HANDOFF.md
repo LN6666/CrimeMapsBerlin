@@ -1,6 +1,49 @@
 # Handoff and owner decisions
 
-## Hamburg D29 current checkpoint (2026-10-02)
+## Hamburg D30 current delivery (2026-10-02)
+
+This window owns Hamburg only. The frozen494 current official2026 newsroom sources
+have current full-body LLM reviews;3360 phases/3973 locations are retained,489
+announcements/3335 phases/3947 locations mapped. These are not independent crime counts.
+All87 historical and29 specific source/native question records have individual current
+dispositions,with0 pending candidate corrections;actual historical bytes,identity,
+date,boundary and precision limits remain unknown where unsupported. Six initial pages
+return official410;no historical body hash or withdrawn portrait was fabricated.
+
+Three geometry disclosure notes corrected:6326293 Hammerbrook encounter has no explicit
+safe/medical outcome;6340409 police learned of Berlin hospital treatment rather than
+finding the person there;6338143 park and path are separate references with unknown
+joint investigation extent. All494 source reviews,1077 history rows,2730 derived
+geometry results,307 relations and1851 POI pairs remain unchanged. Geometry2730 means
+decisions,of which2127 have display references and603 explicit gaps;1820 map locations
+unlocated,0 exact count points,109326 native POIs/3596 tiles.
+
+All eight current technical acceptance checks passed. Unchanged production RG11
+recompiled source/native geometry/map bindings and exactly reproduced all3614 candidate
+files;preview bytes equal. Actual D30 browser verifies the three notes,August46 load,
+empty warning/error console. Existing actual month/cache/navigation evidence is reused
+only for unchanged behaviours;current exact-head core/browser CI passed.
+The owner's2026-10-02 standing routine batch authorization is bound to current candidate
+and packet hashes after checks. Do not claim a new personal owner inspection.
+
+Complete local ZIP under owner-evidence-package-0004:
+Hamburg-current-494-review-and-map-D30-20261002-local-only.zip,133337135 bytes,
+5676 archived files hash-verified,SHA256
+cbb65e1da2429f7126f539011e64465c6f472d5662ac5fbeb31f56007d295865.
+Current sources,all phases/locations,map/POI,media evidence and gate included;
+PBF/large native index remain external hash-bound inputs. Media32 read/applied,
+3 historical pixel gaps,2 police-evidence mentions without public attachments retained.
+Old sealed directories and D17 package remain historical.
+
+Restore full-semantic-20261001/{city-acceptance-0007,disclosure-application-0005,
+map-build-0030,release-gate-0011,owner-evidence-package-0004}.
+Authoritative delivery-status.current.json;preview http://127.0.0.1:51836/?city=hamburg .
+The candidate retains its pre-promotion flags;standing authorization is a separate
+approval record. PR#10 remains unmerged and public deployment is not performed.
+Next:shared consumer integration/public deployment;do not restart the delivered frozen
+source batch or reopen Nuremberg's completed local batch here.
+
+## Historical Hamburg D29 checkpoint (2026-10-02)
 
 This window owns Hamburg only. All494 frozen source reviews remain current;489 announcements
 map to3335 phases/3947 locations, not independent crimes. All87 historical question records
@@ -12,7 +55,7 @@ Five disclosure fields corrected:6327121 three geometry notes cyclist→46-year-
 6296450 stale pending relation wording→same-case/age/medical relations already applied;
 6265603 April-weekend wording→May1 plan. Actual background browser verifies three cards,
 publication-month April/June/August59/60/46 loads and an empty warning/error console.
-All494 source bodies/reviews,1077 history rows,2730 native shapes,307 relation choices,
+All494 source bodies/reviews,1077 history rows,2730 derived geometry decisions,307 relation choices,
 1851 POI context pairs and original media links retained. Other486 map records and3602
 nonmonth payloads are byte-identical;all3614 candidate/preview files equal. Runtime50
 source files equal the tested Git version;code checks reused,new data/browser checks run.
