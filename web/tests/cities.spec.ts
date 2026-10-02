@@ -64,7 +64,8 @@ for (const [ownerApproved, publicationReady] of [[false, false], [true, true], [
     if (ownerApproved && publicationReady) {
       await expect(page.locator("#review-badge")).toBeHidden();
       await expect(page.locator("#city-switch option:checked")).toHaveText("汉堡");
-      await expect(page.locator("#drawer-content")).toContainText("所有者已检查并批准当前版本");
+      await expect(page.locator("#drawer-content")).toContainText("所有者已批准当前版本");
+      await expect(page.locator("#drawer-content")).not.toContainText("所有者已检查");
       await expect(page.locator("#drawer-content")).not.toContainText("等待所有者批准");
     } else {
       await expect(page.locator("#review-badge")).toBeVisible();

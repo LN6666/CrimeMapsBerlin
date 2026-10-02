@@ -240,9 +240,9 @@ function listReports(parent: HTMLElement, ids: string[]) {
       let status = sourceStatusLabels[e.source_status];
       if (manifest.owner_approved === true && manifest.publication_ready === true) {
         if (e.source_status === "complete_official_archive_source_and_geometry_reviewed")
-          status = "官方来源、场景、几何和地图语义已复核；所有者已检查并批准当前版本";
+          status = "官方来源、场景、几何和地图语义已复核；所有者已批准当前版本";
         else if (e.source_status === "current_cached_official_source_reviewed_with_declared_gaps")
-          status = "当前缓存已逐篇复核；保留位置、POI和引用缺口；所有者已检查并批准当前版本";
+          status = "当前缓存已逐篇复核；保留位置、POI和引用缺口；所有者已批准当前版本";
         else if (e.source_status === "complete_frozen_owner_batch_source_and_geometry_reviewed")
           status = "所有者冻结批次已复核并批准；不代表全量犯罪清单";
       }

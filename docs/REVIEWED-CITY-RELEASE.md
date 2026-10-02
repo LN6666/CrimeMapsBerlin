@@ -82,6 +82,15 @@ must name its `city`, `packet_digest`, `candidate_digest`, `approved: true`,
 coverage and unknown positions. Codex may record a human instruction within its
 authorized scope; a scheduler or LLM verdict cannot supply that approval.
 
+The owner's October 2, 2026 project instruction grants standing authorization
+for the routine batch approval step after required checks pass. For that scope,
+record `authorization_type: "standing_routine_batch_authorization"`, the exact
+current packet/candidate hashes, the instruction evidence and accepted limits.
+Do not ask for the same routine approval again or claim a new personal owner
+inspection. Source and technical checks remain mandatory. Promoted manifests
+record `OWNER_APPROVED` and the authorization type; this metadata does not
+generate approval or authorize a new hosting service.
+
 ```sh
 PYTHONPATH=src uv run python -m crimemapsberlin.reviewed_city_release publish \
   --inputs .runtime/release-inputs.json \

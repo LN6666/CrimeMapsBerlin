@@ -377,7 +377,12 @@ def _install_generation(
         publication_ready=True,
         publication_blocks=[],
     )
-    manifest["metadata"]["review_status"] = "OWNER_INSPECTED_AND_APPROVED"
+    manifest["metadata"]["review_status"] = "OWNER_APPROVED"
+    manifest["metadata"]["owner_authorization_type"] = (
+        "standing_routine_batch_authorization"
+        if approval.get("authorization_type") == "standing_routine_batch_authorization"
+        else "current_packet_owner_approval"
+    )
     manifest["metadata"].pop("candidate_notice", None)
     manifest["metadata"]["owner_review_packet_digest"] = packet["packet_digest"]
     generation = packet["generation"]

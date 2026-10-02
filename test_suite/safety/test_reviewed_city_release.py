@@ -223,7 +223,8 @@ def assert_previous(root, previous):
     assert all(current[path] == digest for path, digest in previous.items())
 
 
-def test_real_chain_packet_and_atomic_promotion_retain_previous(checked_city, tmp_path):
+@pytest.mark.parametrize("authorization_type", [None, "standing_routine_batch_authorization"])
+def test_real_chain_packet_and_atomic_promotion_retain_previous(checked_city, tmp_path, authorization_type):
     inputs, candidate = checked_city
     original = release.file_hashes(candidate)
     packet = release.prepare_packet(inputs=inputs, candidate=candidate)
@@ -233,12 +234,18 @@ def test_real_chain_packet_and_atomic_promotion_retain_previous(checked_city, tm
     assert packet["owner_approved"] is False
     output = tmp_path / "public"
     previous = previous_publication(output)
-    receipt = release.promote_candidate(
-        inputs=inputs, candidate=candidate, approval=approval_for(packet), output=output
-    )
+    approval = approval_for(packet)
+    if authorization_type is not None:
+        approval["authorization_type"] = authorization_type
+    receipt = release.promote_candidate(inputs=inputs, candidate=candidate, approval=approval, output=output)
     manifest = json.loads((output / "manifest.json").read_text())
     assert manifest["owner_approved"] is True and manifest["publication_ready"] is True
     assert manifest["publication_blocks"] == []
+    assert manifest["metadata"]["review_status"] == "OWNER_APPROVED"
+    assert manifest["metadata"]["owner_authorization_type"] == (
+        authorization_type or "current_packet_owner_approval"
+    )
+    assert receipt["owner_approval"] == approval
     assert receipt["public_manifest_sha256"] == release._sha(output / "manifest.json")
     assert release.file_hashes(output / manifest["generation"]) == receipt["generation_file_hashes"]
     assert (output / "previous-good/month.json").read_text() == "previous valid bytes"
