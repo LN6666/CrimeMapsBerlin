@@ -6,7 +6,7 @@ import {CITIES,publishStats,countryFromEdge} from '../src/contract.mjs';
 import {renderChart,validateStats} from '../src/chart.mjs';
 import worker from '../src/worker.mjs';
 const schema=await readFile(new URL('../migrations/0001_analytics.sql',import.meta.url),'utf8');
-const modules=await Promise.all(['worker.mjs','contract.mjs','chart.mjs'].map(async file=>({type:'ESModule',path:new URL('../src/'+file,import.meta.url).pathname,contents:await readFile(new URL('../src/'+file,import.meta.url),'utf8')})));
+const modules=await Promise.all(['worker.mjs','contract.mjs','chart.mjs','world-card.mjs','world-boundaries.mjs'].map(async file=>({type:'ESModule',path:new URL('../src/'+file,import.meta.url).pathname,contents:await readFile(new URL('../src/'+file,import.meta.url),'utf8')})));
 const captures=[];
 const usedTokens=new Set();
 let verifierMode='good';

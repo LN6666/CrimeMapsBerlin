@@ -45,13 +45,15 @@ function validStats(s: unknown, city: string): s is PublicStats {
     && (v.total_pv === null || (Number.isSafeInteger(v.total_pv) && v.total_pv >= 20 && v.total_pv % 10 === 0))
     && Array.isArray(v.countries) && v.countries.length <= 9
     && v.countries.every(r => /^(?:[A-Z]{2}|OTHER)$/.test(r.code) && Number.isSafeInteger(r.pv) && r.pv >= 20 && r.pv % 10 === 0)
-    && new Set(v.countries.map(r => r.code)).size === v.countries.length && Number.isFinite(Date.parse(v.generated_at));
+    && new Set(v.countries.map(r => r.code)).size === v.countries.length && Number.isFinite(Date.parse(v.generated_at))
+    && (v.total_pv === null ? v.countries.length === 0 : v.countries.reduce((sum, row) => sum + row.pv, 0) <= v.total_pv);
 }
 export function mountAnalytics(container: HTMLElement, options: AnalyticsOptions) {
   let language = options.language, alive = true, stats: PublicStats | undefined;
   let dataState: AnalyticsKey = "analytics.loading", countState: AnalyticsKey | undefined;
   let widgetId: string | undefined, api: Turnstile | undefined;
   let started = false;
+  let visualVersion = 0;
   const controllers = new Set<AbortController>();
   const city = options.city, lifecycleKey = `${city}:${window.location.pathname}`;
   let endpoint: string | undefined;
@@ -71,23 +73,28 @@ export function mountAnalytics(container: HTMLElement, options: AnalyticsOptions
   };
   const section = element("section", "analytics-summary");
   const title = element("h2"), summary = element("p"), details = element("details"), caption = element("summary");
-  const list = element("ul"), updated = element("p"), note = element("p"), privacy = element("p");
+  const world = element("div", "analytics-world-host"), updated = element("p"), note = element("p"), privacy = element("p");
   const provider = element("p"), retention = element("p"), providerLink = element("a");
   providerLink.href = "https://www.cloudflare.com/turnstile-privacy-policy/"; providerLink.target = "_blank"; providerLink.rel = "noopener noreferrer";
   const button = element("button"), count = element("p"), challenge = element("div", "analytics-challenge");
   summary.setAttribute("role", "status"); count.setAttribute("role", "status");
   button.type = "button";
-  details.append(caption, list, updated, note); section.append(title, summary, details, privacy, provider, retention, providerLink, button, count, challenge); container.replaceChildren(section);
+  details.append(caption, world, updated, note, privacy, provider, retention, providerLink, button, count, challenge); section.append(title, summary, details); container.replaceChildren(section);
+  const renderWorld = () => {
+    const version = ++visualVersion;
+    if (!alive || !details.open) return;
+    const isCurrent = () => alive && details.open && version === visualVersion;
+    const status = dataState === "analytics.unavailable" ? "unavailable" : dataState === "analytics.loading" ? "loading" : "not_connected";
+    void import("./analytics-world-card").then(module => module.renderAnalyticsWorldCard(world, {city, language, stats, status, isCurrent}))
+      .catch(() => {if(isCurrent()) world.textContent = text("analytics.unavailable");});
+  };
+  details.addEventListener("toggle", renderWorld);
   const render = () => {
     if (!alive) return;
     title.textContent = text("analytics.title"); section.setAttribute("aria-label", text("analytics.title"));
     summary.textContent = stats ? stats.total_pv === null ? text("analytics.small") : text("analytics.pv", {count: new Intl.NumberFormat(language).format(stats.total_pv)}) : text(dataState);
-    details.hidden = !stats; caption.textContent = text("analytics.countries"); list.replaceChildren();
-    for (const row of stats?.countries ?? []) {
-      const li = element("li");
-      const name = row.code === "OTHER" ? text("analytics.other") : new Intl.DisplayNames([language], {type: "region"}).of(row.code) ?? row.code;
-      li.textContent = `${name}: ${new Intl.NumberFormat(language).format(row.pv)}`; list.append(li);
-    }
+    details.hidden = !cities.has(city); caption.textContent = analyticsCopy[language]["analytics.countries"];
+    renderWorld();
     updated.textContent = stats ? text("analytics.generated", {time: new Date(stats.generated_at).toLocaleString(language, {timeZoneName: "short"})}) : "";
     note.textContent = text("analytics.note"); privacy.textContent = text("analytics.privacy");
     privacy.hidden = !endpoint || !options.siteKey;
@@ -150,6 +157,6 @@ export function mountAnalytics(container: HTMLElement, options: AnalyticsOptions
   render(); if (endpoint) void refresh();
   return {
     setLanguage(next: AnalyticsLanguage) { language = next; render(); },
-    destroy() { alive = false; for (const c of controllers) c.abort(); controllers.clear(); removeChallenge(); section.remove(); },
+    destroy() { alive = false; visualVersion++; for (const c of controllers) c.abort(); controllers.clear(); removeChallenge(); section.remove(); },
   };
 }

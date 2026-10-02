@@ -1,7 +1,26 @@
-.analytics-summary { font-size: .82rem; line-height: 1.5; padding: .6rem; max-width: 100%; overflow-wrap: anywhere; }
+.analytics-summary { font-size: .82rem; line-height: 1.5; padding: .6rem; max-width: 100%; overflow-wrap: anywhere; container-type: inline-size; container-name: analytics; }
 .analytics-summary h2 { font-size: .9rem; margin: 0; }
 .analytics-summary p { margin: .4rem 0; }
 .analytics-summary details > summary { cursor: pointer; min-height: 44px; padding: .4rem 0; box-sizing: border-box; }
 .analytics-summary ul { padding-left: 1.2rem; margin: .4rem 0; }
 .analytics-summary button { min-height: 44px; max-width: 100%; padding: .45rem .65rem; white-space: normal; }
 .analytics-challenge { max-width: 100%; min-width: 0; }
+.analytics-world-card { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: .7rem 1rem; background: #fff; color: #25394b; border: 1px solid #e1e7ed; border-radius: 10px; padding: .75rem; min-width: 0; }
+.analytics-world-map { margin: 0; min-width: 0; align-self: center; }
+.analytics-world-map svg { display: block; width: 100%; height: auto; }
+.analytics-world-legend { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .4rem; font-size: .65rem; color: #536779; }
+.analytics-world-legend > span { display: inline-flex; align-items: center; gap: .2rem; }
+.analytics-world-legend i { display: inline-block; width: .65rem; height: .5rem; }
+.analytics-world-scale { flex-wrap: nowrap; }
+.analytics-world-scale i { margin: 0 -.2rem 0 0; }
+.analytics-world-ranking { min-width: 0; }
+.analytics-world-ranking h3 { margin: 0 0 .55rem; font-size: .75rem; }
+.analytics-world-ranking ol { margin: 0; padding: 0; list-style: none; }
+.analytics-world-ranking li { margin: 0 0 .65rem; padding: 0; }
+.analytics-world-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .7rem; font-size: .8rem; line-height: 1.4; }
+.analytics-world-row strong { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+.analytics-world-bar { display: block; height: 5px; border-radius: 3px; margin-top: .2rem; }
+.analytics-world-context, .analytics-world-source { grid-column: 1 / -1; color: #536779; font-size: .7rem; }
+.analytics-world-card .analytics-world-source { margin-top: 0; }
+@media (max-width: 600px) { .analytics-world-card { grid-template-columns: minmax(0, 1fr); gap: .65rem; } }
+@container analytics (max-width: 520px) { .analytics-world-card { grid-template-columns: minmax(0, 1fr); gap: .65rem; } }

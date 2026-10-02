@@ -104,9 +104,18 @@ Für Sicherheitsprobleme gilt [SECURITY.md](SECURITY.md). Wenn das Repository �
 
 <a id="stats"></a>
 
-## Aufrufe nach Land
+## Kartenaufrufe nach Ländern oder Regionen
 
-Eine laufende Besuchserfassung ist noch nicht angeschlossen. Länderzahlen werden erst angezeigt, wenn der Dienst echte zusammengefasste Daten liefert. Das Öffnen dieses README oder der Grafik zählt nicht als Kartenaufruf.
+<picture>
+  <source media="(max-width:640px)" srcset="docs/assets/visitors-by-country.de.mobile.svg">
+  <img src="docs/assets/visitors-by-country.de.svg" alt="Statistik zu Kartenaufrufen noch nicht aktiviert: graue Weltkarte und leere Rangliste nach Ländern oder Regionen" role="img" width="840">
+</picture>
+
+Die Statistik zu Kartenaufrufen ist noch nicht aktiviert. Die graue Weltkarte und die leere Rangliste zeigen, dass noch keine Aufrufzahlen verfügbar sind. Das Öffnen dieser README oder ihres Bildes zählt nicht als Kartenaufruf.
+
+Nach der Aktivierung zeigt die Grafik nur Kartenaufrufe, deren Erfassung die Nutzer erlaubt haben, gruppiert nach Land oder Region. Gezählt werden Seitenaufrufe, keine eindeutigen Personen. Gruppen mit weniger als 20 Aufrufen werden verborgen oder zusammengefasst; die Zahlen werden auf Zehner abgerundet. Hellblau steht für weniger, Dunkelblau für mehr veröffentlichte Aufrufe. Grau bedeutet, dass kein öffentlicher Wert vorliegt.
+
+Die Grafik wird in Abständen aktualisiert. Nach der Aktivierung zeigt die Zeit im Bild den jeweiligen Datenstand. GitHub kann eine ältere Bildfassung anzeigen; die Zahlen sind gerundete Summen.
 
 <a id="cities"></a>
 

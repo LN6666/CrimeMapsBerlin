@@ -99,10 +99,10 @@ async function readStats(env,city) {
   const {results}=await env.DB.prepare('SELECT country,pv,started_at FROM country_totals WHERE city=?1').bind(city).all();
   return publishStats(city,results);
 }
-async function read(request,env,ctx,city,kind,lang) {
+async function read(request,env,ctx,city,kind,lang,layout) {
   // Canonical cache key ignores arbitrary query strings to prevent cache pollution.
   const u=new URL(request.url); u.search='';
-  if(kind==='chart') u.searchParams.set('lang',lang);
+  if(kind==='chart') {u.searchParams.set('lang',lang);u.searchParams.set('layout',layout);}
   const key=new Request(u.toString());
   const cache=globalThis.caches?.default;
   const cached=cache && await cache.match(key);
@@ -111,7 +111,7 @@ async function read(request,env,ctx,city,kind,lang) {
     return new Response(request.method==='HEAD'?null:cached.body,{status:cached.status,headers:h});
   }
   const stats=await readStats(env,city);
-  const result=kind==='chart' ? response(renderChart(stats,lang),200,'image/svg+xml; charset=utf-8',{'Cache-Control':'public, max-age=300'})
+  const result=kind==='chart' ? response(renderChart(stats,lang,layout),200,'image/svg+xml; charset=utf-8',{'Cache-Control':'public, max-age=300'})
     : response(stats,200,undefined,{'Cache-Control':'public, max-age=300'});
   if(cache && ctx?.waitUntil) ctx.waitUntil(cache.put(key,result.clone()));
   const h=new Headers(result.headers); for(const [k,v] of Object.entries(cors(request))) h.set(k,v);
@@ -132,9 +132,11 @@ export default {
     if((kind==='events' && request.method!=='POST') || (kind!=='events' && !['GET','HEAD'].includes(request.method))) return error('method_not_allowed',405,{'Allow':kind==='events'?'POST, OPTIONS':'GET, HEAD'});
     if(!configured(env)) return error('not_connected',503,cors(request));
     const lang=u.searchParams.get('lang')??'en';
+    const layout=u.searchParams.get('layout')??'wide';
     if(kind==='chart' && !LANGUAGES.includes(lang)) return error('language_invalid',400);
+    if(kind==='chart' && !['wide','stacked'].includes(layout)) return error('layout_invalid',400);
     try {
-      return kind==='events' ? await collect(request,env,city) : await read(request,env,ctx,city,kind,lang);
+      return kind==='events' ? await collect(request,env,city) : await read(request,env,ctx,city,kind,lang,layout);
     } catch {
       // Do not log request, IP, token, secrets, or provider error bodies.
       return error('analytics_unavailable',503,cors(request));

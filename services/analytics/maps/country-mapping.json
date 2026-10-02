@@ -1,0 +1,2162 @@
+{
+  "source": {
+    "source": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/ca96624a56bd078437bca8184e78163e5039ad19/geojson/ne_50m_admin_0_map_units.geojson",
+    "repository_commit": "ca96624a56bd078437bca8184e78163e5039ad19",
+    "sha256": "b8d421aca6e9e08e8cdf09cc26af111cc3e0deba4fe915611d58ade71e8a4db0",
+    "bytes": 3179420,
+    "features": 265,
+    "license": "Public domain",
+    "license_url": "https://www.naturalearthdata.com/about/terms-of-use/"
+  },
+  "mapping_field": "ISO_A2_EH",
+  "country_groups_share_one_published_count": true,
+  "geometry_semantics": "Simplified cartographic map units; no nationality/residence/sovereignty inference",
+  "unmapped_source_units": [
+    {
+      "source_unit": "Somaliland",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "-99",
+      "connection_region_code": null,
+      "drawn": false,
+      "reason": "no inferred parent assignment"
+    },
+    {
+      "source_unit": "N. Cyprus",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "-99",
+      "connection_region_code": null,
+      "drawn": false,
+      "reason": "no inferred parent assignment"
+    },
+    {
+      "source_unit": "Siachen Glacier",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "-99",
+      "connection_region_code": null,
+      "drawn": false,
+      "reason": "no inferred parent assignment"
+    }
+  ],
+  "features": [
+    {
+      "source_unit": "Zimbabwe",
+      "source_iso_a2": "ZW",
+      "source_iso_a2_eh": "ZW",
+      "connection_region_code": "ZW",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Zambia",
+      "source_iso_a2": "ZM",
+      "source_iso_a2_eh": "ZM",
+      "connection_region_code": "ZM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Yemen",
+      "source_iso_a2": "YE",
+      "source_iso_a2_eh": "YE",
+      "connection_region_code": "YE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Vietnam",
+      "source_iso_a2": "VN",
+      "source_iso_a2_eh": "VN",
+      "connection_region_code": "VN",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Venezuela",
+      "source_iso_a2": "VE",
+      "source_iso_a2_eh": "VE",
+      "connection_region_code": "VE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Vatican",
+      "source_iso_a2": "VA",
+      "source_iso_a2_eh": "VA",
+      "connection_region_code": "VA",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Vanuatu",
+      "source_iso_a2": "VU",
+      "source_iso_a2_eh": "VU",
+      "connection_region_code": "VU",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Uzbekistan",
+      "source_iso_a2": "UZ",
+      "source_iso_a2_eh": "UZ",
+      "connection_region_code": "UZ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Uruguay",
+      "source_iso_a2": "UY",
+      "source_iso_a2_eh": "UY",
+      "connection_region_code": "UY",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Micronesia",
+      "source_iso_a2": "FM",
+      "source_iso_a2_eh": "FM",
+      "connection_region_code": "FM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Marshall Is.",
+      "source_iso_a2": "MH",
+      "source_iso_a2_eh": "MH",
+      "connection_region_code": "MH",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "N. Mariana Is.",
+      "source_iso_a2": "MP",
+      "source_iso_a2_eh": "MP",
+      "connection_region_code": "MP",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "U.S. Virgin Is.",
+      "source_iso_a2": "VI",
+      "source_iso_a2_eh": "VI",
+      "connection_region_code": "VI",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Guam",
+      "source_iso_a2": "GU",
+      "source_iso_a2_eh": "GU",
+      "connection_region_code": "GU",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "American Samoa",
+      "source_iso_a2": "AS",
+      "source_iso_a2_eh": "AS",
+      "connection_region_code": "AS",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Puerto Rico",
+      "source_iso_a2": "PR",
+      "source_iso_a2_eh": "PR",
+      "connection_region_code": "PR",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "United States of America",
+      "source_iso_a2": "US",
+      "source_iso_a2_eh": "US",
+      "connection_region_code": "US",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "S. Geo. and the Is.",
+      "source_iso_a2": "GS",
+      "source_iso_a2_eh": "GS",
+      "connection_region_code": "GS",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Br. Indian Ocean Ter.",
+      "source_iso_a2": "IO",
+      "source_iso_a2_eh": "IO",
+      "connection_region_code": "IO",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Saint Helena",
+      "source_iso_a2": "SH",
+      "source_iso_a2_eh": "SH",
+      "connection_region_code": "SH",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Pitcairn Is.",
+      "source_iso_a2": "PN",
+      "source_iso_a2_eh": "PN",
+      "connection_region_code": "PN",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Anguilla",
+      "source_iso_a2": "AI",
+      "source_iso_a2_eh": "AI",
+      "connection_region_code": "AI",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Falkland Is.",
+      "source_iso_a2": "FK",
+      "source_iso_a2_eh": "FK",
+      "connection_region_code": "FK",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Cayman Is.",
+      "source_iso_a2": "KY",
+      "source_iso_a2_eh": "KY",
+      "connection_region_code": "KY",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Bermuda",
+      "source_iso_a2": "BM",
+      "source_iso_a2_eh": "BM",
+      "connection_region_code": "BM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "British Virgin Is.",
+      "source_iso_a2": "VG",
+      "source_iso_a2_eh": "VG",
+      "connection_region_code": "VG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Turks and Caicos Is.",
+      "source_iso_a2": "TC",
+      "source_iso_a2_eh": "TC",
+      "connection_region_code": "TC",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Montserrat",
+      "source_iso_a2": "MS",
+      "source_iso_a2_eh": "MS",
+      "connection_region_code": "MS",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Jersey",
+      "source_iso_a2": "JE",
+      "source_iso_a2_eh": "JE",
+      "connection_region_code": "JE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Guernsey",
+      "source_iso_a2": "GG",
+      "source_iso_a2_eh": "GG",
+      "connection_region_code": "GG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Isle of Man",
+      "source_iso_a2": "IM",
+      "source_iso_a2_eh": "IM",
+      "connection_region_code": "IM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Wales",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "GB",
+      "connection_region_code": "GB",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Scotland",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "GB",
+      "connection_region_code": "GB",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "N. Ireland",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "GB",
+      "connection_region_code": "GB",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "England",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "GB",
+      "connection_region_code": "GB",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "United Arab Emirates",
+      "source_iso_a2": "AE",
+      "source_iso_a2_eh": "AE",
+      "connection_region_code": "AE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Ukraine",
+      "source_iso_a2": "UA",
+      "source_iso_a2_eh": "UA",
+      "connection_region_code": "UA",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Uganda",
+      "source_iso_a2": "UG",
+      "source_iso_a2_eh": "UG",
+      "connection_region_code": "UG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Turkmenistan",
+      "source_iso_a2": "TM",
+      "source_iso_a2_eh": "TM",
+      "connection_region_code": "TM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Turkey",
+      "source_iso_a2": "TR",
+      "source_iso_a2_eh": "TR",
+      "connection_region_code": "TR",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Tunisia",
+      "source_iso_a2": "TN",
+      "source_iso_a2_eh": "TN",
+      "connection_region_code": "TN",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Trinidad and Tobago",
+      "source_iso_a2": "TT",
+      "source_iso_a2_eh": "TT",
+      "connection_region_code": "TT",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Tonga",
+      "source_iso_a2": "TO",
+      "source_iso_a2_eh": "TO",
+      "connection_region_code": "TO",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Togo",
+      "source_iso_a2": "TG",
+      "source_iso_a2_eh": "TG",
+      "connection_region_code": "TG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Timor-Leste",
+      "source_iso_a2": "TL",
+      "source_iso_a2_eh": "TL",
+      "connection_region_code": "TL",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Thailand",
+      "source_iso_a2": "TH",
+      "source_iso_a2_eh": "TH",
+      "connection_region_code": "TH",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Zanzibar",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "TZ",
+      "connection_region_code": "TZ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Tanzania",
+      "source_iso_a2": "TZ",
+      "source_iso_a2_eh": "TZ",
+      "connection_region_code": "TZ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Tajikistan",
+      "source_iso_a2": "TJ",
+      "source_iso_a2_eh": "TJ",
+      "connection_region_code": "TJ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Taiwan",
+      "source_iso_a2": "CN-TW",
+      "source_iso_a2_eh": "TW",
+      "connection_region_code": "TW",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Syria",
+      "source_iso_a2": "SY",
+      "source_iso_a2_eh": "SY",
+      "connection_region_code": "SY",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Switzerland",
+      "source_iso_a2": "CH",
+      "source_iso_a2_eh": "CH",
+      "connection_region_code": "CH",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Sweden",
+      "source_iso_a2": "SE",
+      "source_iso_a2_eh": "SE",
+      "connection_region_code": "SE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "eSwatini",
+      "source_iso_a2": "SZ",
+      "source_iso_a2_eh": "SZ",
+      "connection_region_code": "SZ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Suriname",
+      "source_iso_a2": "SR",
+      "source_iso_a2_eh": "SR",
+      "connection_region_code": "SR",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "S. Sudan",
+      "source_iso_a2": "SS",
+      "source_iso_a2_eh": "SS",
+      "connection_region_code": "SS",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Sudan",
+      "source_iso_a2": "SD",
+      "source_iso_a2_eh": "SD",
+      "connection_region_code": "SD",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Sri Lanka",
+      "source_iso_a2": "LK",
+      "source_iso_a2_eh": "LK",
+      "connection_region_code": "LK",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Spain",
+      "source_iso_a2": "ES",
+      "source_iso_a2_eh": "ES",
+      "connection_region_code": "ES",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "South Korea",
+      "source_iso_a2": "KR",
+      "source_iso_a2_eh": "KR",
+      "connection_region_code": "KR",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "South Africa",
+      "source_iso_a2": "ZA",
+      "source_iso_a2_eh": "ZA",
+      "connection_region_code": "ZA",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Somalia",
+      "source_iso_a2": "SO",
+      "source_iso_a2_eh": "SO",
+      "connection_region_code": "SO",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Somaliland",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "-99",
+      "connection_region_code": null,
+      "drawn": false,
+      "reason": "no inferred parent assignment"
+    },
+    {
+      "source_unit": "Solomon Is.",
+      "source_iso_a2": "SB",
+      "source_iso_a2_eh": "SB",
+      "connection_region_code": "SB",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Slovakia",
+      "source_iso_a2": "SK",
+      "source_iso_a2_eh": "SK",
+      "connection_region_code": "SK",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Slovenia",
+      "source_iso_a2": "SI",
+      "source_iso_a2_eh": "SI",
+      "connection_region_code": "SI",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Singapore",
+      "source_iso_a2": "SG",
+      "source_iso_a2_eh": "SG",
+      "connection_region_code": "SG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Sierra Leone",
+      "source_iso_a2": "SL",
+      "source_iso_a2_eh": "SL",
+      "connection_region_code": "SL",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Seychelles",
+      "source_iso_a2": "SC",
+      "source_iso_a2_eh": "SC",
+      "connection_region_code": "SC",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Serbia",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "RS",
+      "connection_region_code": "RS",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Vojvodina",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "RS",
+      "connection_region_code": "RS",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Senegal",
+      "source_iso_a2": "SN",
+      "source_iso_a2_eh": "SN",
+      "connection_region_code": "SN",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Saudi Arabia",
+      "source_iso_a2": "SA",
+      "source_iso_a2_eh": "SA",
+      "connection_region_code": "SA",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "São Tomé and Principe",
+      "source_iso_a2": "ST",
+      "source_iso_a2_eh": "ST",
+      "connection_region_code": "ST",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "San Marino",
+      "source_iso_a2": "SM",
+      "source_iso_a2_eh": "SM",
+      "connection_region_code": "SM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Samoa",
+      "source_iso_a2": "WS",
+      "source_iso_a2_eh": "WS",
+      "connection_region_code": "WS",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "St. Vin. and Gren.",
+      "source_iso_a2": "VC",
+      "source_iso_a2_eh": "VC",
+      "connection_region_code": "VC",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Saint Lucia",
+      "source_iso_a2": "LC",
+      "source_iso_a2_eh": "LC",
+      "connection_region_code": "LC",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "St. Kitts and Nevis",
+      "source_iso_a2": "KN",
+      "source_iso_a2_eh": "KN",
+      "connection_region_code": "KN",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Rwanda",
+      "source_iso_a2": "RW",
+      "source_iso_a2_eh": "RW",
+      "connection_region_code": "RW",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Russia",
+      "source_iso_a2": "RU",
+      "source_iso_a2_eh": "RU",
+      "connection_region_code": "RU",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Romania",
+      "source_iso_a2": "RO",
+      "source_iso_a2_eh": "RO",
+      "connection_region_code": "RO",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Qatar",
+      "source_iso_a2": "QA",
+      "source_iso_a2_eh": "QA",
+      "connection_region_code": "QA",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Madeira",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "PT",
+      "connection_region_code": "PT",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Portugal",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "PT",
+      "connection_region_code": "PT",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Azores",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "PT",
+      "connection_region_code": "PT",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Poland",
+      "source_iso_a2": "PL",
+      "source_iso_a2_eh": "PL",
+      "connection_region_code": "PL",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Philippines",
+      "source_iso_a2": "PH",
+      "source_iso_a2_eh": "PH",
+      "connection_region_code": "PH",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Peru",
+      "source_iso_a2": "PE",
+      "source_iso_a2_eh": "PE",
+      "connection_region_code": "PE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Paraguay",
+      "source_iso_a2": "PY",
+      "source_iso_a2_eh": "PY",
+      "connection_region_code": "PY",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Papua New Guinea",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "PG",
+      "connection_region_code": "PG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Bougainville",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "PG",
+      "connection_region_code": "PG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Panama",
+      "source_iso_a2": "PA",
+      "source_iso_a2_eh": "PA",
+      "connection_region_code": "PA",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Palau",
+      "source_iso_a2": "PW",
+      "source_iso_a2_eh": "PW",
+      "connection_region_code": "PW",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Pakistan",
+      "source_iso_a2": "PK",
+      "source_iso_a2_eh": "PK",
+      "connection_region_code": "PK",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Oman",
+      "source_iso_a2": "OM",
+      "source_iso_a2_eh": "OM",
+      "connection_region_code": "OM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Norway",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "NO",
+      "connection_region_code": "NO",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Jan Mayen I.",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "NO",
+      "connection_region_code": "NO",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Svalbard Is.",
+      "source_iso_a2": "SJ",
+      "source_iso_a2_eh": "SJ",
+      "connection_region_code": "SJ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "North Korea",
+      "source_iso_a2": "KP",
+      "source_iso_a2_eh": "KP",
+      "connection_region_code": "KP",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Nigeria",
+      "source_iso_a2": "NG",
+      "source_iso_a2_eh": "NG",
+      "connection_region_code": "NG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Niger",
+      "source_iso_a2": "NE",
+      "source_iso_a2_eh": "NE",
+      "connection_region_code": "NE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Nicaragua",
+      "source_iso_a2": "NI",
+      "source_iso_a2_eh": "NI",
+      "connection_region_code": "NI",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "New Zealand",
+      "source_iso_a2": "NZ",
+      "source_iso_a2_eh": "NZ",
+      "connection_region_code": "NZ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Niue",
+      "source_iso_a2": "NU",
+      "source_iso_a2_eh": "NU",
+      "connection_region_code": "NU",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Tokelau",
+      "source_iso_a2": "TK",
+      "source_iso_a2_eh": "TK",
+      "connection_region_code": "TK",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Cook Is.",
+      "source_iso_a2": "CK",
+      "source_iso_a2_eh": "CK",
+      "connection_region_code": "CK",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Netherlands",
+      "source_iso_a2": "NL",
+      "source_iso_a2_eh": "NL",
+      "connection_region_code": "NL",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Aruba",
+      "source_iso_a2": "AW",
+      "source_iso_a2_eh": "AW",
+      "connection_region_code": "AW",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Caribbean Netherlands",
+      "source_iso_a2": "BQ",
+      "source_iso_a2_eh": "BQ",
+      "connection_region_code": "BQ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Curaçao",
+      "source_iso_a2": "CW",
+      "source_iso_a2_eh": "CW",
+      "connection_region_code": "CW",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Nepal",
+      "source_iso_a2": "NP",
+      "source_iso_a2_eh": "NP",
+      "connection_region_code": "NP",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Nauru",
+      "source_iso_a2": "NR",
+      "source_iso_a2_eh": "NR",
+      "connection_region_code": "NR",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Namibia",
+      "source_iso_a2": "NA",
+      "source_iso_a2_eh": "NA",
+      "connection_region_code": "NA",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Mozambique",
+      "source_iso_a2": "MZ",
+      "source_iso_a2_eh": "MZ",
+      "connection_region_code": "MZ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Morocco",
+      "source_iso_a2": "MA",
+      "source_iso_a2_eh": "MA",
+      "connection_region_code": "MA",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "W. Sahara",
+      "source_iso_a2": "EH",
+      "source_iso_a2_eh": "EH",
+      "connection_region_code": "EH",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Montenegro",
+      "source_iso_a2": "ME",
+      "source_iso_a2_eh": "ME",
+      "connection_region_code": "ME",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Mongolia",
+      "source_iso_a2": "MN",
+      "source_iso_a2_eh": "MN",
+      "connection_region_code": "MN",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Moldova",
+      "source_iso_a2": "MD",
+      "source_iso_a2_eh": "MD",
+      "connection_region_code": "MD",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Monaco",
+      "source_iso_a2": "MC",
+      "source_iso_a2_eh": "MC",
+      "connection_region_code": "MC",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Mexico",
+      "source_iso_a2": "MX",
+      "source_iso_a2_eh": "MX",
+      "connection_region_code": "MX",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Mauritius",
+      "source_iso_a2": "MU",
+      "source_iso_a2_eh": "MU",
+      "connection_region_code": "MU",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Mauritania",
+      "source_iso_a2": "MR",
+      "source_iso_a2_eh": "MR",
+      "connection_region_code": "MR",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Malta",
+      "source_iso_a2": "MT",
+      "source_iso_a2_eh": "MT",
+      "connection_region_code": "MT",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Mali",
+      "source_iso_a2": "ML",
+      "source_iso_a2_eh": "ML",
+      "connection_region_code": "ML",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Maldives",
+      "source_iso_a2": "MV",
+      "source_iso_a2_eh": "MV",
+      "connection_region_code": "MV",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Malaysia",
+      "source_iso_a2": "MY",
+      "source_iso_a2_eh": "MY",
+      "connection_region_code": "MY",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Malawi",
+      "source_iso_a2": "MW",
+      "source_iso_a2_eh": "MW",
+      "connection_region_code": "MW",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Madagascar",
+      "source_iso_a2": "MG",
+      "source_iso_a2_eh": "MG",
+      "connection_region_code": "MG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "North Macedonia",
+      "source_iso_a2": "MK",
+      "source_iso_a2_eh": "MK",
+      "connection_region_code": "MK",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Luxembourg",
+      "source_iso_a2": "LU",
+      "source_iso_a2_eh": "LU",
+      "connection_region_code": "LU",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Lithuania",
+      "source_iso_a2": "LT",
+      "source_iso_a2_eh": "LT",
+      "connection_region_code": "LT",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Liechtenstein",
+      "source_iso_a2": "LI",
+      "source_iso_a2_eh": "LI",
+      "connection_region_code": "LI",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Libya",
+      "source_iso_a2": "LY",
+      "source_iso_a2_eh": "LY",
+      "connection_region_code": "LY",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Liberia",
+      "source_iso_a2": "LR",
+      "source_iso_a2_eh": "LR",
+      "connection_region_code": "LR",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Lesotho",
+      "source_iso_a2": "LS",
+      "source_iso_a2_eh": "LS",
+      "connection_region_code": "LS",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Lebanon",
+      "source_iso_a2": "LB",
+      "source_iso_a2_eh": "LB",
+      "connection_region_code": "LB",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Latvia",
+      "source_iso_a2": "LV",
+      "source_iso_a2_eh": "LV",
+      "connection_region_code": "LV",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Laos",
+      "source_iso_a2": "LA",
+      "source_iso_a2_eh": "LA",
+      "connection_region_code": "LA",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Kyrgyzstan",
+      "source_iso_a2": "KG",
+      "source_iso_a2_eh": "KG",
+      "connection_region_code": "KG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Kuwait",
+      "source_iso_a2": "KW",
+      "source_iso_a2_eh": "KW",
+      "connection_region_code": "KW",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Kosovo",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "XK",
+      "connection_region_code": "XK",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Kiribati",
+      "source_iso_a2": "KI",
+      "source_iso_a2_eh": "KI",
+      "connection_region_code": "KI",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Kenya",
+      "source_iso_a2": "KE",
+      "source_iso_a2_eh": "KE",
+      "connection_region_code": "KE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Kazakhstan",
+      "source_iso_a2": "KZ",
+      "source_iso_a2_eh": "KZ",
+      "connection_region_code": "KZ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Jordan",
+      "source_iso_a2": "JO",
+      "source_iso_a2_eh": "JO",
+      "connection_region_code": "JO",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Japan",
+      "source_iso_a2": "JP",
+      "source_iso_a2_eh": "JP",
+      "connection_region_code": "JP",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Jamaica",
+      "source_iso_a2": "JM",
+      "source_iso_a2_eh": "JM",
+      "connection_region_code": "JM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Italy",
+      "source_iso_a2": "IT",
+      "source_iso_a2_eh": "IT",
+      "connection_region_code": "IT",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Israel",
+      "source_iso_a2": "IL",
+      "source_iso_a2_eh": "IL",
+      "connection_region_code": "IL",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Gaza",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "PS",
+      "connection_region_code": "PS",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "West Bank",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "PS",
+      "connection_region_code": "PS",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Ireland",
+      "source_iso_a2": "IE",
+      "source_iso_a2_eh": "IE",
+      "connection_region_code": "IE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Iraq",
+      "source_iso_a2": "IQ",
+      "source_iso_a2_eh": "IQ",
+      "connection_region_code": "IQ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Iran",
+      "source_iso_a2": "IR",
+      "source_iso_a2_eh": "IR",
+      "connection_region_code": "IR",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Indonesia",
+      "source_iso_a2": "ID",
+      "source_iso_a2_eh": "ID",
+      "connection_region_code": "ID",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "India",
+      "source_iso_a2": "IN",
+      "source_iso_a2_eh": "IN",
+      "connection_region_code": "IN",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Iceland",
+      "source_iso_a2": "IS",
+      "source_iso_a2_eh": "IS",
+      "connection_region_code": "IS",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Hungary",
+      "source_iso_a2": "HU",
+      "source_iso_a2_eh": "HU",
+      "connection_region_code": "HU",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Honduras",
+      "source_iso_a2": "HN",
+      "source_iso_a2_eh": "HN",
+      "connection_region_code": "HN",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Haiti",
+      "source_iso_a2": "HT",
+      "source_iso_a2_eh": "HT",
+      "connection_region_code": "HT",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Guyana",
+      "source_iso_a2": "GY",
+      "source_iso_a2_eh": "GY",
+      "connection_region_code": "GY",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Guinea-Bissau",
+      "source_iso_a2": "GW",
+      "source_iso_a2_eh": "GW",
+      "connection_region_code": "GW",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Guinea",
+      "source_iso_a2": "GN",
+      "source_iso_a2_eh": "GN",
+      "connection_region_code": "GN",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Guatemala",
+      "source_iso_a2": "GT",
+      "source_iso_a2_eh": "GT",
+      "connection_region_code": "GT",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Grenada",
+      "source_iso_a2": "GD",
+      "source_iso_a2_eh": "GD",
+      "connection_region_code": "GD",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Greece",
+      "source_iso_a2": "GR",
+      "source_iso_a2_eh": "GR",
+      "connection_region_code": "GR",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Ghana",
+      "source_iso_a2": "GH",
+      "source_iso_a2_eh": "GH",
+      "connection_region_code": "GH",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Germany",
+      "source_iso_a2": "DE",
+      "source_iso_a2_eh": "DE",
+      "connection_region_code": "DE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Georgia",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "GE",
+      "connection_region_code": "GE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Gambia",
+      "source_iso_a2": "GM",
+      "source_iso_a2_eh": "GM",
+      "connection_region_code": "GM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Gabon",
+      "source_iso_a2": "GA",
+      "source_iso_a2_eh": "GA",
+      "connection_region_code": "GA",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "France",
+      "source_iso_a2": "FR",
+      "source_iso_a2_eh": "FR",
+      "connection_region_code": "FR",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Mayotte",
+      "source_iso_a2": "FR-976",
+      "source_iso_a2_eh": "YT",
+      "connection_region_code": "YT",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Réunion",
+      "source_iso_a2": "FR-974",
+      "source_iso_a2_eh": "RE",
+      "connection_region_code": "RE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Martinique",
+      "source_iso_a2": "FR-972",
+      "source_iso_a2_eh": "MQ",
+      "connection_region_code": "MQ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Guadeloupe",
+      "source_iso_a2": "FR-971",
+      "source_iso_a2_eh": "GP",
+      "connection_region_code": "GP",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "French Guiana",
+      "source_iso_a2": "FR-973",
+      "source_iso_a2_eh": "GF",
+      "connection_region_code": "GF",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "St. Pierre and Miquelon",
+      "source_iso_a2": "PM",
+      "source_iso_a2_eh": "PM",
+      "connection_region_code": "PM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Wallis and Futuna Is.",
+      "source_iso_a2": "WF",
+      "source_iso_a2_eh": "WF",
+      "connection_region_code": "WF",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "St-Martin",
+      "source_iso_a2": "MF",
+      "source_iso_a2_eh": "MF",
+      "connection_region_code": "MF",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "St-Barthélemy",
+      "source_iso_a2": "BL",
+      "source_iso_a2_eh": "BL",
+      "connection_region_code": "BL",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Fr. Polynesia",
+      "source_iso_a2": "PF",
+      "source_iso_a2_eh": "PF",
+      "connection_region_code": "PF",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "New Caledonia",
+      "source_iso_a2": "NC",
+      "source_iso_a2_eh": "NC",
+      "connection_region_code": "NC",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Fr. S. Antarctic Lands",
+      "source_iso_a2": "TF",
+      "source_iso_a2_eh": "TF",
+      "connection_region_code": "TF",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Åland",
+      "source_iso_a2": "AX",
+      "source_iso_a2_eh": "AX",
+      "connection_region_code": "AX",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Finland",
+      "source_iso_a2": "FI",
+      "source_iso_a2_eh": "FI",
+      "connection_region_code": "FI",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Fiji",
+      "source_iso_a2": "FJ",
+      "source_iso_a2_eh": "FJ",
+      "connection_region_code": "FJ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Ethiopia",
+      "source_iso_a2": "ET",
+      "source_iso_a2_eh": "ET",
+      "connection_region_code": "ET",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Estonia",
+      "source_iso_a2": "EE",
+      "source_iso_a2_eh": "EE",
+      "connection_region_code": "EE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Eritrea",
+      "source_iso_a2": "ER",
+      "source_iso_a2_eh": "ER",
+      "connection_region_code": "ER",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Eq. Guinea",
+      "source_iso_a2": "GQ",
+      "source_iso_a2_eh": "GQ",
+      "connection_region_code": "GQ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "El Salvador",
+      "source_iso_a2": "SV",
+      "source_iso_a2_eh": "SV",
+      "connection_region_code": "SV",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Egypt",
+      "source_iso_a2": "EG",
+      "source_iso_a2_eh": "EG",
+      "connection_region_code": "EG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Ecuador",
+      "source_iso_a2": "EC",
+      "source_iso_a2_eh": "EC",
+      "connection_region_code": "EC",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Dominican Rep.",
+      "source_iso_a2": "DO",
+      "source_iso_a2_eh": "DO",
+      "connection_region_code": "DO",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Dominica",
+      "source_iso_a2": "DM",
+      "source_iso_a2_eh": "DM",
+      "connection_region_code": "DM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Djibouti",
+      "source_iso_a2": "DJ",
+      "source_iso_a2_eh": "DJ",
+      "connection_region_code": "DJ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Greenland",
+      "source_iso_a2": "GL",
+      "source_iso_a2_eh": "GL",
+      "connection_region_code": "GL",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Faeroe Is.",
+      "source_iso_a2": "FO",
+      "source_iso_a2_eh": "FO",
+      "connection_region_code": "FO",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Denmark",
+      "source_iso_a2": "DK",
+      "source_iso_a2_eh": "DK",
+      "connection_region_code": "DK",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Czechia",
+      "source_iso_a2": "CZ",
+      "source_iso_a2_eh": "CZ",
+      "connection_region_code": "CZ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "N. Cyprus",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "-99",
+      "connection_region_code": null,
+      "drawn": false,
+      "reason": "no inferred parent assignment"
+    },
+    {
+      "source_unit": "Cyprus",
+      "source_iso_a2": "CY",
+      "source_iso_a2_eh": "CY",
+      "connection_region_code": "CY",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Cuba",
+      "source_iso_a2": "CU",
+      "source_iso_a2_eh": "CU",
+      "connection_region_code": "CU",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Croatia",
+      "source_iso_a2": "HR",
+      "source_iso_a2_eh": "HR",
+      "connection_region_code": "HR",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Côte d'Ivoire",
+      "source_iso_a2": "CI",
+      "source_iso_a2_eh": "CI",
+      "connection_region_code": "CI",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Costa Rica",
+      "source_iso_a2": "CR",
+      "source_iso_a2_eh": "CR",
+      "connection_region_code": "CR",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Dem. Rep. Congo",
+      "source_iso_a2": "CD",
+      "source_iso_a2_eh": "CD",
+      "connection_region_code": "CD",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Congo",
+      "source_iso_a2": "CG",
+      "source_iso_a2_eh": "CG",
+      "connection_region_code": "CG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Comoros",
+      "source_iso_a2": "KM",
+      "source_iso_a2_eh": "KM",
+      "connection_region_code": "KM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Colombia",
+      "source_iso_a2": "CO",
+      "source_iso_a2_eh": "CO",
+      "connection_region_code": "CO",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "China",
+      "source_iso_a2": "CN",
+      "source_iso_a2_eh": "CN",
+      "connection_region_code": "CN",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Macao",
+      "source_iso_a2": "MO",
+      "source_iso_a2_eh": "MO",
+      "connection_region_code": "MO",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Hong Kong",
+      "source_iso_a2": "HK",
+      "source_iso_a2_eh": "HK",
+      "connection_region_code": "HK",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Chile",
+      "source_iso_a2": "CL",
+      "source_iso_a2_eh": "CL",
+      "connection_region_code": "CL",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Chad",
+      "source_iso_a2": "TD",
+      "source_iso_a2_eh": "TD",
+      "connection_region_code": "TD",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Central African Rep.",
+      "source_iso_a2": "CF",
+      "source_iso_a2_eh": "CF",
+      "connection_region_code": "CF",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Cabo Verde",
+      "source_iso_a2": "CV",
+      "source_iso_a2_eh": "CV",
+      "connection_region_code": "CV",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Canada",
+      "source_iso_a2": "CA",
+      "source_iso_a2_eh": "CA",
+      "connection_region_code": "CA",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Cameroon",
+      "source_iso_a2": "CM",
+      "source_iso_a2_eh": "CM",
+      "connection_region_code": "CM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Cambodia",
+      "source_iso_a2": "KH",
+      "source_iso_a2_eh": "KH",
+      "connection_region_code": "KH",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Myanmar",
+      "source_iso_a2": "MM",
+      "source_iso_a2_eh": "MM",
+      "connection_region_code": "MM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Burundi",
+      "source_iso_a2": "BI",
+      "source_iso_a2_eh": "BI",
+      "connection_region_code": "BI",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Burkina Faso",
+      "source_iso_a2": "BF",
+      "source_iso_a2_eh": "BF",
+      "connection_region_code": "BF",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Bulgaria",
+      "source_iso_a2": "BG",
+      "source_iso_a2_eh": "BG",
+      "connection_region_code": "BG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Brunei",
+      "source_iso_a2": "BN",
+      "source_iso_a2_eh": "BN",
+      "connection_region_code": "BN",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Brazil",
+      "source_iso_a2": "BR",
+      "source_iso_a2_eh": "BR",
+      "connection_region_code": "BR",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Botswana",
+      "source_iso_a2": "BW",
+      "source_iso_a2_eh": "BW",
+      "connection_region_code": "BW",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Rep. Srpska",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "BA",
+      "connection_region_code": "BA",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Fed. of Bos. & Herz.",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "BA",
+      "connection_region_code": "BA",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Bolivia",
+      "source_iso_a2": "BO",
+      "source_iso_a2_eh": "BO",
+      "connection_region_code": "BO",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Bhutan",
+      "source_iso_a2": "BT",
+      "source_iso_a2_eh": "BT",
+      "connection_region_code": "BT",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Benin",
+      "source_iso_a2": "BJ",
+      "source_iso_a2_eh": "BJ",
+      "connection_region_code": "BJ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Belize",
+      "source_iso_a2": "BZ",
+      "source_iso_a2_eh": "BZ",
+      "connection_region_code": "BZ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Flemish",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "BE",
+      "connection_region_code": "BE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Walloon",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "BE",
+      "connection_region_code": "BE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Brussels",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "BE",
+      "connection_region_code": "BE",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Belarus",
+      "source_iso_a2": "BY",
+      "source_iso_a2_eh": "BY",
+      "connection_region_code": "BY",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Barbados",
+      "source_iso_a2": "BB",
+      "source_iso_a2_eh": "BB",
+      "connection_region_code": "BB",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Bangladesh",
+      "source_iso_a2": "BD",
+      "source_iso_a2_eh": "BD",
+      "connection_region_code": "BD",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Bahrain",
+      "source_iso_a2": "BH",
+      "source_iso_a2_eh": "BH",
+      "connection_region_code": "BH",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Bahamas",
+      "source_iso_a2": "BS",
+      "source_iso_a2_eh": "BS",
+      "connection_region_code": "BS",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Azerbaijan",
+      "source_iso_a2": "AZ",
+      "source_iso_a2_eh": "AZ",
+      "connection_region_code": "AZ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Austria",
+      "source_iso_a2": "AT",
+      "source_iso_a2_eh": "AT",
+      "connection_region_code": "AT",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Australia",
+      "source_iso_a2": "AU",
+      "source_iso_a2_eh": "AU",
+      "connection_region_code": "AU",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Christmas I.",
+      "source_iso_a2": "CX",
+      "source_iso_a2_eh": "CX",
+      "connection_region_code": "CX",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Cocos Is.",
+      "source_iso_a2": "CC",
+      "source_iso_a2_eh": "CC",
+      "connection_region_code": "CC",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Heard I. and McDonald Is.",
+      "source_iso_a2": "HM",
+      "source_iso_a2_eh": "HM",
+      "connection_region_code": "HM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Norfolk Island",
+      "source_iso_a2": "NF",
+      "source_iso_a2_eh": "NF",
+      "connection_region_code": "NF",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Ashmore and Cartier Is.",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "AU",
+      "connection_region_code": "AU",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Armenia",
+      "source_iso_a2": "AM",
+      "source_iso_a2_eh": "AM",
+      "connection_region_code": "AM",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Argentina",
+      "source_iso_a2": "AR",
+      "source_iso_a2_eh": "AR",
+      "connection_region_code": "AR",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Antigua",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "AG",
+      "connection_region_code": "AG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Barbuda",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "AG",
+      "connection_region_code": "AG",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Angola",
+      "source_iso_a2": "AO",
+      "source_iso_a2_eh": "AO",
+      "connection_region_code": "AO",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Andorra",
+      "source_iso_a2": "AD",
+      "source_iso_a2_eh": "AD",
+      "connection_region_code": "AD",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Algeria",
+      "source_iso_a2": "DZ",
+      "source_iso_a2_eh": "DZ",
+      "connection_region_code": "DZ",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Albania",
+      "source_iso_a2": "AL",
+      "source_iso_a2_eh": "AL",
+      "connection_region_code": "AL",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Afghanistan",
+      "source_iso_a2": "AF",
+      "source_iso_a2_eh": "AF",
+      "connection_region_code": "AF",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Siachen Glacier",
+      "source_iso_a2": "-99",
+      "source_iso_a2_eh": "-99",
+      "connection_region_code": null,
+      "drawn": false,
+      "reason": "no inferred parent assignment"
+    },
+    {
+      "source_unit": "Antarctica",
+      "source_iso_a2": "AQ",
+      "source_iso_a2_eh": "AQ",
+      "connection_region_code": "AQ",
+      "drawn": false,
+      "reason": "polar continent omitted; ranking preserved"
+    },
+    {
+      "source_unit": "Sint Maarten",
+      "source_iso_a2": "SX",
+      "source_iso_a2_eh": "SX",
+      "connection_region_code": "SX",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    },
+    {
+      "source_unit": "Tuvalu",
+      "source_iso_a2": "TV",
+      "source_iso_a2_eh": "TV",
+      "connection_region_code": "TV",
+      "drawn": true,
+      "reason": "source explicit ISO_A2_EH mapping"
+    }
+  ]
+}

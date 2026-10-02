@@ -18,9 +18,11 @@ Internally, country totals are exact accepted-event counters. Public totals and 
 |---|---|---|
 | `/v1/events/{city}` | POST | Validated page view; `202 {"accepted":true}` only after committed storage |
 | `/v1/stats/{city}` | GET / HEAD | Public aggregate JSON, schema 1, no write |
-| `/v1/chart/{city}.svg?lang=de` | GET / HEAD | Safe horizontal SVG with localized labels, title, description and UTC generation time |
+| `/v1/chart/{city}.svg?lang=de&layout=wide` | GET / HEAD | World map and matching ranking SVG; `layout=stacked` selects the narrow image |
 
 `city` is one of berlin, hamburg, munich, cologne, frankfurt, dusseldorf, stuttgart, leipzig, dortmund, bremen, essen, dresden, hannover, nuremberg. Chart languages are `de`, `en`, `zh`.
+
+The webpage keeps a compact summary and native disclosure closed by default. Its static boundary chunk is loaded only when the disclosure opens; the map and ranking read the same public rows for that page's fixed city. The layout follows the available panel width: map left and ranking right on a wide panel, stacked on a narrow panel. Gray is an unpublished group, not zero. Countries and regions describe approximate connection origins, not citizenship or residence. Source and deterministic mapping details are in [WORLD-MAP-SOURCES.md](WORLD-MAP-SOURCES.md). The existing `mountAnalytics` interface remains the integration point. The opt-in button and provider/privacy text are inside the expanded disclosure, before any collection can be requested.
 
 POST body has exactly three keys: `{ "event": "pageview", "path": "/crimemaps-Berlin/", "token": "<single-use Turnstile token>" }`. There is no client-supplied country, URL, count or timestamp. Server verification requires `hostname=ln6666.github.io`, `action=pv_berlin`, `cdata=berlin`. Origin must be `https://ln6666.github.io`. CORS and path checks are input checks, not proof of a real visitor. All 14 repositories share the GitHub Pages origin, so the challenge bindings and fixed city paths are also checked. Repository page paths use `/crimemaps-{City}/`, with only the first letter of the existing English slug capitalized. Internal city IDs, API routes, challenge action/cdata and snapshot source URLs remain lowercase; old and differently cased page paths are rejected.
 

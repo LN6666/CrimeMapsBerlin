@@ -104,9 +104,18 @@ uv run pytest test_suite/safety
 
 <a id="stats"></a>
 
-## 国家访问分布
+## 按国家或地区统计的地图页面浏览量
 
-实际访问统计尚未接入。在服务返回真实汇总数据前，不展示国家访问数字。打开README或统计图片不会计入地图访问。
+<picture>
+  <source media="(max-width:640px)" srcset="docs/assets/visitors-by-country.zh.mobile.svg">
+  <img src="docs/assets/visitors-by-country.zh.svg" alt="访问统计尚未启用：灰色世界地图与空白的国家或地区排行榜" role="img" width="840">
+</picture>
+
+访问统计尚未启用。灰色世界地图和空白排行榜表示目前没有可显示的访问数据。打开这份 README 或其中的图片，不会增加地图页面浏览次数。
+
+启用后，图中只汇总用户同意记录的地图页面浏览次数，按国家或地区分组，不统计独立访客人数。少于20次的分组会隐藏或合并，公布的次数向下取整为10的整数倍。浅蓝表示公布的浏览次数较少，深蓝表示较多；灰色表示没有可公开的数字。
+
+启用统计后，请看图中的更新时间。GitHub可能显示较早的缓存图片。浏览次数为截至该更新时间的累计数，并已取整；图表不会实时更新。
 
 <a id="cities"></a>
 
