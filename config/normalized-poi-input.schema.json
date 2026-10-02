@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CrimeMaps normalized source-linked POI input",
+  "type": "object",
+  "required": [
+    "source_pbf_sha256",
+    "boundary_source_id",
+    "poi_contract_sha256",
+    "review_binding_sha256",
+    "features",
+    "source_links",
+    "explicit_native_identities",
+    "unknown_dispositions"
+  ],
+  "properties": {
+    "source_pbf_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "poi_contract_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "review_binding_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "boundary_source_id": {
+      "type": "string"
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "type",
+          "geometry",
+          "properties"
+        ],
+        "properties": {
+          "type": {
+            "const": "Feature"
+          },
+          "properties": {
+            "type": "object",
+            "required": [
+              "id",
+              "kind",
+              "geometry_mode"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^osm/(node|way|relation)/[1-9][0-9]*$"
+              },
+              "osm_type_tags": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "native_tags": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "native_type_unknown": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    "source_links": {
+      "type": "array"
+    },
+    "explicit_native_identities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unknown_dispositions": {
+      "type": "array"
+    }
+  },
+  "description": "Literal type tags must come from the current checked native source. A no-tags feature is allowed only with explicit reviewed unknown-type provenance and current source binding. Scene geometries and unknown dispositions are retained independently of the POI subset."
+}

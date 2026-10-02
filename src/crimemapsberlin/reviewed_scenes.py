@@ -175,6 +175,14 @@ def build_inventory(*, city: str, db_path: Path) -> dict:
                     for key in ("transit_route", "poi_contexts", "poi_review", "transit_review"):
                         if key in location:
                             request[key] = location[key]
+                    if "source_reference_binding" in decision:
+                        request["source_reference_binding"] = decision["source_reference_binding"]
+                    if "source_document_binding" in decision:
+                        request["source_document_binding"] = decision["source_document_binding"]
+                    if "source_attachment_binding" in decision:
+                        request["source_attachment_binding"] = decision["source_attachment_binding"]
+                    if "source_supporting_material_binding" in decision:
+                        request["source_supporting_material_binding"] = decision["source_supporting_material_binding"]
                     request["geometry_request_sha256"] = _digest(request)
                     geometry_requests.append(request)
             articles.append(
@@ -187,6 +195,17 @@ def build_inventory(*, city: str, db_path: Path) -> dict:
                     "incident_count": scene_inventory["incident_count"],
                     "incidents": scene_inventory["incidents"],
                     "formal_locations": scene_inventory["formal_locations"],
+                    **({"source_attachment_binding": decision["source_attachment_binding"]}
+                       if "source_attachment_binding" in decision else {}),
+                    **({"source_document_binding": decision["source_document_binding"]}
+                       if "source_document_binding" in decision else {}),
+                    **({"source_reference_binding": decision["source_reference_binding"]}
+                       if "source_reference_binding" in decision else {}),
+                    **({"source_supporting_material_binding": decision["source_supporting_material_binding"]}
+                       if "source_supporting_material_binding" in decision else {}),
+                    **({"source_review_decision": decision}
+                       if any(key in decision for key in ("source_reference_binding", "source_supporting_material_binding",
+                                                           "source_attachment_binding", "source_document_binding")) else {}),
                 }
             )
 

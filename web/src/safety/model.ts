@@ -8,7 +8,7 @@ import type {
 export type Properties = Record<string, any>;
 export type FC = FeatureCollection<Geometry, Properties>;
 export const SCENE_CLICK_LAYERS = [
-  "scene-point", "scene-candidate-road-hit", "scene-line", "scene-transit-route",
+  "scene-point", "scene-candidate-road-hit", "scene-line", "scene-line-hit", "scene-transit-route",
   "scene-transit-line-reference", "scene-transit-line-reference-hit",
   "scene-area-fill", "scene-area-outline",
 ];
@@ -46,6 +46,17 @@ export interface PoiContext {
   evidence_quote: string;
 }
 export interface SceneLocation {
+  location_object_ids?:string[];
+  poi_review?: {status:string;note:string};
+  transit_review?: {status:string;note:string};
+  source_relations?: {decision:{review_note:string}}[];
+  native_platform_count?:number;
+  actual_platform_side_known?:boolean;
+  source_platform_side_known?:boolean;
+  source_attachment_url?:string;
+  height_known?:false;
+  full_legal_definition_verified?:false;
+  static_scene_reference?:boolean;
   label: string;
   role: SceneRole;
   location_precision: string;
@@ -53,12 +64,12 @@ export interface SceneLocation {
   coordinates?: [number, number] | null;
   geometry?: Geometry | null;
   candidate_road_geometry?: LineString | MultiLineString | null;
-  geometry_usage?: "source_road_reference_only" | "carrier_line_reference_only" | "source_footprint_reference_only" | "source_transit_corridor_reference_only" | "source_junction_reference_only" | "source_native_collection_reference_only";
+  geometry_usage?: "source_road_reference_only" | "carrier_line_reference_only" | "source_footprint_reference_only" | "source_transit_corridor_reference_only" | "source_junction_reference_only" | "source_native_collection_reference_only" | "official_attachment_horizontal_reference_only" | "source_native_platform_points_reference_only" | "source_station_platform_footprint_reference_only";
   actual_event_position_known?: boolean;
   actual_event_extent_known?: boolean;
   actual_non_transit_extent_known?: boolean;
   service_identity_known?: false;
-  source_road_extent?: "native_endpoint_bounded";
+  source_road_extent?: "native_endpoint_bounded" | "native_bridge_outline_bounded";
   actual_transit_extent_known?: false;
   complete_transit_line?: false;
   primary_for_count: boolean;
@@ -84,6 +95,37 @@ export interface SourceStage {
   incident_id:string;details?:string;event_time?:EventTime;category?:string;formal_location_ids?:string[];
 }
 export interface PoliceEvent {
+  public_display_fields?:string[];
+  historical_source_reviews?: {
+    source_id: string;
+    title: string;
+    source_url: string;
+    published_at_source_literal: string;
+    review_note: string;
+    source_incidents: {
+      incident_id: string;
+      event_time: EventTime;
+      details: string;
+      formal_location_ids: string[];
+    }[];
+    formal_locations: {
+      location_id: string;
+      label: string;
+      role: SceneRole;
+      precision: string;
+      poi_review: { status: string; note: string };
+      transit_review: { status: string; note: string };
+    }[];
+  }[];
+  source_reference_comparisons?: { review_note: string }[];
+  current_claim_overlays?: { display_note: string }[];
+  source_attachments?: { source_url: string; source_sha256: string; read: boolean; page_count: number; note: string }[];
+  source_supporting_materials?: { source_url: string; source_sha256: string; label: string; note: string }[];
+  map_review_note?: string;
+  source_incidents?:SourceStage[];
+  published_at_source_literal?:string;
+  published_at_timezone_basis?:string;
+  month_basis?:string;
   id: string;
   title: string;
   published_at?:string;
@@ -211,6 +253,7 @@ function sceneGeometries(geometry: Geometry): Geometry[] {
 }
 /** Road anchors must not be labelled as checked operational lines or precise segments. */
 export function transitGeometryLabel(scene: SceneLocation): string {
+  if (isUnderpassReference(scene)) return t("transit.underpass");
   if (scene.geometry_usage === "source_transit_corridor_reference_only")
     return t("transit.trackInterval");
   if (scene.geometry_usage === "carrier_line_reference_only")
@@ -223,6 +266,9 @@ export function transitGeometryLabel(scene: SceneLocation): string {
       ? t("transit.partialRoad")
       : t("transit.unknownRoad");
   return scene.transit_route?.extent === "full_line" ? t("transit.fullLine") : t("transit.sourceSection");
+}
+function isUnderpassReference(scene: SceneLocation): boolean {
+  return scene.geocode_method === "osm_road_under_bridge_reference";
 }
 function isFootprintReference(scene: SceneLocation): boolean {
   return scene.geometry_usage === "source_footprint_reference_only" || [
@@ -244,7 +290,7 @@ export function sceneFeatures(rows: PoliceEvent[]): FC {
           label: scene.label,
           role: scene.role,
           role_group: sceneRoleGroup(scene.role),
-          primary_for_count: isFootprintReference(scene) || scene.geometry_usage === "source_junction_reference_only" ||
+          primary_for_count: scene.geometry_usage?.endsWith("reference_only") || isUnderpassReference(scene) || isFootprintReference(scene) || scene.geometry_usage === "source_junction_reference_only" ||
             ["osm_junction_reference", "osm_rail_crossing_area_reference"].includes(scene.geocode_method) ? false : scene.primary_for_count,
           location_precision: scene.location_precision,
           geocode_method: scene.geocode_method,
@@ -266,7 +312,9 @@ export function sceneFeatures(rows: PoliceEvent[]): FC {
               properties: {
                 ...properties,
                 geometry_kind:
-                  scene.geocode_method === "osm_station_footprint_reference"
+                  scene.geometry_usage === "source_native_platform_points_reference_only"
+                    ? "native_platform_reference"
+                    : scene.geocode_method === "osm_station_footprint_reference"
                     ? "station_footprint_reference"
                     : scene.geocode_method === "official_district_footprint_reference"
                     ? "official_district_reference"
@@ -287,7 +335,7 @@ export function sceneFeatures(rows: PoliceEvent[]): FC {
               },
             });
         if (
-          !isFootprintReference(scene) &&
+          !scene.geometry_usage?.endsWith("reference_only") && !isUnderpassReference(scene) && !isFootprintReference(scene) &&
           scene.geometry_usage !== "source_native_collection_reference_only" &&
           scene.geometry_usage !== "source_junction_reference_only" &&
           scene.coordinates &&
@@ -330,7 +378,7 @@ export function countableEventIds(rows: PoliceEvent[]): Set<string> {
         event.scene_locations === undefined ||
         event.scene_locations.some(
           (scene) =>
-            !isFootprintReference(scene) &&
+            !scene.geometry_usage?.endsWith("reference_only") && !isUnderpassReference(scene) && !isFootprintReference(scene) &&
             scene.geometry_usage !== "source_native_collection_reference_only" &&
             scene.geometry_usage !== "source_junction_reference_only" &&
             scene.primary_for_count &&
@@ -483,18 +531,22 @@ export function styledPois(
   return {
     ...data.pois,
     features: data.pois.features
-      .filter((f) => kinds.has(f.properties.scope_category??f.properties.kind))
+      .filter((f) => f.properties.scope_category ? kinds.has(f.properties.scope_category)
+        : (f.properties.context_kinds ?? [f.properties.kind]).some((kind:string) => kinds.has(kind)))
       .map((f) => {
         const id = f.properties.id,
           n = counts.get(id)?.size ?? 0,
           c = candidate.get(id)?.size ?? 0,
           x = context.get(id)?.size ?? 0;
+        const displayKind = f.properties.scope_category ? f.properties.kind
+          : (f.properties.context_kinds ?? [f.properties.kind]).find((kind:string) => kinds.has(kind)) ?? f.properties.kind;
         return {
           ...f,
           properties: {
             ...f.properties,
+            display_kind: displayKind,
             color:
-              data.catalog.poi_types[f.properties.kind]?.color ?? "#64748b",
+              data.catalog.poi_types[displayKind]?.color ?? "#64748b",
             count: n,
             candidate_count: c,
             context_count: x,
@@ -547,7 +599,7 @@ export function renderPois(fc: FC): FC {
 /** Preserve stages that have no displayed scene; they never supply coordinates or counts. */
 export function unplacedStages(event:PoliceEvent):SourceStage[] {
  const displayed=new Set(event.scene_locations?.flatMap(scene=>scene.incidents?.map(stage=>stage.incident_id)??[])??[]);
- return (event.incidents??[]).filter(stage=>!displayed.has(stage.incident_id));
+ return (event.incidents??event.source_incidents??[]).filter(stage=>!displayed.has(stage.incident_id));
 }
 
 export const SOURCE_POI_CLICK_LAYERS=["source-poi-reference-fill","source-poi-reference-line","source-poi-reference-point"];

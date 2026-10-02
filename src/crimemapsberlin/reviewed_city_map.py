@@ -17,6 +17,7 @@ import shutil
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from shapely.geometry import shape
 
@@ -29,6 +30,8 @@ from .poi_context import context_compatibility_digest
 from .poi_context_identities import apply_reviewed_identities
 from .poi_street_contexts import RESERVED_FIELDS as STREET_RESERVED_FIELDS
 from .poi_street_contexts import apply_street_contexts
+from .reviewed_map_display import apply_reviewed_display, copy_display_resources
+from .reviewed_poi_product import validate_reviewed_poi_product
 from .source_review_pack import read_checkpoint
 from .spatial import build_months, metric_transforms
 from .tiles import tiles
@@ -87,7 +90,8 @@ def _replace_directory(staging: Path, target: Path) -> None:
 
 
 def _verify_poi_product(
-    *, city: str, poi_root: Path, catalog_path: Path
+    *, city: str, poi_root: Path, catalog_path: Path,
+    reviewed_binding: dict | None = None, inventory_digest: str | None = None,
 ) -> tuple[dict, dict, dict, dict, dict]:
     contract = _load(poi_root / "poi-contract.json", "POI contract")
     validation = _load(poi_root / "validation.json", "POI validation")
@@ -95,6 +99,11 @@ def _verify_poi_product(
     index = _load(poi_root / "poi-index.json", "POI index")
     search = json.loads((poi_root / "search.json").read_text(encoding="utf-8"))
     catalog = _load(catalog_path, "POI category catalog")
+    if reviewed_binding is not None:
+        validation = validate_reviewed_poi_product(
+            city=city, poi_root=poi_root, catalog_path=catalog_path,
+            binding=reviewed_binding, inventory_digest=inventory_digest,
+        )
     spec = POI_CITY_SPECS.get(city)
     if spec is None:
         raise ValueError(f"Unsupported city: {city}")
@@ -148,7 +157,7 @@ def _verify_poi_product(
     return contract, validation, boundary, catalog, index
 
 
-def _published(value: object) -> datetime:
+def _published(value: object, *, timezone_name: str | None = None) -> datetime:
     if not isinstance(value, str):
         raise TypeError("Official publication timestamp must be a string")
     try:
@@ -156,7 +165,17 @@ def _published(value: object) -> datetime:
     except ValueError as exc:
         raise ValueError(f"Invalid official publication timestamp: {value}") from exc
     if parsed.tzinfo is None:
-        raise ValueError("Official publication timestamp needs a timezone")
+        if timezone_name is None:
+            raise ValueError("Official publication timestamp needs a timezone")
+        zone = ZoneInfo(timezone_name)
+        localized = parsed.replace(tzinfo=zone)
+        if (
+            localized.astimezone(UTC).astimezone(zone).replace(tzinfo=None) != parsed
+            or parsed.replace(tzinfo=zone, fold=0).utcoffset()
+            != parsed.replace(tzinfo=zone, fold=1).utcoffset()
+        ):
+            raise ValueError("Publication timestamp is ambiguous or nonexistent in the chosen timezone")
+        return localized
     return parsed
 
 
@@ -217,6 +236,7 @@ def _scene(
     decision = geometry_row.get("decision", {}) if geometry_row else {}
     geometry = derived.get("geometry") if isinstance(derived, dict) else None
     primary = location_id == primary_location_id
+    reference_only = isinstance(derived, dict) and str(derived.get("geometry_usage", "")).endswith("reference_only")
     coordinates = None
     water_reference = decision.get("method") == "osm_water_footprint_reference"
     official_reference = decision.get("method") == "official_district_footprint_reference"
@@ -235,7 +255,9 @@ def _scene(
         raise ValueError("junction reference cannot be a primary count scene")
     if road_reference and primary:
         raise ValueError("road reference cannot be a primary count scene")
-    if isinstance(derived, dict) and derived.get("type") == "Point" and not (junction_reference or road_reference or collection_reference or official_reference):
+    if primary and reference_only:
+        raise ValueError(f"Display reference cannot be a primary count location: {location_id}")
+    if isinstance(derived, dict) and derived.get("type") == "Point" and not reference_only:
         coordinates = list(derived["geometry"]["coordinates"][:2])
     elif primary:
         coordinates = _count_point(geometry_row)
@@ -276,7 +298,7 @@ def _scene(
         }
         for ident in incident_ids
     ]
-    for key in ("event_time", "details", "transit_route", "poi_contexts"):
+    for key in ("event_time", "details", "transit_route", "poi_contexts", "poi_review", "transit_review"):
         if key in location:
             scene[key] = location[key]
     if geometry_row:
@@ -286,13 +308,24 @@ def _scene(
             "review_note": decision.get("review_note", ""),
         }
     if isinstance(derived, dict):
+        if "road_under_bridge_reference" in derived:
+            scene["road_under_bridge_reference"] = derived["road_under_bridge_reference"]
         if "rail_crossing_reference" in derived:
             scene["rail_crossing_reference"] = derived["rail_crossing_reference"]
         if derived.get("source_reference_ids"):
             scene["source_reference_ids"] = derived["source_reference_ids"]
             scene["source_reference_provenance"] = derived["source_reference_provenance"]
+        for key in ("native_platform_count", "native_platform_sources", "actual_platform_side_known",
+                    "native_park_sources", "park_reference_identity", "source_document_binding",
+                    "static_road_reference", "coordinates_generated", "source_platform_side_known",
+                    "static_scene_reference", "actual_static_scene_extent_known", "source_attachment_url",
+                    "source_attachment_sha256", "height_known", "full_legal_definition_verified",
+                    "geodesic_model", "radius_metres", "complete_park_boundary_known",
+                    "source_document_id", "source_object_groups"):
+            if key in derived:
+                scene[key] = derived[key]
         usage = derived.get("geometry_usage")
-        if usage in {"source_road_reference_only", "carrier_line_reference_only", "source_footprint_reference_only", "source_transit_corridor_reference_only", "source_junction_reference_only", "source_native_collection_reference_only"}:
+        if isinstance(usage, str) and usage.endswith("reference_only"):
             scene["geometry_usage"] = usage
             if derived.get("actual_event_position_known") is False:
                 scene["actual_event_position_known"] = False
@@ -303,8 +336,8 @@ def _scene(
         if (usage in {"source_road_reference_only", "carrier_line_reference_only", "source_transit_corridor_reference_only"}
                 and derived.get("actual_non_transit_extent_known") is not False):
             scene["complete_transit_line"] = False
-        if derived.get("source_road_extent") == "native_endpoint_bounded":
-            scene["source_road_extent"] = "native_endpoint_bounded"
+        if derived.get("source_road_extent") in {"native_endpoint_bounded", "native_bridge_outline_bounded"}:
+            scene["source_road_extent"] = derived["source_road_extent"]
         if usage == "carrier_line_reference_only" or derived.get("actual_transit_extent_known") is False:
             scene["actual_transit_extent_known"] = False
         if usage == "source_transit_corridor_reference_only":
@@ -339,7 +372,11 @@ def _prepare_events(
     inventory: dict,
     geometry_ledger: dict,
     map_ledger: dict,
+    publication_timezone: str | None = None,
+    month_basis: str = "reviewed_incident_time",
 ) -> tuple[list[dict], Counter, datetime]:
+    if month_basis not in {"reviewed_incident_time", "publication_month"}:
+        raise ValueError("Unknown map month filter basis")
     _validate_inputs(inventory, geometry_ledger, city)
     if (
         inventory.get("city") != city
@@ -386,7 +423,7 @@ def _prepare_events(
             or article["decision_sha256"] != decision["source_review_sha256"]
         ):
             raise ValueError(f"Map inputs disagree for source {source_id}")
-        published = _published(source["published"])
+        published = _published(source["published"], timezone_name=publication_timezone)
         latest = published if latest is None or published > latest else latest
         incident_categories = {row["incident_id"]: row["category"] for row in decision["incident_categories"]}
         incidents = {
@@ -415,6 +452,8 @@ def _prepare_events(
         if primary and coordinates is None:
             raise ValueError(f"Primary scene lost its checked count point: {source_id}")
         event_date, month, time_basis = _event_time_basis(incidents, published)
+        if month_basis == "publication_month":
+            month = published.strftime("%Y-%m")
         event = {
             "id": source_id,
             "title": source["title"],
@@ -424,6 +463,9 @@ def _prepare_events(
             "event_date": event_date,
             "month": month,
             "time_basis": time_basis,
+            "month_basis": month_basis,
+            "published_at_source_literal": source["published"],
+            "published_at_timezone_basis": publication_timezone or "explicit_source_offset",
             "source_url": source["source_url"],
             "feed_url": source["source_url"],
             "source_status": (
@@ -453,7 +495,19 @@ def _prepare_events(
             "incident_categories": decision["incident_categories"],
             "classification_evidence_quotes": decision["classification_evidence_quotes"],
             "map_review_note": decision["review_note"],
+            "source_incidents": article["incidents"],
         }
+        for key in ("source_reference_binding", "source_attachment_binding", "source_document_binding"):
+            if key in article:
+                event[key] = article[key]
+        if "source_supporting_material_binding" in article:
+            from .supporting_material_reviews import visible_materials
+            event["source_supporting_materials"] = visible_materials(
+                article["source_supporting_material_binding"],
+                source={"id": source["source_id"], "url": source["source_url"],
+                        "body": source["source_body"], "sha256": source["source_sha256"]},
+            )
+            event["public_display_fields"] = ["source_supporting_materials"]
         events.append(event)
         audit["events"] += 1
         if scope == "uncertain":
@@ -482,6 +536,10 @@ def build_candidate(
     poi_reference_selections_path: Path | None = None,
     poi_native_metadata_path: Path | None = None,
     poi_street_contexts_path: Path | None = None,
+    reviewed_poi_binding_path: Path | None = None,
+    reviewed_display_path: Path | None = None,
+    publication_timezone: str | None = None,
+    month_basis: str = "reviewed_incident_time",
 ) -> dict:
     """Assemble a local candidate; decision coverage is not full acceptance."""
     inventory = _load(inventory_path, "scene inventory")
@@ -495,7 +553,9 @@ def build_candidate(
     ):
         raise ValueError("Official source checkpoint is incomplete")
     contract, validation, boundary, catalog, poi_index = _verify_poi_product(
-        city=city, poi_root=poi_root, catalog_path=catalog_path
+        city=city, poi_root=poi_root, catalog_path=catalog_path,
+        reviewed_binding=_load(reviewed_poi_binding_path, "reviewed POI binding") if reviewed_poi_binding_path else None,
+        inventory_digest=inventory["inventory_digest"],
     )
     events, counts, latest = _prepare_events(
         city=city,
@@ -503,7 +563,12 @@ def build_candidate(
         inventory=inventory,
         geometry_ledger=geometry_ledger,
         map_ledger=map_ledger,
+        publication_timezone=publication_timezone, month_basis=month_basis,
     )
+    display = None
+    if reviewed_display_path is not None:
+        display = _load(reviewed_display_path, "reviewed display annotations")
+        apply_reviewed_display(events, display, inventory=inventory, geometry_ledger=geometry_ledger, map_ledger=map_ledger)
     poi_contract_digest = hashlib.sha256((poi_root / "poi-contract.json").read_bytes()).hexdigest()
     identity_review = None
     identity_ledgers = []
@@ -552,6 +617,9 @@ def build_candidate(
         to_metric=to_metric,
         to_wgs=to_wgs,
         include_legacy_links=False,
+        validated_context_memberships={f["properties"]["id"]: f["properties"]["context_kinds"]
+            for f in poi_index["features"] if "context_kinds" in f["properties"]}
+            if reviewed_poi_binding_path is not None else None,
     )
     if sum(len(value["event_ids"]) for value in months.values()) != len(events):
         raise ValueError("Monthly candidate files do not cover every mappable article")
@@ -565,11 +633,15 @@ def build_candidate(
 
     matching_policy_digest = context_compatibility_digest()
     boundary_digest = hashlib.sha256((poi_root / "boundary.geojson").read_bytes()).hexdigest()
+    producer_digest = hashlib.sha256(b"".join((Path(__file__).parent / name).read_bytes()
+        for name in ("reviewed_city_map.py", "reviewed_map_display.py", "reviewed_poi_product.py", "spatial.py"))).hexdigest()
     signature = hashlib.sha256(
         (
             f"reviewed-city-map-v{CANDIDATE_FORMAT_VERSION}:"
             f"{inventory['inventory_digest']}:{geometry_ledger['ledger_sha256']}:"
             f"{map_ledger['ledger_sha256']}:{poi_contract_digest}:{matching_policy_digest}:{boundary_digest}"
+            + f":display:{_digest(display)}:month-basis:{month_basis}:timezone:{publication_timezone}:producer:{producer_digest}"
+            + (f":reviewed-poi-binding:{hashlib.sha256(reviewed_poi_binding_path.read_bytes()).hexdigest()}" if reviewed_poi_binding_path else "")
             + (f":named-poi-identities:{identity_review['ledger_sha256']}" if identity_review else "")
             + (f":native-named-references:{reference_selections['ledger_sha256']}" if reference_selections else "")
             + (f":native-context-metadata:{metadata_review['ledger_sha256']}" if metadata_review else "")
@@ -606,6 +678,9 @@ def build_candidate(
             "semantic_basis": "source_first_hash_bound_llm_review",
             "coverage_scope": inventory.get("coverage", {}).get("scope", "source_checkpoint_not_full_crime_inventory"),
             "time_basis": "reviewed_incident_time_or_explicit_publication_month_fallback",
+            "month_filter_basis": month_basis,
+            "producer_sha256": producer_digest,
+            "publication_timezone_display_assumption": publication_timezone,
             "count_unit": "at_most_one_reviewed_announcement_primary",
             "hex_crs": f"EPSG:{spec.epsg}",
             "hex_edge_m": [1100, 275],
@@ -674,12 +749,24 @@ def build_candidate(
         "publication_ready": False,
         "publication_blocks": manifest["publication_blocks"],
     }
+    if display is not None:
+        manifest["metadata"].update(display["metadata"])
+        for key in ("source_reference_review_url", "historical112_service_review_url"):
+            if key in manifest["metadata"]:
+                manifest["metadata"][key] = f"{generation}/{manifest['metadata'][key]}"
+        manifest["publication_blocks"] = sorted(
+            set(manifest["publication_blocks"] + display["publication_blocks"])
+        )
+        audit["publication_blocks"] = manifest["publication_blocks"]
+        audit["reviewed_display_sha256"] = _digest(display)
     audit["candidate_digest"] = _digest({"manifest": manifest, "audit": audit})
 
     output = output.resolve()
     staging = output.with_name(f".{output.name}.building")
     shutil.rmtree(staging, ignore_errors=True)
     generation_root = staging / generation
+    if display is not None:
+        copy_display_resources(display, generation_root)
     for month, value in months.items():
         _write_json(
             generation_root / "months" / f"{month}.json",
@@ -741,6 +828,10 @@ def main() -> None:
     parser.add_argument("--poi-reference-selections", type=Path)
     parser.add_argument("--poi-native-metadata", type=Path)
     parser.add_argument("--poi-street-contexts", type=Path)
+    parser.add_argument("--reviewed-poi-binding", type=Path)
+    parser.add_argument("--reviewed-display", type=Path)
+    parser.add_argument("--publication-timezone", choices=["Europe/Berlin"])
+    parser.add_argument("--month-basis", choices=["reviewed_incident_time", "publication_month"], default="reviewed_incident_time")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     runtime = (Path.cwd() / ".runtime").resolve()
@@ -759,6 +850,8 @@ def main() -> None:
         poi_reference_selections_path=args.poi_reference_selections,
         poi_native_metadata_path=args.poi_native_metadata,
         poi_street_contexts_path=args.poi_street_contexts,
+        reviewed_poi_binding_path=args.reviewed_poi_binding, reviewed_display_path=args.reviewed_display,
+        publication_timezone=args.publication_timezone, month_basis=args.month_basis,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 

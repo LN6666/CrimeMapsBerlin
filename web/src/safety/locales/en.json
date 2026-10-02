@@ -752,5 +752,17 @@
   "feedback.details": "How your message is handled",
   "feedback.policyLink": "Full privacy notice",
   "unknown.summaryDate": "Event date in the report summary: {date}.",
-  "aria.toggleAttribution": "Toggle map attribution"
+  "aria.toggleAttribution": "Toggle map attribution",
+  "transit.underpass": "Road reference beneath the bridge (actual impact location and extent unknown)",
+  "source.mapReview": "Classification and counting note: {note}",
+  "source.supportingHeading": "Reviewed supporting material · Items: {count}",
+  "source.historyHeading": "Reviewed earlier official announcement · Stages described: {count}",
+  "source.claimNote": "Later source revision: {note}",
+  "source.relationNote": "Source relationship: {note}",
+  "geometry.platformReference": "Platform reference points from the map data: {count}. The platform side and incident location are unknown; these points do not add to hexagon totals.",
+  "geometry.stationPlatformReference": "The station and platform outline from the map data is shown for reference. The platform side and incident location are unknown; this outline does not add to hexagon totals.",
+  "geometry.parkReference": "Only reviewed park areas from the map data are shown. The complete park boundary and incident location remain unknown; these areas do not add to hexagon totals.",
+  "source.reviewDetails": "Read the supplementary source reviews and their limits",
+  "source.serviceHistory": "Read the historical emergency-service context",
+  "geometry.showReference": "Show this reference on the map"
 }

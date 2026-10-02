@@ -24,6 +24,7 @@ from .city_geometry_index import validate_geometry_index, _valid_native_facility
 from .city_road_segment import source_road_segments
 from .city_district_road_reference import district_road_reference
 from .city_rail_crossing_reference import METHOD as RAIL_CROSSING_METHOD, derive_crossing_reference
+from .city_road_bridge_reference import METHOD as ROAD_BRIDGE_METHOD, derive_underpass_reference
 from .city_transit_segment import source_track_segment, source_track_segments_between_roads
 from .official_geometry_references import (
     METHOD as OFFICIAL_DISTRICT_METHOD, derive_official_district_reference,
@@ -36,8 +37,15 @@ SCHEMA_VERSION = 1
 INTERSECTION_CLUSTER_MAX_M = 150
 VERDICTS = {"resolved", "unresolved", "needs_correction"}
 METHODS = {
+    "osm_park_footprint_reference",
+    "osm_station_platform_footprint_reference",
+    "osm_platform_point_collection_reference",
+    "official_pdf_horizontal_circle_reference",
+    "osm_static_road_reference_segment",
+
     OFFICIAL_DISTRICT_METHOD,
     RAIL_CROSSING_METHOD,
+    ROAD_BRIDGE_METHOD,
     "source_coordinate",
     "osm_point",
     "osm_footprint",
@@ -172,7 +180,7 @@ def _source_route_relation(row: dict, line: str, mode: str) -> bool:
     )
 
 
-def _derived_geometry(
+def _derived_geometry_without_static_reference(
     decision: dict, request: dict, objects: dict[str, dict], border, city: str,
     *, include_footprint_count_points: bool = True, official_references: dict | None = None,
     source_transit_contexts: list | None = None,
@@ -221,6 +229,8 @@ def _derived_geometry(
 
     if method == OFFICIAL_DISTRICT_METHOD:
         return derive_official_district_reference(decision, request, official_references or {})
+    if method == ROAD_BRIDGE_METHOD:
+        return derive_underpass_reference(decision, request, objects, border, city)
     if method == RAIL_CROSSING_METHOD:
         return derive_crossing_reference(decision, request, objects, border, city,
             source_transit_contexts=source_transit_contexts or [], valid_carrier=_source_route_relation)
@@ -244,6 +254,8 @@ def _derived_geometry(
         except KeyError as exc:
             raise ValueError(f"selected OSM object is absent from the checked index: {exc.args[0]}") from exc
         geometries = [shape(row["geometry"]) for row in selected]
+        if any("native_bridge_outline_source_proof" in row for row in selected):
+            raise ValueError("bridge outline is only valid for its source-bound underpass reference")
         if (any("native_facility_source_proof" in row for row in selected)
                 and method not in {"osm_native_facility_reference", "osm_station_footprint_reference"}):
             raise ValueError("native facilities are source references only, not event/count points or roads")
@@ -879,6 +891,34 @@ def _derived_geometry(
     return result
 
 
+def _derived_geometry(decision, request, objects, border, city, *, include_footprint_count_points=True, source_pbf_sha256=None, official_references=None, source_transit_contexts=None):
+    if decision.get("method") == "osm_park_footprint_reference":
+        from .park_footprint_references import park_footprint_reference
+        return park_footprint_reference(decision, request, objects, border, source_pbf_sha256)
+    if decision.get("method") == "osm_station_platform_footprint_reference":
+        from .station_platform_references import station_platform_reference
+        return station_platform_reference(decision, request, objects, border, source_pbf_sha256)
+    if decision.get("method") == "osm_platform_point_collection_reference":
+        from .native_platform_references import native_platform_reference
+        return native_platform_reference(decision, request, objects, border)
+    if decision.get("method") == "official_pdf_horizontal_circle_reference":
+        from .official_pdf_references import derive_pdf_circle_reference
+        return derive_pdf_circle_reference(decision, request, border, city)
+    if decision.get("method") == "osm_static_road_reference_segment":
+        from .static_road_references import derive_static_road_reference
+        return derive_static_road_reference(
+            decision, request, objects, border, city,
+            compile_base=_derived_geometry_without_static_reference,
+            include_footprint_count_points=False,
+        )
+    return _derived_geometry_without_static_reference(
+        decision, request, objects, border, city,
+        include_footprint_count_points=include_footprint_count_points,
+        official_references=official_references, source_transit_contexts=source_transit_contexts,
+    )
+
+
+
 def compile_geometry_decisions(
     *, inventory: dict, geometry_index: dict, decision_envelope: dict, border,
     include_footprint_count_points: bool = True, official_reference_index: dict | None = None,
@@ -941,6 +981,7 @@ def compile_geometry_decisions(
             geometry = _derived_geometry(
                 decision, request, objects, border, city,
                 include_footprint_count_points=include_footprint_count_points,
+                source_pbf_sha256=geometry_index.get("source_pbf_sha256"),
                 official_references=official_references,
                 source_transit_contexts=[r["transit_route"] for r in requests.values()
                     if r.get("source_id") == request["source_id"] and r.get("transit_route")

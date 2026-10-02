@@ -752,5 +752,17 @@
   "feedback.details": "So wird dein Hinweis verarbeitet",
   "feedback.policyLink": "Vollständige Datenschutzhinweise",
   "unknown.summaryDate": "Ereignisdatum in der Zusammenfassung der Meldung: {date}.",
-  "aria.toggleAttribution": "Quellenhinweise der Karte ein- oder ausblenden"
+  "aria.toggleAttribution": "Quellenhinweise der Karte ein- oder ausblenden",
+  "transit.underpass": "Straße unter der Brücke zur Orientierung (genaue Aufprallstelle und Ausdehnung des Ereignisses unbekannt)",
+  "source.mapReview": "Hinweis zur Einordnung und Zählung: {note}",
+  "source.supportingHeading": "Ergänzende Unterlagen · {count} Einträge",
+  "source.historyHeading": "Frühere amtliche Meldung · {count} Abschnitte des Geschehens",
+  "source.claimNote": "Spätere Änderung der Quelle: {note}",
+  "source.relationNote": "Zusammenhang zwischen den Quellen: {note}",
+  "geometry.platformReference": "Die {count} Markierungen für Bahnsteige dienen der Orientierung. Bahnsteigseite und genauer Ereignisort sind unbekannt. Die Markierungen werden in den Sechsecken nicht mitgezählt.",
+  "geometry.stationPlatformReference": "Die gezeigten Umrisse von Bahnhof und Bahnsteig dienen der Orientierung. Bahnsteigseite und genauer Ereignisort sind unbekannt. Die Umrisse werden in den Sechsecken nicht mitgezählt.",
+  "geometry.parkReference": "Gezeigt werden bekannte Parkflächen zur Orientierung. Die vollständige Parkgrenze und der genaue Ereignisort bleiben unbekannt. Die Flächen werden in den Sechsecken nicht mitgezählt.",
+  "source.reviewDetails": "Ergänzende Quellenangaben und Einschränkungen ansehen",
+  "source.serviceHistory": "Historische Angaben zu den Rettungsdiensten ansehen",
+  "geometry.showReference": "Diese Orientierungshilfe auf der Karte anzeigen"
 }

@@ -38,7 +38,8 @@ test("production repository prefix retains its city and ignores a foreign city q
   await expect(page.locator("#month")).toHaveValue("09");
   await expect(page.locator("#language")).toHaveValue("en");
   await expect(page.locator(".maplibregl-ctrl-attrib")).toContainText(
-    config.city === "munich" ? "POLIZEIKARTE" : native[config.city]);
+    config.city === "munich" ? "POLIZEIKARTE" :
+      config.city === "nuremberg" ? "Polizeipräsidium Mittelfranken" : native[config.city]);
   if (config.city !== "berlin")
     await expect(page.locator("#basemap option[value='aerial']")).toHaveAttribute("disabled", "");
   expect(requested.length).toBeGreaterThan(1);

@@ -180,7 +180,7 @@ def _count_point(row: dict | None) -> list[float] | None:
     derived = row.get("derived_geometry")
     if not isinstance(derived, dict):
         return None
-    if derived.get("geometry_usage") in {"source_junction_reference_only", "source_road_reference_only", "source_native_collection_reference_only", "source_footprint_reference_only"}:
+    if str(derived.get("geometry_usage", "")).endswith("reference_only"):
         return None
     count_geometry = derived.get("count_point")
     if count_geometry is None and derived.get("type") == "Point":
@@ -439,7 +439,24 @@ def compile_map_decisions(
             incident_seen.add(incident_id)
             if item["category"] not in CATEGORIES:
                 raise ValueError(f"{incident_label} has an invalid category")
-            evidence = _quotes(item["evidence_quotes"], source_text, incident_label)
+            try:
+                evidence = _quotes(item["evidence_quotes"], source_text, incident_label)
+            except ValueError:
+                if not any(key in article for key in (
+                    "source_reference_binding", "source_supporting_material_binding",
+                    "source_attachment_binding", "source_document_binding",
+                )):
+                    raise
+                from .review_decisions import validate_stored_decision
+                from .source_phase_evidence import validate_referenced_phase_quotes
+                def primary(value, source, city, ident):
+                    return validate_stored_decision(value, source=source, city=city, source_id=ident)
+                evidence = validate_referenced_phase_quotes(
+                    item["evidence_quotes"], article={**article, "city": city},
+                    source={"id": source_id, "url": source["source_url"],
+                            "body": source["source_body"], "sha256": source["source_sha256"]},
+                    incident_id=incident_id, primary_validator=primary,
+                )
             normalized_incidents.append(
                 {
                     "incident_id": incident_id,

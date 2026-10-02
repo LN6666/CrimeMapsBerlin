@@ -382,7 +382,7 @@ def _validate_scenes(value: dict, body: str, ident: str, label: str) -> dict:
     }
 
 
-def _revalidate_stored_decision(
+def _revalidate_single_source_decision(
     value: object, source: dict, city: str, ident: str
 ) -> dict:
     decision = _require_exact_keys(value, DECISION_KEYS, f"stored decision for {ident}")
@@ -415,6 +415,34 @@ def _revalidate_stored_decision(
     if normalized != decision:
         raise ValueError(f"Stored review decision is not canonical: {ident}")
     return normalized
+
+
+def _revalidate_stored_decision(value, source, city, ident):
+    if isinstance(value, dict) and "source_supporting_material_binding" in value:
+        from .supporting_material_reviews import validate_supporting_decision
+        return validate_supporting_decision(
+            value, source=source, city=city, source_id=ident,
+            primary_validator=_revalidate_stored_decision,
+        )
+    if isinstance(value, dict) and "source_attachment_binding" in value:
+        from .official_attachment_reviews import validate_attachment_referenced_decision
+        return validate_attachment_referenced_decision(
+            value, source=source, city=city, source_id=ident,
+            primary_validator=_revalidate_stored_decision,
+        )
+    if isinstance(value, dict) and "source_document_binding" in value:
+        from .official_pdf_references import validate_pdf_referenced_decision
+        return validate_pdf_referenced_decision(
+            value, source=source, city=city, source_id=ident,
+            primary_validator=_revalidate_single_source_decision,
+        )
+    if isinstance(value, dict) and "source_reference_binding" in value:
+        from .article_source_references import validate_source_referenced_decision
+        return validate_source_referenced_decision(
+            value, source=source, city=city, source_id=ident,
+            primary_validator=_revalidate_single_source_decision,
+        )
+    return _revalidate_single_source_decision(value, source, city, ident)
 
 
 def validate_stored_decision(

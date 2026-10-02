@@ -752,5 +752,17 @@
   "feedback.details": "你的反馈会如何处理",
   "feedback.policyLink": "完整隐私说明",
   "unknown.summaryDate": "公告摘要中的事件日期：{date}。",
-  "aria.toggleAttribution": "展开或收起地图版权说明"
+  "aria.toggleAttribution": "展开或收起地图版权说明",
+  "transit.underpass": "桥下道路参照（实际撞击位置与范围未知）",
+  "source.mapReview": "分类与计数说明：{note}",
+  "source.supportingHeading": "已核对的补充资料 · {count}项",
+  "source.historyHeading": "已核对的早期官方公告 · {count}段事件经过",
+  "source.claimNote": "来源后续修订：{note}",
+  "source.relationNote": "来源之间的关联说明：{note}",
+  "geometry.platformReference": "沿用地图中的{count}个站台点作参照。具体在哪一侧站台、事件发生在哪里均未知，不计入六边形。",
+  "geometry.stationPlatformReference": "沿用地图中的车站及站台轮廓作参照。具体在哪一侧站台、事件发生在哪里均未知，不计入六边形。",
+  "geometry.parkReference": "仅以地图中已核对的公园区域作参照。完整公园边界及具体事件位置仍未知，不计入六边形。",
+  "source.reviewDetails": "查看补充来源核对说明及使用限制",
+  "source.serviceHistory": "查看早期应急服务的背景说明",
+  "geometry.showReference": "在地图上显示此参照"
 }

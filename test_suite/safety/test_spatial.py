@@ -344,3 +344,84 @@ def test_reviewed_scene_context_deepens_all_same_type_pois_along_geometry_only()
     }
     assert all(link["mention_basis"] == "source_reviewed_context_only" for link in links)
     assert count_location(report) is None
+
+
+def test_multiple_reviewed_types_and_phases_keep_one_context_pair_and_all_evidence():
+    pois, _ = pois_from_osm({"elements": [
+        {"type": "node", "id": 1, "lon": 13.4, "lat": 52.5, "tags": {"amenity": "bar"}},
+    ]})
+    pois["features"][0]["properties"]["context_kinds"] = ["bar", "cafe"]
+    contexts = [{"kind": kind, "scope": "named_object", "radius_m": 0,
+                 "evidence_quote": f"Explicit source context for {kind}."} for kind in ("bar", "cafe")]
+    scenes = [{"scene_id": ident, "coordinates": [13.4, 52.5],
+               "location_object_ids": ["osm/node/1"], "primary_for_count": False,
+               "poi_contexts": contexts} for ident in ("discovery", "operation")]
+    report = {**event("unknown"), "coordinates": None, "scene_locations": scenes,
+              "source_sha256": "a" * 64, "source_review_sha256": "b" * 64}
+    # An unvalidated context_kinds property cannot add a native type.
+    unvalidated = associate([report], pois, include_legacy_links=False)
+    assert unvalidated[0]["context_kinds"] == ["bar"]
+    assert len(unvalidated[0]["source_context_evidence"]) == 2
+    links = associate([report], pois, include_legacy_links=False,
+                      validated_context_memberships={"osm/node/1": ["bar", "cafe"]})
+    assert len(links) == 1
+    assert links[0]["context_kinds"] == ["bar", "cafe"]
+    assert len(links[0]["source_context_evidence"]) == 4
+    assert {r["scene_id"] for r in links[0]["source_context_evidence"]} == {"discovery", "operation"}
+    assert all(r["source_review_sha256"] == "b" * 64 for r in links[0]["source_context_evidence"])
+    assert links[0]["mention_basis"] == "source_reviewed_context_only"
+
+
+
+def test_geometry_reference_cannot_be_counted_even_with_a_valid_point_and_primary_flag():
+    report = scene_event()
+    report["scene_locations"][0]["geometry_usage"] = "source_junction_reference_only"
+    with pytest.raises(ValueError, match="reference cannot be a count"):
+        count_location(report)
+
+
+
+def test_native_platform_context_uses_only_reviewed_ids_despite_public_coordinate_rounding():
+    pois, _ = pois_from_osm({"elements": [
+        {"type": "node", "id": ident, "lon": 13.4000004, "lat": 52.5000004,
+         "tags": {"railway": "station"}} for ident in (1, 2)
+    ]})
+    for feature in pois["features"]:
+        feature["properties"]["context_kinds"] = ["station"]
+    scene = {"scene_id": "rounded", "geometry_usage": "source_native_platform_points_reference_only",
+             "geometry": {"type": "MultiPoint", "coordinates": [[13.4, 52.5]]},
+             "location_object_ids": ["osm/node/1"], "primary_for_count": False,
+             "actual_platform_side_known": False, "actual_event_position_known": False,
+             "poi_contexts": [{"kind": "station", "scope": "along_geometry", "radius_m": 0,
+                               "evidence_quote": "Explicit reviewed station-name context."}]}
+    report = {**event("unknown"), "coordinates": None, "scene_locations": [scene]}
+    links = associate([report], pois, include_legacy_links=False)
+    assert [link["poi_id"] for link in links] == ["osm/node/1"]
+    assert links[0]["actual_event_position_known"] is False
+
+
+
+def test_park_identity_context_keeps_only_selected_faces_and_excludes_nested_playground():
+    # All three points lie inside the visible park reference. The third is a
+    # separately mapped playground, not an authored park identity face.
+    pois, _ = pois_from_osm({"elements": [
+        {"type": "node", "id": ident, "lon": 13.4 + ident * .001, "lat": 52.5,
+         "tags": {"leisure": "park", "name": name}}
+        for ident, name in [(1, "Example park"), (2, "park"), (3, "Nested playground")]
+    ]})
+    for feature in pois["features"]:
+        feature["properties"]["context_kinds"] = ["park"]
+    scene = {"scene_id": "park-context", "geocode_method": "osm_park_footprint_reference",
+        "geometry_usage": "source_footprint_reference_only",
+        "geometry": {"type": "Polygon", "coordinates": [[[13.39, 52.49], [13.42, 52.49],
+            [13.42, 52.51], [13.39, 52.51], [13.39, 52.49]]]},
+        "location_object_ids": ["osm/node/1", "osm/node/2"],
+        "native_park_sources": [{"object_id": "osm/node/1"}, {"object_id": "osm/node/2"}],
+        "primary_for_count": False, "actual_event_position_known": False,
+        "poi_contexts": [{"kind": "park", "scope": "along_geometry", "radius_m": 0,
+                          "evidence_quote": "Near the source-named park; actual site unknown."}]}
+    report = {**event("unknown"), "coordinates": None, "scene_locations": [scene]}
+    links = associate([report], pois, include_legacy_links=False)
+    assert [r["poi_id"] for r in links] == ["osm/node/1", "osm/node/2"]
+    assert all(r["mention_basis"] == "source_reviewed_context_only" for r in links)
+    assert all(r["actual_event_position_known"] is False for r in links)

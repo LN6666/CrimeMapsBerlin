@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CrimeMaps public context type label allowlist",
+  "type": "object",
+  "required": [
+    "policy_version",
+    "allowlist",
+    "generic_label_key",
+    "raw_kind_is_internal_only",
+    "source_label_details_evidence_quote_preserved",
+    "changes_source_context_semantics_or_matching"
+  ],
+  "properties": {
+    "policy_version": {
+      "const": "crimemaps-public-context-labels/1.0.0"
+    },
+    "allowlist": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "label_key"
+        ],
+        "properties": {
+          "label_key": {
+            "type": "string",
+            "pattern": "^poi\\.[a-z_]+$"
+          }
+        }
+      }
+    },
+    "generic_label_key": {
+      "const": "sourceContext.generic"
+    },
+    "raw_kind_is_internal_only": {
+      "const": true
+    },
+    "source_label_details_evidence_quote_preserved": {
+      "const": true
+    },
+    "changes_source_context_semantics_or_matching": {
+      "const": false
+    }
+  }
+}
