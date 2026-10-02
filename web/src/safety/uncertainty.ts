@@ -7,6 +7,7 @@ export interface UncertaintyRow {
   sourceId: string;
   title: string;
   sourceURL: string | null;
+  sourceStatus?: string;
   category: string;
   kind: UncertaintyKind;
   label: string;
@@ -77,6 +78,7 @@ export function uncertaintyRows(events: readonly PoliceEvent[]): UncertaintyRow[
         !!(scene.geometry || scene.candidate_road_geometry) &&
         (scene.geometry?.type !== "Point" || !!scene.geometry_usage);
       rows.push({key, sourceId: event.id, title: event.title, sourceURL: sourceURL(event.source_url),
+        ...(event.source_status ? {sourceStatus: event.source_status} : {}),
         category: event.category, kind: kind(scene), label: scene.label ?? "", role: scene.role,
         eventTime: scene.event_time ?? null,
         summaryEventDate: !hasScenes && typeof event.event_date === "string" && /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(event.event_date) ? event.event_date : null,

@@ -170,7 +170,7 @@ text("button", t("nav.otherCities"), el("external-maps")).onclick =
   externalMapsDialog;
 const dynamicText=new DynamicTranslations();
 const methodsPanel=mountAnnouncementMethods(el("methods-panel"),{t,locale,categoryLabel});
-const uncertaintyPanel=mountUncertaintyPanel(el("uncertainty-panel"),{locale,city:currentCity,translate:t,onSelect:(id)=>{const p=openDialog(t("report.scenes"));listReports(p,[id]);}});
+const uncertaintyPanel=mountUncertaintyPanel(el("uncertainty-panel"),{locale,city:currentCity,translate:t,sourceUncertaintyNotice:t("report.sourceUncertain"),onSelect:(id)=>{const p=openDialog(t("report.scenes"));listReports(p,[id]);}});
 const feedbackPanel=mountFeedbackPanel(el("feedback-panel"),{locale,city:currentCity,translate:t});
 const analyticsPanel=mountAnalytics(el("analytics-panel"),{language:locale,city:currentCity,translate:(key,params)=>t(key,params)});
 let data: Bundle;
@@ -266,6 +266,8 @@ function listReports(parent: HTMLElement, ids: string[]) {
       `${e.event_date ? date(e.event_date) : t("report.publishedMonth",{month:e.month??"—"})} · ${categoryLabel(e.category)} · ${precisionLabels[e.location_precision] ?? t("precision.unknown")}`,
       card,
     );
+    if (e.source_status === "uncertain")
+      text("small", t("report.sourceUncertain"), card);
     if (e.source_status && ["unavailable","refresh_failed"].includes(e.source_status)) {
       const status = sourceStatusLabels[e.source_status];
       text(

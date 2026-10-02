@@ -764,5 +764,6 @@
   "geometry.parkReference": "Gezeigt werden bekannte Parkflächen zur Orientierung. Die vollständige Parkgrenze und der genaue Ereignisort bleiben unbekannt. Die Flächen werden in den Sechsecken nicht mitgezählt.",
   "source.reviewDetails": "Ergänzende Quellenangaben und Einschränkungen ansehen",
   "source.serviceHistory": "Historische Angaben zu den Rettungsdiensten ansehen",
-  "geometry.showReference": "Diese Orientierungshilfe auf der Karte anzeigen"
+  "geometry.showReference": "Diese Orientierungshilfe auf der Karte anzeigen",
+  "report.sourceUncertain": "Zu dieser Meldung sind noch Fragen zur Quelle offen. Die hier gezeigte Einordnung bleibt unsicher."
 }
