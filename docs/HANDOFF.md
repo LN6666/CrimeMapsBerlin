@@ -6,7 +6,8 @@ Hamburg's current local candidate is D23: 494 reviewed source announcements,
 Its 2,730 GIS dispositions retain 2,127 display references and 603 explicit gaps;
 there are zero generated count points. These are not crime totals. Restore from
 ignored `native-name-application-0002/` and `map-build-0023/`; exact release
-verification is being saved separately in `release-gate-0005/`. The affected
+verification is saved in `release-gate-0005/` and reproduces all 3,614 candidate
+files. The affected
 browser card and native-vertex checks passed; full city
 acceptance and current owner approval remain pending. D21 and earlier packets are
 historical and immutable.
@@ -22,6 +23,12 @@ unactivated draft whose browser finding is retained. Current native-task binding
 are saved in `native-name-application-0002/current-native-task-reconciliation.json`:
 27 completed subtasks with limits, 114 display limits and 28 specific open tasks,
 plus the separate open Jenfelder question, giving 29 specific open questions.
+
+The separate media reconciliation in `city-acceptance-0004/` retains all 37 old
+records: one exact primary-page witness poster is already read and applied; two
+full police narratives mention evidence obtained by investigators without a
+public media attachment. The other 34 media references remain unread. Police
+image/video analysis is not presented as the project's independent inspection.
 
 The following D21 task reconciliation is historical; do not use its count of 30
 as the current D23 queue size.
