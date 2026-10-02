@@ -266,6 +266,16 @@ function listReports(parent: HTMLElement, ids: string[]) {
       link(details, "查看已复核官方附件", attachment.source_url);
       text("small", `附件 SHA-256：${attachment.source_sha256}`, details);
     }
+    if (e.source_supporting_materials?.length) {
+      const details = document.createElement("details");
+      details.className = "source-supporting-materials";
+      card.append(details);
+      text("summary", `已复核补充资料 · ${e.source_supporting_materials.length}项`, details);
+      for (const material of e.source_supporting_materials) {
+        text("p", material.note, details);
+        link(details, material.label, material.source_url);
+      }
+    }
     for (const claim of e.current_claim_overlays ?? [])
       text("p", `后续来源修订：${claim.display_note}`, card);
     for (const history of e.historical_source_reviews ?? []) {

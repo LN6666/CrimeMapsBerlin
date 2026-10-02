@@ -320,6 +320,11 @@ test("clicking overlapping scene shapes opens one report card with every scene",
   const browserRows = [
     report("shared", {
       title: "多地点公告",
+      source_supporting_materials: [{
+        source_url: "https://example.invalid/reviewed-organizer",
+        source_sha256: "a".repeat(64), label: "主办方2026年活动回顾",
+        note: "象征性支票展示与后续实际交接分开；图面日期不作为实际发生日期。",
+      }],
       scene_locations: [
         {
           label: "主案发处", role: "incident", location_precision: "street",
@@ -421,6 +426,11 @@ test("clicking overlapping scene shapes opens one report card with every scene",
   }).toContain("多地点公告");
   await expect(page.locator("#selection .report")).toHaveCount(1);
   await expect(page.locator("#selection .scene-list li")).toHaveCount(7);
+  const supporting = page.locator("#selection .source-supporting-materials");
+  await expect(supporting.locator("summary")).toHaveText("已复核补充资料 · 1项");
+  await supporting.locator("summary").click();
+  await expect(supporting).toContainText("图面日期不作为实际发生日期");
+  await expect(supporting.getByRole("link")).toHaveAttribute("href", "https://example.invalid/reviewed-organizer");
   const unknownPark = page.locator("#selection .scene-list li").filter({ hasText: "未定位公园" });
   await expect(unknownPark).toContainText("位置未知");
   await expect(unknownPark).not.toContainText("场所近似位置");

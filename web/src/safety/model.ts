@@ -107,6 +107,7 @@ export interface PoliceEvent {
   source_reference_comparisons?: { review_note: string }[];
   current_claim_overlays?: { display_note: string }[];
   source_attachments?: { source_url: string; source_sha256: string; read: boolean; page_count: number; note: string }[];
+  source_supporting_materials?: { source_url: string; source_sha256: string; label: string; note: string }[];
   map_review_note?: string;
   id: string;
   title: string;

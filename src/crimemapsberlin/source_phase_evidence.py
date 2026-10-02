@@ -35,10 +35,16 @@ def validate_referenced_phase_quotes(
         and _digest(decision) == article.get("decision_sha256"),
         "Stale or foreign complete source review for phase evidence",
     )
-    verified = validate_source_referenced_decision(
-        decision, source=source, city=article["city"], source_id=source_id,
-        primary_validator=primary_validator,
-    )
+    if "source_supporting_material_binding" in decision:
+        from .review_decisions import validate_stored_decision
+        verified = validate_stored_decision(
+            decision, source=source, city=article["city"], source_id=source_id,
+        )
+    else:
+        verified = validate_source_referenced_decision(
+            decision, source=source, city=article["city"], source_id=source_id,
+            primary_validator=primary_validator,
+        )
     phases = {row["incident_id"]: row for row in verified["scene_inventory"]["incidents"]}
     _require(incident_id in phases, "Unknown reviewed phase for map evidence")
     _require(isinstance(quotes, list) and bool(quotes), "Missing map phase quotes")

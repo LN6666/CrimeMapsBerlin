@@ -181,6 +181,8 @@ def build_inventory(*, city: str, db_path: Path) -> dict:
                         request["source_document_binding"] = decision["source_document_binding"]
                     if "source_attachment_binding" in decision:
                         request["source_attachment_binding"] = decision["source_attachment_binding"]
+                    if "source_supporting_material_binding" in decision:
+                        request["source_supporting_material_binding"] = decision["source_supporting_material_binding"]
                     request["geometry_request_sha256"] = _digest(request)
                     geometry_requests.append(request)
             articles.append(
@@ -199,8 +201,11 @@ def build_inventory(*, city: str, db_path: Path) -> dict:
                        if "source_document_binding" in decision else {}),
                     **({"source_reference_binding": decision["source_reference_binding"]}
                        if "source_reference_binding" in decision else {}),
+                    **({"source_supporting_material_binding": decision["source_supporting_material_binding"]}
+                       if "source_supporting_material_binding" in decision else {}),
                     **({"source_review_decision": decision}
-                       if "source_reference_binding" in decision else {}),
+                       if ("source_reference_binding" in decision
+                           or "source_supporting_material_binding" in decision) else {}),
                 }
             )
 

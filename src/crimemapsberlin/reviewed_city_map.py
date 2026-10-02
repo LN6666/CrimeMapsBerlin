@@ -455,6 +455,13 @@ def _prepare_events(
         for key in ("source_reference_binding", "source_attachment_binding", "source_document_binding"):
             if key in article:
                 event[key] = article[key]
+        if "source_supporting_material_binding" in article:
+            from .supporting_material_reviews import visible_materials
+            event["source_supporting_materials"] = visible_materials(
+                article["source_supporting_material_binding"],
+                source={"id": source["source_id"], "url": source["source_url"],
+                        "body": source["source_body"], "sha256": source["source_sha256"]},
+            )
         events.append(event)
         audit["events"] += 1
         audit["incidents"] += article["incident_count"]

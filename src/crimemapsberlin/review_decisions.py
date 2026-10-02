@@ -418,6 +418,12 @@ def _revalidate_single_source_decision(
 
 
 def _revalidate_stored_decision(value, source, city, ident):
+    if isinstance(value, dict) and "source_supporting_material_binding" in value:
+        from .supporting_material_reviews import validate_supporting_decision
+        return validate_supporting_decision(
+            value, source=source, city=city, source_id=ident,
+            primary_validator=_revalidate_stored_decision,
+        )
     if isinstance(value, dict) and "source_attachment_binding" in value:
         from .official_attachment_reviews import validate_attachment_referenced_decision
         return validate_attachment_referenced_decision(

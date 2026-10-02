@@ -407,7 +407,9 @@ def compile_map_decisions(
             try:
                 evidence = _quotes(item["evidence_quotes"], source_text, incident_label)
             except ValueError:
-                if "source_reference_binding" not in article:
+                if not any(key in article for key in (
+                    "source_reference_binding", "source_supporting_material_binding"
+                )):
                     raise
                 from .review_decisions import validate_stored_decision
                 from .source_phase_evidence import validate_referenced_phase_quotes

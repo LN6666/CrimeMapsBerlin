@@ -1,5 +1,15 @@
 # Handoff and owner decisions
 
+Hamburg D20 is compiled from six individually reviewed supporting-source packets;
+the July symbolic cheque stage is separate from the August actual handover, with
+unknown precise July time and no new location/count point. Supporting materials
+carry their own captured-byte/robots/review-packet origins and collapsed browser
+links; primary quotes remain anchors and scalar dates are not imported from photos.
+The other 483 map events, all geometry and POI choices are preserved. Restore from
+ignored `source-material-application-0001/` and `map-build-0020/`. Full city acceptance,
+remaining historical/source gaps and the current owner package remain pending.
+This thread owns Hamburg only; completed Nuremberg batches are not reopened here.
+
 The reviewed city assembler now has a separate exact-input owner packet and
 atomic local promotion gate; see [reviewed city release](REVIEWED-CITY-RELEASE.md).
 It revalidates the source/GIS/map/POI chain and every candidate file, requires
