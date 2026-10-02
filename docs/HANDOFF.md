@@ -1,6 +1,34 @@
 # Handoff and owner decisions
 
-## Hamburg D28 current checkpoint (2026-10-02)
+## Hamburg D29 current checkpoint (2026-10-02)
+
+This window owns Hamburg only. All494 frozen source reviews remain current;489 announcements
+map to3335 phases/3947 locations, not independent crimes. All87 historical question records
+now have individually authored, source-bound dispositions; original contradictions, missing
+historical bytes and unknown locations remain explicit. This does not close the29 separate
+native-identity/historical-source issues or complete full-city acceptance.
+
+Five disclosure fields corrected:6327121 three geometry notes cyclist→46-year-old pedestrian;
+6296450 stale pending relation wording→same-case/age/medical relations already applied;
+6265603 April-weekend wording→May1 plan. Actual background browser verifies three cards,
+publication-month April/June/August59/60/46 loads and an empty warning/error console.
+All494 source bodies/reviews,1077 history rows,2730 native shapes,307 relation choices,
+1851 POI context pairs and original media links retained. Other486 map records and3602
+nonmonth payloads are byte-identical;all3614 candidate/preview files equal. Runtime50
+source files equal the tested Git version;code checks reused,new data/browser checks run.
+
+Restore full-semantic-20261001/{city-acceptance-0006,disclosure-application-0004,map-build-0029,
+release-gate-0010}. Preview http://127.0.0.1:51835/?city=hamburg . Q6's D25 input snapshot is
+immutable;D29 reuse proof binds all87 dispositions and records intentional historical source
+and current map-note corrections. No historical version or withdrawn portrait was fabricated.
+RG10 revalidates current canonical source/GIS/map/POI inputs and exactly reproduces all3614
+candidate files, also byte-equal to the preview;full-city acceptance remains incomplete.
+Media32 original attachments read/applied,3 historical pixel gaps,2 police-evidence mentions
+without public attachments;0 precise count points. Full-city acceptance/current whole package
+unfinished;standing routine authorization binds after required checks;unpublished.
+Next: the29 specific native/source issues, then whole-city acceptance and current delivery.
+
+## Historical Hamburg D28 checkpoint (2026-10-02)
 
 This window owns Hamburg only; Nuremberg's completed frozen849 local delivery is not
 reopened here.494 frozen bodies are source-reviewed,489 map;3335 phases/3947 locations
