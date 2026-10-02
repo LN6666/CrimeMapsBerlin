@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixture";
 import { LRU, tileKeys } from "../src/safety/data";
 import { styledPois } from "../src/safety/model";
 
@@ -114,7 +114,7 @@ test("overview loads no POI geometry, month switching clears missing months", as
           retrieved_at: "2026-09-27T12:00:00Z",
           coverage: { discovered: 2, fetched: 2, pending: 0, failed: 0 },
           months: { "2026-09": { count: 2 } },
-          categories: ["Raub"],
+          categories: ["raub"],
           tile_index: { pois: [], roads: [] },
           tile_size: [0.04, 0.025],
           catalog: {
@@ -135,7 +135,7 @@ test("overview loads no POI geometry, month switching clears missing months", as
             {
               id: "1",
               title: "Test",
-              category: "Raub",
+              category: "raub",
               month: "2026-09",
               coordinates: null,
               location_precision: "unknown",
@@ -145,7 +145,7 @@ test("overview loads no POI geometry, month switching clears missing months", as
             {
               id: "2",
               title: "Named park",
-              category: "Raub",
+              category: "raub",
               month: "2026-09",
               coordinates: [13.41, 52.51],
               location_precision: "place",
@@ -164,6 +164,10 @@ test("overview loads no POI geometry, month switching clears missing months", as
               },
               poi_mentions: ["park"],
               source_url: "https://www.berlin.de/",
+              reviewed_tags: [{
+                tag: "property_offence",
+                evidence_quote: "Das Fahrzeug wurde beschädigt.",
+              }],
             },
           ],
           hex: { overview: hex, detail: hex },
@@ -172,27 +176,33 @@ test("overview loads no POI geometry, month switching clears missing months", as
       });
     return route.fulfill({ json: empty });
   });
-  await page.goto("/");
+  await page.goto("/?lang=zh");
+  await expect(page.locator("#city-switch optgroup")).toHaveCount(1);
+  await expect(page.locator("#city-switch option")).toHaveCount(14);
+  await expect(page.locator("#city-switch")).toHaveValue("berlin");
+  await expect(page.locator("#city-switch option[value='hamburg']")).toHaveAttribute("disabled", "");
   await expect(page.locator("#stats .big")).toHaveText("2");
-  await expect(page.locator("#stats button")).toContainText("1 条位置不足");
+  await expect(page.locator("#stats button")).toContainText("1条地点信息不足");
   expect(requests.filter((url) => url.includes("/pois/"))).toHaveLength(0);
   await expect
     .poll(async () => {
       await page.locator(".maplibregl-canvas").click();
       return page.locator("#selection").innerText();
     })
-    .toContain("2 条已收录警情");
+    .toContain("2条公告");
   await expect(page.locator("#selection")).toContainText("场所近似位置");
   await expect(page.locator("#selection")).toContainText(
-    "匹配对象跨度约 110 米",
+    "匹配的地图对象跨度约110米",
   );
-  await expect(page.locator("#selection")).toContainText("案发地优先");
+  await expect(page.locator("#selection")).toContainText("采用原文中第一个明确的案发地点");
   await expect(page.locator("#selection")).toContainText(
-    "其他案发地点候选：Anderstraße",
+    "原文还提到其他可能的案发地点：Anderstraße",
   );
   await expect(page.locator("#selection")).toContainText(
-    "本公告在网格中只计一条",
+    "本公告在六边形中只计一次",
   );
+  await expect(page.locator("#selection")).toContainText("财产相关事件线索");
+  await expect(page.locator("#selection")).toContainText("Das Fahrzeug wurde beschädigt.");
   expect(errors).toEqual([]);
   expect(requests.filter((url) => url.includes("/months/"))).toHaveLength(1);
   await page.locator("#month").selectOption("08");

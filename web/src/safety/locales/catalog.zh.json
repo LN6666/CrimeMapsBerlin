@@ -1,0 +1,119 @@
+{
+  "locale": "zh-CN",
+  "source_catalog_sha256": "c4919b11cb52f6cfc489690f32c2f051d2da44e8750a8883f6d13a7950a5a085",
+  "verification_scope": "Language adaptation of unchanged checked catalog; no new source acquisition or claim of current re-verification.",
+  "sources": [
+    {
+      "source_id": "source-01",
+      "source_url": "https://www.berlin.de/polizei/polizeimeldungen/fakten-hintergruende/artikel.1078268.php",
+      "source_summary_sha256": "8b27f7ec5d5c17d71b0281ac8bcd0e9110bea73ff6b8eaeb49b0edf9e754e960",
+      "source_checked_on": "2026-09-27",
+      "zh_summary": "列出七个警方划定区域；它们是区域，不是商户名单。",
+      "zh_place": "柏林（Berlin）"
+    },
+    {
+      "source_id": "source-02",
+      "source_url": "https://www.polizei-beratung.de/themen-und-tipps/diebstahl/taschendiebstahl/",
+      "source_summary_sha256": "2a23110e49cdee03750e53ded35e145cea2f35370a3234da914fef5ff77565a3",
+      "source_checked_on": "2026-09-27",
+      "zh_summary": "介绍拥挤的交通、购物和活动场所中的防扒窃建议，不认定具体商户案件高发。",
+      "zh_place": "德国"
+    },
+    {
+      "source_id": "source-03",
+      "source_url": "https://www.college.police.uk/support-forces/practices/problem-solving-prevent-night-time-economy-related-serious-violence-mcdonalds-restaurants",
+      "source_summary_sha256": "6b048c710b87c43fe241f6313af765a8da65ff07a4367bd207cbcb32f73fce2b",
+      "source_checked_on": "2026-09-27",
+      "zh_summary": "研究涉及两家市中心快餐店的夜间暴力，结论不能推广到整个品牌。",
+      "zh_place": "莱斯特（Leicester）"
+    },
+    {
+      "source_id": "source-04",
+      "source_url": "https://www.gmp.police.uk/news/greater-manchester/news/news/2025/july/operation-which-reduced-rape-by-50-and-robbery-by-39-on-peter-street-to-expand-citywide-this-summer/",
+      "source_summary_sha256": "cf30ea42f6c8faddb17424a84b393f2bbac35fe2a7c8ed1ec495b7d49eda612b",
+      "source_checked_on": "2026-09-27",
+      "zh_summary": "介绍市中心夜间暴力相关的警务工作。",
+      "zh_place": "曼彻斯特（Manchester）"
+    },
+    {
+      "source_id": "source-05",
+      "source_url": "https://www.police-nationale.interieur.gouv.fr/actualite/transports-en-commun-a-lyon-des-patrouilles-de-policiers-pour-renforcer-securite",
+      "source_summary_sha256": "67a4fd1864e0bb3e9541d95c1c1dd7b9c37ccf59e64bc6b109583bd8f91ad3b7",
+      "source_checked_on": "2026-09-27",
+      "zh_summary": "介绍交通网络中的防扒窃与抢夺治理。",
+      "zh_place": "里昂（Lyon）"
+    },
+    {
+      "source_id": "source-06",
+      "source_url": "https://mossos.gencat.cat/es/consells_de_seguretat/persones/mobilitatsegura/transports-publics/",
+      "source_summary_sha256": "faea460ebee1340ff4368126baef83a132902f17b4d2a386ee86249c1c22e16b",
+      "source_checked_on": "2026-09-27",
+      "zh_summary": "介绍车站、站台、扶梯和上下车位置的防扒窃建议。",
+      "zh_place": "加泰罗尼亚（Catalonia）"
+    },
+    {
+      "source_id": "source-07",
+      "source_url": "https://www.politie.nl/informatie/waar-moet-ik-op-mijn-hoede-zijn-voor-zakkenrollers.html",
+      "source_summary_sha256": "7619afef00e87a3e5b8531c51ddefe346709ef0aad3fbb81b892038a068cfe7c",
+      "source_checked_on": "2026-09-27",
+      "zh_summary": "建议涉及集市、交通、机场、景点和酒店大堂。",
+      "zh_place": "荷兰"
+    },
+    {
+      "source_id": "source-08",
+      "source_url": "https://politi.dk/politikredse/koebenhavns-politi/nattelivszoner",
+      "source_summary_sha256": "d36271f93419306634cfbc43f39b63aa2811a133bb2c85362f5daeba03c4bdb9",
+      "source_checked_on": "2026-09-27",
+      "zh_summary": "已核对的来源记录了四个夜生活区，并注明延续至2027年5月31日；该制度与柏林kbO不同。",
+      "zh_place": "哥本哈根（Copenhagen）"
+    },
+    {
+      "source_id": "source-09",
+      "source_url": "https://polisen.se/om-polisen/polisens-arbete/utsatta-omraden/",
+      "source_summary_sha256": "e2fbea0e5e4a68240a8858dd72f5b26c517d8200d8c6ca0a33d411143cc70de6",
+      "source_checked_on": "2026-09-27",
+      "zh_summary": "2025年区域清单提供可下载地图，讨论犯罪对社区的影响，不衡量游客受害概率。",
+      "zh_place": "瑞典"
+    },
+    {
+      "source_id": "source-10",
+      "source_url": "https://www.police.be/5998/fr/actualites/stop-pickpockets-suivre-son-intuition",
+      "source_summary_sha256": "b95d827a45f2ddac0302edc418f83ed110b544ffbebb6c52a0aad9648cfbabe0",
+      "source_checked_on": "2026-09-27",
+      "zh_summary": "2021年材料介绍根据警方统计选出的五个主要车站的宣传与执法工作，属于历史材料。",
+      "zh_place": "布鲁塞尔（Brussels）"
+    },
+    {
+      "source_id": "source-11",
+      "source_url": "https://www.police.be/5337/actualites/ameliorer-la-securite-dans-les-parkings",
+      "source_summary_sha256": "3350d5d771ca66c760e9146bcf7326ac308b6cbbfe49a369f9c65978ed98fdbe",
+      "source_checked_on": "2026-09-27",
+      "zh_summary": "介绍公共停车场盗窃和毁损的防范建议，不认定某一个停车场为案件高发地点。",
+      "zh_place": "Brunau（保留来源写法）"
+    },
+    {
+      "source_id": "source-12",
+      "source_url": "https://www.polizei.gv.at/sbg/start19c0.html?ctrl=3734335266674d385951343d&nwid=4e4b43634338376b622b343d&nwo=48",
+      "source_summary_sha256": "ad4cd51db5a887494a9b9962afc341261a0557d355504edbddfb3edc3e394230",
+      "source_checked_on": "2026-09-27",
+      "zh_summary": "2022年发布的车站、站台和车厢防扒窃提示。",
+      "zh_place": "萨尔茨堡（Salzburg）"
+    },
+    {
+      "source_id": "source-13",
+      "source_url": "https://questure.poliziadistato.it/it/Napoli/articolo/2571643d421e13fb8663533496",
+      "source_summary_sha256": "b3ea5f7a419b8cbc68b3ded83270560555a643a030739f1cfa4334d418ec82c0",
+      "source_checked_on": "2026-09-27",
+      "zh_summary": "介绍2023年复活节期间的车站及铁路警务工作，特别提到Napoli Centrale（那不勒斯中央火车站）。",
+      "zh_place": "那不勒斯（Napoli）"
+    },
+    {
+      "source_id": "source-14",
+      "source_url": "https://poliisi.fi/-/suojaudu-taskuvarkailta",
+      "source_summary_sha256": "919765f6a1ac87af0c9ffb7fb4f12bf618360eb6f0e827887ad3a84c4b9c0fd2",
+      "source_checked_on": "2026-09-27",
+      "zh_summary": "介绍活动、餐厅、酒吧和交通换乘场所中的防扒窃建议。",
+      "zh_place": "拉普兰（Lapland）"
+    }
+  ]
+}

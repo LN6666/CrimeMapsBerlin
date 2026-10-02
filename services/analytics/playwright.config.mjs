@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'test',testMatch:'browser.spec.mjs',workers:1,reporter:[['list'],['json',{outputFile:'../../../evidence/browser-results.json'}]],use:{baseURL:'http://127.0.0.1:4188',headless:true,channel:'chrome'},webServer:{command:'vite --config test/preview/vite.config.mjs',url:'http://127.0.0.1:4188',reuseExistingServer:false}});

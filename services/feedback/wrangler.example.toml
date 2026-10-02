@@ -1,0 +1,26 @@
+name = "crimemaps-private-feedback"
+main = "worker.mjs"
+compatibility_date = "2026-10-03"
+workers_dev = true
+[observability]
+enabled = false
+[vars]
+ENABLED = "false"
+ALLOWED_ORIGINS = "https://ln6666.github.io"
+TURNSTILE_HOSTNAME = "ln6666.github.io"
+OPERATOR_NAME = "REPLACE_WITH_REAL_OPERATOR"
+PRIVACY_URL = "https://ln6666.github.io/crimemapsberlin/privacy.html"
+[[d1_databases]]
+binding = "DB"
+database_name = "crimemaps-private-feedback"
+database_id = "REPLACE_WITH_REAL_D1_ID"
+[[ratelimits]]
+name = "REQUEST_LIMITER"
+namespace_id = "10013"
+[ratelimits.simple]
+limit = 60
+period = 60
+[triggers]
+crons = ["10 3 * * *"]
+# Server-only secrets: RATE_SECRET (64 random hex), ADMIN_TOKEN (64 random hex), TURNSTILE_SECRET.
+# Keep ENABLED=false until real challenge, receipt, deletion and operator-access checks pass.

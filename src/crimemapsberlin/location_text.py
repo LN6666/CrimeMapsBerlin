@@ -9,6 +9,7 @@ GENERIC_NAMES = {
     "aufzug",
     "balkon",
     "schulweg",
+    "heimweg",
     "verbindungsweg",
     "zufahrt",
     "ausfahrt",
@@ -79,10 +80,10 @@ def name_aliases(name):
 
 
 class NameMatcher:
-    def __init__(self, aliases):
+    def __init__(self, aliases, *, allow_generic=False):
         self.aliases = defaultdict(set)
         for alias, key in aliases:
-            if alias and alias not in GENERIC_NAMES:
+            if alias and (allow_generic or alias not in GENERIC_NAMES):
                 self.aliases[alias].add(key)
         trie = {}
         for alias in self.aliases:
@@ -113,6 +114,8 @@ def narrative_sentences(body):
     text = re.sub(r"\b(?:z\. b\.|u\. a\.|bzw\.|ca\.)", lambda m: m[0].replace(".", ""), text)
     boundaries = []
     for match in re.finditer(r"(?<=[.!?])\s+(?=[a-zäöü„“])|(?=\berstmeldung\b)", text):
+        if re.search(r"\b(?:st|dr|nr)\.$", text[: match.start()]):
+            continue  # Preserve names and headings such as Hamburg-St. Georg.
         if (
             text[max(0, match.start() - 2) : match.start()].endswith(".")
             and re.search(r"\d\.$", text[: match.start()])
@@ -140,6 +143,7 @@ def location_clause(sentence, start, end):
         re.finditer(
             r"\b(?:dann|anschliessend|danach|kurz darauf|später|zuvor)\b|;|"
             r",\s*(?:als|wobei|woraufhin)\b|"
+            r",\s*(?:der|die|das)\s+(?:zuvor|bereits)\b|"
             r"\bund\s+(?=(?:(?:der|die|er|sie)\s+)?(?:täter\s+|tatverdächtige\s+|mann\s+)?"
             r"(?:floh|flücht|lief|rannte|kollid|prall|schlug))",
             sentence,
@@ -156,12 +160,21 @@ def location_clause(sentence, start, end):
 def mention_role(sentence, start, end):
     clause, offset, _ = location_clause(sentence, start, end)
     before = clause[max(0, offset - 100) : offset]
+    # A police scene heading can share a sentence with later arrest or response
+    # language; those later verbs must not demote the labelled incident scene.
+    if official_scene_heading(sentence, start):
+        return "primary"
     if re.search(
         r"hinweise\s+(?:nimmt|nehmen|erbitt|bitte)|(?:rufnummer|telefonnummer)|"
         r"(?:telefonisch|telefon)\s+unter|(?:kontakt|erreichbar)\s+unter",
         sentence,
     ):
         return "contact"
+    if (
+        re.search(r"\bnahe\s+(?:der|des|dem|einer|einem)?\s*$", before)
+        and not re.search(r"\b(?:tatort|unfallort|ort):", sentence[:start])
+    ):
+        return "proximity"
     if re.search(r"polizeidirektion\s+\d|kommissariat|polizeigewahrsam", sentence) and re.search(
         r"gebracht|brachten|überstellt|eingeliefert|hinweise", sentence
     ):
@@ -171,6 +184,12 @@ def mention_role(sentence, start, end):
     ):
         return "destination"
     if re.search(
+        r"\b(?:trugen|brachten|führten)\b.{0,100}\b(?:geschädigten|verletzten|opfer)\b"
+        r".{0,30}\b(?:zum|zur)\s+$",
+        before,
+    ) and re.search(r"\b(?:rettungsdienst|notruf|alarmierten)\b", clause):
+        return "response"
+    if re.search(
         r"\b(?:richtung|fahrtrichtung)\s+(?:der\s+|des\s+)?"
         r"(?:(?:[us](?:\+u)?-)?bahnhof\s+)?$",
         before,
@@ -179,7 +198,7 @@ def mention_role(sentence, start, end):
     # An explicit 'from NAME, coming ...' is an origin even when a collision occurs elsewhere.
     origin = re.search(
         r"\b(?:aus|von|vom)\s+(?:der\s+|dem\s+)?"
-        r"(?:(?:[us](?:\+u)?-)?bahnhof\s+)?$",
+        r"(?:strasse\s+)?(?:(?:[us](?:\+u)?-)?bahnhof\s+)?$",
         before,
     )
     if origin and re.match(r"\s+kommend\b", clause[offset + end - start :]):
@@ -228,6 +247,8 @@ def mention_role(sentence, start, end):
 
 def locative(sentence, start):
     before = sentence[max(0, start - 180) : start]
+    if official_scene_heading(sentence, start):
+        return True
     return bool(
         re.search(
             r"\b(?:befuhr|befuhren|überquerte|überquerten|lief|ging)\b.{0,160}?\b(?:die|den)\s+$",
@@ -237,12 +258,13 @@ def locative(sentence, start):
         re.search(
             r"(?:\b(?:in|im|am|an|auf|beim|vor|nahe|gegenüber|hinter|unter|über|zur|zum|zu|entlang|"
             r"befuhr|befuhren|überquerte|überquerten|passierte|erreichte)|"
-            r"\b(?:bereich|höhe|kreuzung|kreuzungsbereich|ecke|einmündung|hinterhof|hausflur|gebäude|wohnung|"
+            r"\b(?:bereich|höhe|kreuzung|kreuzungsbereich|ecke|einmündung|einmündungsbereich|"
+            r"hinterhof|hausflur|gebäude|wohnung|"
             r"wohnanschrift|anschrift|adresse|strasse|fahrbahn|gehweg))\s+(?:der\s+|dem\s+|des\s+|die\s+|den\s+|einem\s+|einer\s+)?(?:"
             r"bahnhof\s+|[us]-bahnhof\s+|s\+u-bahnhof\s+|haltestelle\s+|bushaltestelle\s+|"
             r"(?:gehweg|fahrbahn|mittelstreifen|eingang|zufahrt)\s+(?:der|des|zur|zum)\s+|"
             r"einkaufscenter\s+|einkaufszentrum\s+|restaurant\s+|cafe\s+|bar\s+|hotel\s+|"
-            r"park\s+|grünanlage\s+|strasse\s+namens\s+)?[„“\"‚'»]*$",
+            r"park\s+|grünanlagen?\s+(?:von\s+)?|strasse\s+namens\s+)?[„“\"‚'»]*$",
             sentence[max(0, start - 65) : start],
         )
     )
@@ -251,16 +273,31 @@ def locative(sentence, start):
 def contextual_locality(sentence, start):
     return bool(
         re.search(
-            r"(?:\bin|\bortsteil|\bbezirk|\bstadtteil|\bstadtteilen|\bortsteilen)\s+(?:berlin-)?$",
+            r"(?:\bin|\bortsteil|\bbezirk|\bstadtteil|\bstadtteilen|\bortsteilen)\s+(?:(?:berlin|hamburg)-)?$",
             sentence[:start],
         )
     )
 
 
+def official_scene_heading(sentence, start):
+    """A singular police `Tatort:`, `Unfallort:` or `Ort:` heading names a scene."""
+    before = sentence[max(0, start - 180) : start]
+    return bool(re.search(
+        r"\b(?:tatort|unfallort|ort):\s*(?:(?:hamburg|berlin)-[^,;]+,\s*)?$|"
+        r"\b(?:tatort|unfallort|ort):\s*am\s+bahnsteig\s+des\s+"
+        r"[us](?:\+u)?-bahnhof(?:es|s)?\s+$|"
+        r"\b(?:tatort|unfallort|ort):\s*(?:(?:hamburg|berlin)-[^,;]+,\s*)?"
+        r"[us]-bahn-linie\s+[a-z0-9]+\s+\([us]?[a-z0-9]+\),\s*haltestelle\s+$|"
+        r"\b(?:tatort|unfallort|ort):\s*(?:(?:hamburg|berlin)-[^,;]+,\s*)?"
+        r"[\wäöü.-]+(?:\s+[\wäöü.-]+){0,5}\s*(?:/|-|,\s*(?:[us](?:\+u)?-bahnhof\s+)?)\s*$",
+        before,
+    ))
+
+
 def station_context(sentence, start, end, name):
     return "bahnhof" in name or bool(
         re.search(
-            r"\b(?:[us](?:\+u)?[- ](?:bahnhof|bhf\.?|station)?|bahnhof|haltestelle)\s*$",
+            r"\b(?:[us](?:\+u)?[- ](?:bahnhof|bhf\.?|station)?|bahnhof(?:es|s)?|haltestelle)\s*$",
             sentence[max(0, start - 45) : start],
         )
     )
@@ -270,7 +307,7 @@ def venue_context(sentence, start):
     return bool(
         re.search(
             r"\b(?:bar|kneipe|club|nachtclub|restaurant|cafe|hotel|einkaufscenter|einkaufszentrum|"
-            r"geschäft|supermarkt|museum|park|grünanlage)\s+(?:namens\s+)?[„“\"‚'»]*$",
+            r"geschäft|supermarkt|museum|park|grünanlagen?)\s+(?:namens\s+|von\s+)?[„“\"‚'»]*$",
             sentence[max(0, start - 65) : start],
         )
     ) or bool(re.search(r"[„“\"‚'»]$", sentence[:start]))
@@ -290,6 +327,7 @@ INCIDENT_ACTIONS = re.compile(
     r"zusammenstoss|kollid|kollision|stiess.{0,150}?zusammen|angefahren|fuhr.*?an,|"
     r"einschuss|einschüsse|schusslöch|beschmier|farbschmier|bemal|graffiti|hakenkreuz|"
     r"verkauf.{0,60}?(?:drogen|betäubungsmittel)|drogenhandel|"
+    r"(?:gefälscht|plagiat).{0,100}?(?:angebot|verkauf|zum kauf)|"
     r"aufzubrechen|aufgebrochen|einzubrechen|einbruchsspuren|attackier|entreissen|"
     r"prall|erfass|beschädig|stach|beleidig|bedroht|bedrohung|übergriff|stürz|sturz|"
     r"fuhr.{0,150}?\ban\b(?=\s*[,.;]|$)|"
@@ -301,6 +339,8 @@ INCIDENT_ACTIONS = re.compile(
 
 
 def incident_at_location(sentence, match):
+    if official_scene_heading(sentence, match["start"]):
+        return True
     clause, _, _ = location_clause(sentence, match["start"], match["end"])
     return bool(INCIDENT_ACTIONS.search(clause))
 

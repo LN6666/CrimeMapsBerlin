@@ -17,11 +17,16 @@ runs/
 experiments/
 node_modules/
 web/dist/
+web/dist-fixture/
 web/public/safety/
 web/test-results/
 web/playwright-report/
 dist/
 .coverage
+*.ndjson
+review-decisions*.json
+scope-decisions*.json
+scene-decisions*.json
 
 # Preserved ignored legacy runtime artifacts
 evidence/wp6/runtime/

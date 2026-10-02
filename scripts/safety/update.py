@@ -27,7 +27,19 @@ def main():
         except BlockingIOError:
             print("Another collector is running; skipped overlap")
             return
-        result = sync(runtime / "police.sqlite", now.year, args.full or now.weekday() == 6, args.limit)
+        status_path = runtime / "update-status.json"
+        try:
+            result = sync(runtime / "police.sqlite", now.year, args.full or now.weekday() == 6, args.limit)
+        except Exception as exc:
+            status_path.write_text(
+                json.dumps(dict(updated_at=now.isoformat(), publication="blocked", error=str(exc)), indent=2)
+            )
+            raise
+        status = dict(updated_at=now.isoformat(), **result)
+        if result["failed"] or result["errors"] or result["pending"]:
+            status["publication"] = "blocked"
+            status_path.write_text(json.dumps(status, indent=2))
+            raise SystemExit("Source failures or pending bodies: previous map retained")
         raw = ROOT / "data/raw/safety"
         provenance = raw / "berlin-pois.source.json"
         version = (
@@ -38,13 +50,23 @@ def main():
             subprocess.run(
                 [sys.executable, str(ROOT / "scripts/safety/extract_pbf.py")], cwd=ROOT, check=True
             )
-        # Source failure is visible, but successfully ingested records may still be published.
-        subprocess.run([sys.executable, str(ROOT / "scripts/safety/build.py")], cwd=ROOT, check=True)
-        status = dict(updated_at=now.isoformat(), **result)
-        (runtime / "update-status.json").write_text(json.dumps(status, indent=2))
+        try:
+            manifest_path = ROOT / "web/public/safety/manifest.json"
+            prior_generation = (
+                json.loads(manifest_path.read_text())["generation"]
+                if manifest_path.exists() else None
+            )
+            subprocess.run([sys.executable, str(ROOT / "scripts/safety/build.py")], cwd=ROOT, check=True)
+        except subprocess.CalledProcessError:
+            status["publication"] = "blocked"
+            status_path.write_text(json.dumps(status, indent=2))
+            raise
+        status["generation"] = json.loads(manifest_path.read_text())["generation"]
+        status["publication"] = (
+            "unchanged" if status["generation"] == prior_generation else "published"
+        )
+        status_path.write_text(json.dumps(status, indent=2))
         print(json.dumps(status, indent=2))
-        if result["failed"]:
-            raise SystemExit(2)
 
 
 if __name__ == "__main__":

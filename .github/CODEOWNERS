@@ -1,0 +1,8 @@
+# Merge into existing ownership rules; do not replace other owners.
+/.github/CODEOWNERS @LN6666
+/.github/workflows/ @LN6666
+/scripts/security/ @LN6666
+/scripts/migration/ @LN6666
+/services/ @LN6666
+/web/src/safety/security.ts @LN6666
+/SECURITY.md @LN6666
