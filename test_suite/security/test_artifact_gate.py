@@ -48,6 +48,17 @@ class ArtifactTests(unittest.TestCase):
         for page in ['<html/>','<meta http-equiv="Content-Security-Policy" content="script-src *"><script src="https://evil/x.js"></script>','<meta http-equiv="Content-Security-Policy" content="'+csp.policy()+'"><script>alert(1)</script>']:
             self.root.joinpath('index.html').write_text(page)
             with self.assertRaises(ValueError):gate.scan(self.root,'berlin',COMMIT)
+    def test_script_free_report_requires_explicit_strict_script_object_and_base_policy(self):
+        policy = "default-src 'none'; script-src 'none'; object-src 'none'; base-uri 'none'; style-src 'unsafe-inline'"
+        self.root.joinpath('index.html').write_text('<meta http-equiv="Content-Security-Policy" content="'+policy+'"><p>Saved report</p>')
+        gate.scan(self.root,'berlin',COMMIT)
+        for unsafe in ["default-src 'none'; object-src 'none'; base-uri 'none'",
+                       "script-src 'none'; object-src *; base-uri 'none'",
+                       "script-src 'none'; object-src 'none'; base-uri *"]:
+            self.root.joinpath('index.html').write_text('<meta http-equiv="Content-Security-Policy" content="'+unsafe+'"><p>Saved report</p>')
+            with self.assertRaises(ValueError):gate.scan(self.root,'berlin',COMMIT)
+        self.root.joinpath('index.html').write_text('<meta http-equiv="Content-Security-Policy" content="'+policy+'"><p onclick="alert(1)">Saved report</p>')
+        with self.assertRaises(ValueError):gate.scan(self.root,'berlin',COMMIT)
     def test_csp_only_exact_origins_and_optional_challenge(self):
         for origin in ['https://*.workers.dev','http://worker.example','https://user@worker.example','https://worker.example/path','https://worker.example:8443','https://worker.example/']:
             with self.assertRaises(ValueError):csp.policy([origin])
