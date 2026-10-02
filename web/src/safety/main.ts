@@ -306,9 +306,14 @@ function listReports(parent: HTMLElement, ids: string[]) {
         const item = document.createElement("li");
         scenes.append(item);
         text("strong", `${sceneRoleLabel(scene.role)} · ${scene.label}`, item);
+        const locationDisplay = !scene.geometry && !scene.coordinates && !scene.candidate_road_geometry
+          ? "位置未知"
+          : scene.geometry_usage === "official_attachment_horizontal_reference_only"
+          ? "附件水平范围参考"
+          : (precisionLabels[scene.location_precision] ?? "位置待核验");
         text(
           "small",
-          `${scene.case_relation ? `${sceneRelationLabels[scene.case_relation]} · ` : ""}${scene.geometry_usage === "official_attachment_horizontal_reference_only" ? "附件水平范围参考" : (precisionLabels[scene.location_precision] ?? "位置待核验")} · ${scene.primary_for_count ? "主场景" : "仅展示，不计入六边形"}${scene.candidate_road_geometry ? " · 道路范围待核验" : ""}`,
+          `${scene.case_relation ? `${sceneRelationLabels[scene.case_relation]} · ` : ""}${locationDisplay} · ${scene.primary_for_count ? "主场景" : "仅展示，不计入六边形"}${scene.candidate_road_geometry ? " · 道路范围待核验" : ""}`,
           item,
         );
         const eventTimes = [
@@ -329,6 +334,8 @@ function listReports(parent: HTMLElement, ids: string[]) {
           const focus = text("button", "查看原生站台参考", item);
           focus.onclick = () => focusReviewedScenes(e, [scene]);
         }
+        if (scene.geometry_usage === "source_station_platform_footprint_reference_only")
+          text("small", "原生站台轮廓参考；实际站台侧、出口及事件位置未知，不表示完整站区，不计入六边形。", item);
         if (scene.geometry_usage === "official_attachment_horizontal_reference_only") {
           text("small", "警方附件水平范围参考；高度、坐标基准及完整法定条件未核。历史管理范围，不计为犯罪地点。", item);
           if (scene.source_attachment_url) link(item, "查看警方原始PDF附件", scene.source_attachment_url);

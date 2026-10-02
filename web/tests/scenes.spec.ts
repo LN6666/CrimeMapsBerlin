@@ -346,6 +346,21 @@ test("clicking overlapping scene shapes opens one report card with every scene",
           ]] },
           primary_for_count: false,
         },
+        {
+          label: "未定位公园", role: "incident", location_precision: "place",
+          geocode_method: "none", coordinates: null, geometry: null,
+          primary_for_count: false,
+        },
+        {
+          label: "尾随起点站台参考", role: "background", location_precision: "place",
+          geocode_method: "osm_station_platform_footprint_reference",
+          geometry_usage: "source_station_platform_footprint_reference_only",
+          geometry: { type: "Polygon", coordinates: [[
+            [13.410, 52.507], [13.412, 52.507], [13.412, 52.509],
+            [13.410, 52.509], [13.410, 52.507],
+          ]] },
+          primary_for_count: false,
+        },
       ],
     }),
     report("other", {
@@ -395,7 +410,11 @@ test("clicking overlapping scene shapes opens one report card with every scene",
     return page.locator("#selection").innerText();
   }).toContain("多地点公告");
   await expect(page.locator("#selection .report")).toHaveCount(1);
-  await expect(page.locator("#selection .scene-list li")).toHaveCount(4);
+  await expect(page.locator("#selection .scene-list li")).toHaveCount(6);
+  const unknownPark = page.locator("#selection .scene-list li").filter({ hasText: "未定位公园" });
+  await expect(unknownPark).toContainText("位置未知");
+  await expect(unknownPark).not.toContainText("场所近似位置");
+  await expect(page.locator("#selection")).toContainText("原生站台轮廓参考；实际站台侧、出口及事件位置未知");
   await expect(page.locator("#selection")).toContainText("主场景");
   await expect(page.locator("#selection")).toContainText("同一公告最多计一次");
   await page.locator("#category").selectOption("Raub");

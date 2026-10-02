@@ -50,7 +50,7 @@ export interface SceneLocation {
   coordinates?: [number, number] | null;
   geometry?: Geometry | null;
   candidate_road_geometry?: LineString | MultiLineString | null;
-  geometry_usage?: "source_road_reference_only" | "carrier_line_reference_only" | "source_footprint_reference_only" | "source_transit_corridor_reference_only" | "source_junction_reference_only" | "official_attachment_horizontal_reference_only" | "source_native_platform_points_reference_only";
+  geometry_usage?: "source_road_reference_only" | "carrier_line_reference_only" | "source_footprint_reference_only" | "source_transit_corridor_reference_only" | "source_junction_reference_only" | "official_attachment_horizontal_reference_only" | "source_native_platform_points_reference_only" | "source_station_platform_footprint_reference_only";
   native_platform_count?: number;
   source_platform_side_known?: boolean;
   source_attachment_url?: string;

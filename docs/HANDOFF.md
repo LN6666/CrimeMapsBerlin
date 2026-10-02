@@ -2,32 +2,35 @@
 
 ## Current objective
 
-Hamburg D17 supersedes the earlier Hamburg candidate counts below: the frozen
-494-source review remains unchanged, with 489 displayed announcements, 3,334
-phases and 3,947 locations. Three contexts now retain all original platform nodes
-from the Wördemanns Weg and Rispengrasweg stop areas. The five original nodes are
-station-name references; actual side, event position and whole-stop extent remain
-unknown. The three earlier native park faces and their explicit provenance remain.
-There are 2,122 display references, 608 explicit GIS request gaps and zero count
-points, separately from 1,825 unlocated display locations. The candidate retains
-109,326 POIs and 1,851 unique announcement–POI context pairs. Nippoldstraße's
-east/west stops remain distinct alternatives, with the family collection place
-unresolved. Source, phase, time, role, category, relation and count choices are
-unchanged. The general operation caption now reads “处置／行动” so that rescue and
-medical actions are not labelled police actions.
-Recovery uses `.runtime/review/hamburg/full-semantic-20261001/native-stop-reference-followup-0001/`
-and `map-build-0017/`. D16 and earlier evidence stay preserved. The current D17
-full-source input package is now saved at `owner-evidence-package-0003/`:
-5,038 archived files, SHA-256
+Hamburg D18 supersedes the earlier candidate counts below. The frozen 494-source
+review remains unchanged: 489 displayed announcements, 3,334 phases and 3,947
+locations. Source 6232002 now retains both original Legienstraße platform polygons
+as the following-origin station background reference. The park offence stays
+unlocated; actual exit, platform side and complete station extent stay unknown.
+Only this scene geometry changes; the other 488 announcements and 2,729 compiled
+geometry rows are unchanged. The original platform rings remain byte-identical to
+the prior index and all vertices match the native PBF nodes. Two enriched native
+records do not add POIs to the frozen product or fabricate associations.
+
+There are 2,123 display references, 607 explicit GIS request gaps, zero pending
+GIS requests and zero count points, separately from 1,824 unlocated display
+locations. The candidate retains 109,326 POIs and 1,851 unique announcement–POI
+context pairs. Scene cards without geometry or coordinates now say “位置未知”;
+platform faces explicitly disclose unknown side, exit, event position and whole
+station extent. Actual browser checks cover March's 50 announcements, two drawn
+faces, clicking a face to open all five source scenes, and a working local basemap.
+Source, phase, time, role, category, relation and count choices are unchanged.
+
+Recovery uses `native-legien-footprints-0001/` and `map-build-0018/` under
+`.runtime/review/hamburg/full-semantic-20261001/`.
+D17 and earlier sealed evidence stay preserved. The D17 full-source ZIP in
+`owner-evidence-package-0003/` remains a historical input baseline with SHA-256
 `5eb8f9798fdc1dfc09354936e57c200c374a78d9964c520f925d99bed802fbcb`.
-Current source/decision bindings and all ten publication-month browser loads were
-checked, along with empty-month handling, rapid switching, category filtering and
-POI navigation/detail-to-overview scales. These checks cover data assembly and
-executed browser behavior. Specific historical-source/native-identity gaps,
-whole-city technical acceptance and current owner approval remain incomplete;
-the package does not authorize publishing or close all 170 historical task rows.
-See [Hamburg progress](HAMBURG-PROGRESS.md) and
-[historical native park references](HAMBURG-NATIVE-PARK-REFERENCES.md).
+D18 differences are separate and do not authorize publication. Specific historical
+and native-identity questions, whole-city technical acceptance and current owner
+approval remain incomplete. Unknown geometry must remain explicit and must not be
+resolved by selecting a nearby venue or generating a representative point.
+See [Hamburg progress](HAMBURG-PROGRESS.md).
 
 CrimeMapsBerlin replaces CiviFlux. The owner authorized removal of the former plugin code locally and on GitHub, and renaming the repository. Git history is preserved. The old traffic disruption, digital twin, ontology/PPR and Qwen development plans are superseded for this product.
 
