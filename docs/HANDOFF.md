@@ -1,34 +1,41 @@
 # Handoff and owner decisions
 
 This thread owns Hamburg only; completed Nuremberg batches are not reopened here.
-Hamburg's current local candidate is D23: 494 reviewed source announcements,
+Hamburg's current local candidate is D24: all 494 frozen sources reviewed,
 489 displayed announcements, 3,335 displayed phases and 3,947 displayed locations.
-Its 2,730 GIS dispositions retain 2,127 display references and 603 explicit gaps;
-there are zero generated count points. These are not crime totals. Restore from
-ignored `native-name-application-0002/` and `map-build-0023/`; exact release
-verification is saved in `release-gate-0005/` and reproduces all 3,614 candidate
-files. The affected
-browser card and native-vertex checks passed; full city
-acceptance and current owner approval remain pending. D21 and earlier packets are
-historical and immutable.
+These are not crime totals. Restore ignored `source-material-application-0003/`
+and `map-build-0024/`; the current preview is http://127.0.0.1:51830/?city=hamburg .
+D23/RG5 and earlier sealed packets remain immutable historical evidence.
 
-The source heading of announcement 6285920 explicitly names Weinligstraße while
-its body uses Weinlingstraße. Both source spellings remain. Three scenes now use
-the whole named road as a display reference, retaining all 24 native vertices on
-three OSM ways. Exact fall/care/ambulance positions and hospitals remain unknown;
-no count point or POI association is added. One stale care-phase explanation is
-corrected. The other 493 source decisions, 488 map records, 2,727 geometries,
-307 relationship choices and 1,851 POI context pairs are preserved. D22 is an
-unactivated draft whose browser finding is retained. Current native-task bindings
-are saved in `native-name-application-0002/current-native-task-reconciliation.json`:
-27 completed subtasks with limits, 114 display limits and 28 specific open tasks,
-plus the separate open Jenfelder question, giving 29 specific open questions.
+Eight complete primary bodies and original linked images have been read by the
+LLM, hash-bound and applied. All 494 source records, scene/scope choices, 2,730
+native geometries, 307 relation choices and 1,851 POI context pairs are retained.
+The other 480 map records are byte-identical; counterpart 6271927 only rebinds
+two prior-source-review hashes. All existing supporting links and notes survive.
+Actual hidden-browser checks cover eight material panels, 14 visible links,
+five months (59/57/54/46/46 announcements), the September map and an empty
+warning/error console. No image-derived coordinates or new phases are generated.
 
-The separate media reconciliation in `city-acceptance-0004/` retains all 37 old
-records: one exact primary-page witness poster is already read and applied; two
-full police narratives mention evidence obtained by investigators without a
-public media attachment. The other 34 media references remain unread. Police
-image/video analysis is not presented as the project's independent inspection.
+Current media reconciliation is `source-material-application-0003/current-media-status.json`:
+all 37 historical reference records survive; nine exact original attachments are
+read and applied, two police narratives mention evidence without a public media
+attachment, and 26 references remain unread. July symbolic cheque imagery and
+the August 4 image showing 6,180 euros remain distinct; neither proves bank funds
+arrival. Invitations remain planned, and a raster policy map is not a legal vector.
+
+There are 2,127 display references, 603 explicit GIS gaps and zero count points,
+separate from 1,820 unlocated display locations. Native-task status remains 27
+completed subtasks with limits, 114 display limitations and 28 specific open tasks,
+plus one separate Jenfelder question: 29 specific open questions. The three whole
+Weinligstraße references from D23 remain, with the original Weinlingstraße body
+spelling and unknown fall/care/ambulance/hospital positions preserved.
+
+RG6 revalidates the source/GIS/map/POI chain and exactly reproduces all 3,614
+candidate files; the preview is byte-identical. Full-city technical
+acceptance, remaining source-gap reconciliation and the current full evidence
+package are unfinished; no Hamburg publication. Standing routine owner-review
+authorization is recorded against current batch hashes only after all required
+checks pass; it does not replace source review or publish data.
 
 The following D21 task reconciliation is historical; do not use its count of 30
 as the current D23 queue size.
