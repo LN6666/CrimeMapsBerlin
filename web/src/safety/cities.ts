@@ -57,6 +57,26 @@ export function requestedMapView(search: string) {
     : mapViews.berlin;
 }
 
+/** The static-site assembly embeds only manifest/receipt-verified releases. */
+export function approvedCityLinks(value: unknown): Map<string, string> {
+  const links = new Map<string, string>();
+  if (!value || typeof value !== "object") return links;
+  const directory = value as { schema_version?: unknown; cities?: unknown };
+  if (directory.schema_version !== 1 || !Array.isArray(directory.cities)) return links;
+  for (const entry of directory.cities) {
+    if (!entry || typeof entry !== "object") continue;
+    const city = entry as Record<string, unknown>;
+    if (
+      typeof city.id !== "string" || !Object.hasOwn(mapViews, city.id) ||
+      city.owner_approved !== true || city.publication_ready !== true ||
+      typeof city.manifest_sha256 !== "string" || !/^[a-f0-9]{64}$/.test(city.manifest_sha256) ||
+      typeof city.packet_digest !== "string" || !/^[a-f0-9]{64}$/.test(city.packet_digest)
+    ) continue;
+    links.set(city.id, `${import.meta.env.BASE_URL}?city=${encodeURIComponent(city.id)}`);
+  }
+  return links;
+}
+
 export const cityGroups: readonly { label: string; cities: readonly City[] }[] = [
   {
     label: "第 1 组 · 5 城",

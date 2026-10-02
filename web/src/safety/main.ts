@@ -25,7 +25,7 @@ import type { Manifest } from "./data";
 import { Basemaps, basemapLabels } from "./basemaps";
 import type { BasemapId } from "./basemaps";
 import { externalMaps, externalMapsDirectory } from "./external-maps";
-import { cityGroups, requestedMapView } from "./cities";
+import { approvedCityLinks, cityGroups, requestedMapView } from "./cities";
 
 const cityView = requestedMapView(window.location.search);
 const currentCity = cityView.id;
@@ -102,15 +102,21 @@ app.innerHTML = `<header><div><span class="brand">${currentCity === "berlin" ? "
 const el = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const citySelect = el<HTMLSelectElement>("city-switch");
+let publishedCityLinks = new Map<string, string>();
+try {
+  const directory = document.getElementById("approved-city-maps")?.textContent;
+  if (directory) publishedCityLinks = approvedCityLinks(JSON.parse(directory));
+} catch { /* Missing or malformed availability data keeps existing city choices. */ }
 for (const group of cityGroups) {
   const section = document.createElement("optgroup");
   section.label = group.label;
   for (const city of group.cities) {
+    const href = city.href ?? publishedCityLinks.get(city.id);
     const option = new Option(
-      city.name + (city.href ? "" : " · 制作中"),
+      city.name + (href ? "" : " · 制作中"),
       city.id,
     );
-    option.disabled = !city.href && city.id !== currentCity;
+    option.disabled = !href && city.id !== currentCity;
     section.append(option);
   }
   citySelect.append(section);
@@ -120,7 +126,8 @@ citySelect.onchange = () => {
   const destination = cityGroups.flatMap((group) => group.cities).find(
     (city) => city.id === citySelect.value,
   );
-  if (destination?.href) window.location.assign(destination.href);
+  const href = destination?.href ?? publishedCityLinks.get(citySelect.value);
+  if (href) window.location.assign(href);
 };
 const text = (tag: string, value: string, parent: HTMLElement) => {
   const n = document.createElement(tag);

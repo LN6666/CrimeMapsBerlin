@@ -113,3 +113,18 @@ bodies, commit generated data, merge a PR, or provide hosting authorization.
 All source bodies, review ledgers, candidate data, packets, acceptance evidence,
 approval records and local static output must remain excluded from Git. Deployment
 of the approved artifacts remains a separate owner-authorized step.
+
+## City switching in an assembled site
+
+The frontend accepts an optional `application/json` script element with
+`id="approved-city-maps"`. Static assembly supplies schema version 1 and a
+`cities` array. Each entry names a supported `id`, explicit `owner_approved: true`
+and `publication_ready: true`, plus the verified `manifest_sha256` and
+`packet_digest`. The assembler must first validate the owner approval, release
+receipt, manifest and every generation file against the current packet.
+
+The directory enables the corresponding local city links while preserving
+Berlin as the default entrance and the 5/5/4 selector order. Missing, malformed
+or unapproved entries retain their pending state. Availability needs no extra
+map-data requests; normal month/viewport loading and caches remain unchanged.
+Embed this derived directory only in the assembled site, never in source control.
