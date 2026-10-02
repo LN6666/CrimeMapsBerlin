@@ -48,9 +48,9 @@ for (const [ownerApproved, publicationReady] of [[true, true], [true, false], [f
     const hamburg = page.locator("#city-switch option[value='hamburg']");
     await expect(page.locator("#city-switch optgroup")).toHaveCount(3);
     await expect(page.locator("#city-switch option")).toHaveCount(14);
-    await expect(page.locator("#city-switch option[value='frankfurt']")).toBeDisabled();
+    await expect(page.locator("#city-switch option[value='frankfurt']")).toHaveJSProperty("disabled", true);
     if (ownerApproved && publicationReady) {
-      await expect(hamburg).toBeEnabled();
+      await expect(hamburg).toHaveJSProperty("disabled", false);
       await expect(hamburg).toHaveText("汉堡");
       await page.locator("#city-switch").selectOption("hamburg");
       await expect(page).toHaveURL(/\?city=hamburg$/);
@@ -61,7 +61,7 @@ for (const [ownerApproved, publicationReady] of [[true, true], [true, false], [f
       await expect(page.locator("h1")).toContainText("柏林");
       await expect(page.locator("#city-switch")).toHaveValue("berlin");
     } else {
-      await expect(hamburg).toBeDisabled();
+      await expect(hamburg).toHaveJSProperty("disabled", true);
       await expect(hamburg).toHaveText("汉堡 · 制作中");
     }
   });
