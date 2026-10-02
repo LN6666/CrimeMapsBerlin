@@ -16,8 +16,16 @@ unresolved. Source, phase, time, role, category, relation and count choices are
 unchanged. The general operation caption now reads “处置／行动” so that rescue and
 medical actions are not labelled police actions.
 Recovery uses `.runtime/review/hamburg/full-semantic-20261001/native-stop-reference-followup-0001/`
-and `map-build-0017/`. D16 and earlier evidence stay preserved. Whole-city acceptance,
-the current final owner package and current owner approval remain incomplete.
+and `map-build-0017/`. D16 and earlier evidence stay preserved. The current D17
+full-source input package is now saved at `owner-evidence-package-0003/`:
+5,038 archived files, SHA-256
+`5eb8f9798fdc1dfc09354936e57c200c374a78d9964c520f925d99bed802fbcb`.
+Current source/decision bindings and all ten publication-month browser loads were
+checked, along with empty-month handling, rapid switching, category filtering and
+POI navigation/detail-to-overview scales. These checks cover data assembly and
+executed browser behavior. Specific historical-source/native-identity gaps,
+whole-city technical acceptance and current owner approval remain incomplete;
+the package does not authorize publishing or close all 170 historical task rows.
 See [Hamburg progress](HAMBURG-PROGRESS.md) and
 [historical native park references](HAMBURG-NATIVE-PARK-REFERENCES.md).
 
