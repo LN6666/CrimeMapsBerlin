@@ -51,7 +51,7 @@ jobs:
         run: |
           CITY=$(python -c 'import json; print(json.load(open("city-config.json"))["city"])')
           python scripts/migration/verify_release.py --acceptance incoming/site-acceptance.json --expected-sha256 "$EXPECTED_SHA256" --archive incoming/site.tar.gz --receipt incoming/site-integrity.json --output accepted-site --city "$CITY" --repository "$GITHUB_REPOSITORY" --commit "$GITHUB_SHA"
-      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: accepted-site
   deploy:
