@@ -29,3 +29,12 @@
 :root[data-theme=light] .portal-footer summary{color:#284c58}
 @media(hover:hover) and (pointer:fine){:root[data-theme=light] .city-tile:hover .city-label{background:#e2edef}}
 @media(max-width:600px){.header-tools{flex-wrap:wrap}.header-caption{flex-basis:100%;text-align:right}}
+
+@media(max-width:600px){
+  .language-switch button{font-size:16px;min-width:44px;min-height:44px;padding:8px 10px}
+  .appearance-switch{font-size:14px;flex-wrap:wrap}
+  .appearance-switch select{font-size:16px;min-width:44px;min-height:44px}
+  .header-caption{font-size:14px;line-height:1.5}
+  .portal-footer{font-size:16px;line-height:1.55}
+  .portal-footer summary,.portal-footer .repo-link{display:flex;align-items:center;min-height:44px}
+}

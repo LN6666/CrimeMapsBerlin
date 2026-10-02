@@ -37,6 +37,11 @@ export function installMobileLayout(root: HTMLElement, options: {
   settings.className = "mobile-view-settings";
   const settingsSummary = document.createElement("summary");
   const currentView = document.createElement("span");
+  const currentCity = document.createElement("span");
+  currentCity.className = "mobile-view-city";
+  const currentPeriod = document.createElement("span");
+  currentPeriod.className = "mobile-view-period";
+  currentView.append(currentCity, currentPeriod);
   const settingsIcon = document.createElement("span");
   settingsIcon.className = "mobile-disclosure-icon";
   settingsIcon.textContent = "⌄";
@@ -45,7 +50,12 @@ export function installMobileLayout(root: HTMLElement, options: {
   if (toolbar) { toolbar.before(settings); settings.append(settingsSummary, toolbar); }
   function updateViewSummary() {
     const value = (id: string) => root.querySelector<HTMLSelectElement>(`#${id}`)?.selectedOptions[0]?.textContent?.trim() || "";
-    currentView.textContent = [value("city-switch"), [value("month"), value("year")].filter(Boolean).join(" ")].filter(Boolean).join(" · ");
+    const city = value("city-switch");
+    const period = [value("month"), value("year")].filter(Boolean).join(" ");
+    currentCity.textContent = city;
+    currentPeriod.textContent = period ? `${city ? "· " : ""}${period}` : "";
+    settingsSummary.setAttribute("aria-label", [city, period].filter(Boolean).join(" · "));
+    currentCity.title = city;
   }
   const toolbarObserver = new MutationObserver(updateViewSummary);
   if (toolbar) toolbarObserver.observe(toolbar, { childList: true, subtree: true, characterData: true });
