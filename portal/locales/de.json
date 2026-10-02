@@ -1,0 +1,20 @@
+{
+  "copy": {
+    "title": "CrimeMaps Deutschland",
+    "home": "Startseite",
+    "caption": "Polizeimeldungen auf der Karte · 14 Städte",
+    "grid": "Stadt auswählen",
+    "open": "Karte für {city} öffnen",
+    "about": "Über die Karten und Bilder",
+    "note": "Die Karten zeigen ausgewählte Polizeimeldungen. Sie erfassen nicht alle Straftaten.",
+    "details": "Dies ist eine frühe Open-Source-Version. Bei den erfassten Meldungen, der Ortszuordnung und den Übersetzungen sind Lücken oder Fehler möglich. Lesen Sie dazu die verlinkten Polizeimeldungen. Wer mithelfen möchte, ist willkommen.",
+    "images": "Die Stadtansichten wurden mit KI anhand örtlicher Wahrzeichen erstellt. Sie stellen die Städte vor und zeigen keine konkreten Ereignisse aus Polizeimeldungen.",
+    "repo": "Projekt und Quellcode",
+    "alt": "Mit KI erstellte Stadtansicht: {city} · {landmark}"
+  },
+  "appearanceCopy": {
+    "label": "Darstellung",
+    "blue": "Blau",
+    "light": "Hell"
+  }
+}

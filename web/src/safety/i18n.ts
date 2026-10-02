@@ -21,7 +21,7 @@ export function html(value:string):string {
   return value.replace(/[&<>"']/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 }
 export function cityName(id:string,fallback:string):string { return t(`city.${id}`,{},fallback); }
-export function poiName(kind:string,fallback:string):string {return t(`poi.${kind}`,{},t("poi.unknown",{},fallback));}
+export function poiName(kind:string,fallback:string):string {return t(`poi.${kind === "source_linked_context" ? "context" : kind}`,{},t("poi.unknown",{},fallback));}
 export function languageURL(destination:string):string {
   const url=new URL(destination,location.href);url.searchParams.set('lang',locale);
   const month=document.querySelector<HTMLSelectElement>('#month')?.value;

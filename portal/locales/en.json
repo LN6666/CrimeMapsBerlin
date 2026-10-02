@@ -1,0 +1,20 @@
+{
+  "copy": {
+    "title": "CrimeMaps Germany",
+    "home": "Home",
+    "caption": "German police report maps · 14 cities",
+    "grid": "Choose a city",
+    "open": "Open the {city} map",
+    "about": "About the maps and images",
+    "note": "Selected police announcements. They do not represent all crime.",
+    "details": "This is an early open-source version. Coverage, locations and translations may have gaps or errors. Please read the linked police announcements for context. Contributions are welcome.",
+    "images": "The city images were generated with AI using local landmarks. They introduce the cities and do not depict specific incidents.",
+    "repo": "Project and source code",
+    "alt": "AI-generated view of {landmark} in {city}"
+  },
+  "appearanceCopy": {
+    "label": "Appearance",
+    "blue": "Blue",
+    "light": "Light"
+  }
+}

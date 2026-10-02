@@ -1,7 +1,7 @@
 {
   "app.title": "CrimeMaps · {city}警方公告地图",
   "app.heading": "{city} · 警方公告与城市场所",
-  "app.tagline": "查看公告与周边场所",
+  "app.tagline": "警方公告与地图",
   "app.preview": "预览版本 · 尚未公开发布",
   "app.localApproved": "此版本尚未公开发布",
   "nav.city": "城市",
@@ -765,5 +765,10 @@
   "source.reviewDetails": "查看补充来源核对说明及使用限制",
   "source.serviceHistory": "查看早期应急服务的背景说明",
   "geometry.showReference": "在地图上显示此参照",
-  "report.sourceUncertain": "这篇公告仍有部分来源信息无法确认，相关解读保留为不确定。"
+  "report.sourceUncertain": "这篇公告仍有部分来源信息无法确认，相关解读保留为不确定。",
+  "external.policeWebsite": "警察官网",
+  "app.brandName": "德国城市警情地图",
+  "theme.label": "外观",
+  "theme.blue": "深蓝",
+  "theme.light": "亮色"
 }

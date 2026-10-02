@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "checked_date": "2026-10-03",
+  "cities": {
+    "berlin": {
+      "url": "https://www.berlin.de/polizei/",
+      "authority": "Polizei Berlin"
+    },
+    "hamburg": {
+      "url": "https://www.polizei.hamburg/",
+      "authority": "Polizei Hamburg"
+    },
+    "munich": {
+      "url": "https://www.polizei.bayern.de/muenchen",
+      "authority": "Polizeipräsidium München"
+    },
+    "cologne": {
+      "url": "https://koeln.polizei.nrw/",
+      "authority": "Polizei Köln"
+    },
+    "frankfurt": {
+      "url": "https://www.polizei.hessen.de/polizeipraesidien/polizeipraesidium-frankfurt-am-main/",
+      "authority": "Polizeipräsidium Frankfurt am Main"
+    },
+    "dusseldorf": {
+      "url": "https://duesseldorf.polizei.nrw/",
+      "authority": "Polizei Düsseldorf"
+    },
+    "stuttgart": {
+      "url": "https://ppstuttgart.polizei-bw.de/",
+      "authority": "Polizeipräsidium Stuttgart"
+    },
+    "leipzig": {
+      "url": "https://www.polizei.sachsen.de/de/pdl.htm",
+      "authority": "Polizeidirektion Leipzig"
+    },
+    "dortmund": {
+      "url": "https://dortmund.polizei.nrw/",
+      "authority": "Polizei Dortmund"
+    },
+    "bremen": {
+      "url": "https://www.polizei.bremen.de/",
+      "authority": "Polizei Bremen"
+    },
+    "essen": {
+      "url": "https://essen.polizei.nrw/",
+      "authority": "Polizei Essen"
+    },
+    "dresden": {
+      "url": "https://www.polizei.sachsen.de/de/pdd.htm",
+      "authority": "Polizeidirektion Dresden"
+    },
+    "hannover": {
+      "url": "https://www.pd-h.polizei-nds.de/startseite/",
+      "authority": "Polizeidirektion Hannover"
+    },
+    "nuremberg": {
+      "url": "https://www.polizei.bayern.de/wir-ueber-uns/organisation/dienststellen/000967/index.html",
+      "authority": "Polizeipräsidium Mittelfranken"
+    }
+  }
+}

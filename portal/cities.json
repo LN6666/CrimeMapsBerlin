@@ -1,0 +1,226 @@
+[
+  {
+    "city": "berlin",
+    "month": "2026-09",
+    "names": {
+      "de": "Berlin",
+      "zh": "柏林",
+      "en": "Berlin"
+    },
+    "landmark": {
+      "en": "Brandenburg Gate",
+      "de": "Brandenburger Tor",
+      "zh": "勃兰登堡门"
+    },
+    "officialPoliceUrl": "https://www.berlin.de/polizei/",
+    "map_path": "/crimemaps-Berlin/map/"
+  },
+  {
+    "city": "hamburg",
+    "month": "2026-10",
+    "names": {
+      "de": "Hamburg",
+      "zh": "汉堡",
+      "en": "Hamburg"
+    },
+    "landmark": {
+      "en": "Elbphilharmonie",
+      "de": "Elbphilharmonie",
+      "zh": "易北爱乐厅"
+    },
+    "officialPoliceUrl": "https://www.polizei.hamburg/",
+    "map_path": "/crimemaps-Hamburg/"
+  },
+  {
+    "city": "munich",
+    "month": "2026-09",
+    "names": {
+      "de": "München",
+      "zh": "慕尼黑",
+      "en": "Munich"
+    },
+    "landmark": {
+      "en": "Frauenkirche twin towers",
+      "de": "Türme der Frauenkirche",
+      "zh": "圣母教堂双塔"
+    },
+    "officialPoliceUrl": "https://www.polizei.bayern.de/muenchen",
+    "map_path": "/crimemaps-Munich/"
+  },
+  {
+    "city": "cologne",
+    "month": "2026-09",
+    "names": {
+      "de": "Köln",
+      "zh": "科隆",
+      "en": "Cologne"
+    },
+    "landmark": {
+      "en": "Cologne Cathedral",
+      "de": "Kölner Dom",
+      "zh": "科隆大教堂"
+    },
+    "officialPoliceUrl": "https://koeln.polizei.nrw/",
+    "map_path": "/crimemaps-Cologne/"
+  },
+  {
+    "city": "frankfurt",
+    "month": "2026-09",
+    "names": {
+      "de": "Frankfurt am Main",
+      "zh": "法兰克福（美因河畔）",
+      "en": "Frankfurt am Main"
+    },
+    "landmark": {
+      "en": "Frankfurt financial skyline",
+      "de": "Frankfurter Skyline",
+      "zh": "法兰克福金融天际线"
+    },
+    "officialPoliceUrl": "https://www.polizei.hessen.de/polizeipraesidien/polizeipraesidium-frankfurt-am-main/",
+    "map_path": "/crimemaps-Frankfurt/"
+  },
+  {
+    "city": "dusseldorf",
+    "month": "2026-09",
+    "names": {
+      "de": "Düsseldorf",
+      "zh": "杜塞尔多夫",
+      "en": "Düsseldorf"
+    },
+    "landmark": {
+      "en": "Rhine Tower",
+      "de": "Rheinturm",
+      "zh": "莱茵电视塔"
+    },
+    "officialPoliceUrl": "https://duesseldorf.polizei.nrw/",
+    "map_path": "/crimemaps-Dusseldorf/"
+  },
+  {
+    "city": "stuttgart",
+    "month": "2026-09",
+    "names": {
+      "de": "Stuttgart",
+      "zh": "斯图加特",
+      "en": "Stuttgart"
+    },
+    "landmark": {
+      "en": "Stuttgart television tower",
+      "de": "Stuttgarter Fernsehturm",
+      "zh": "斯图加特电视塔"
+    },
+    "officialPoliceUrl": "https://ppstuttgart.polizei-bw.de/",
+    "map_path": "/crimemaps-Stuttgart/"
+  },
+  {
+    "city": "leipzig",
+    "month": "2026-09",
+    "names": {
+      "de": "Leipzig",
+      "zh": "莱比锡",
+      "en": "Leipzig"
+    },
+    "landmark": {
+      "en": "Monument to the Battle of the Nations",
+      "de": "Völkerschlachtdenkmal",
+      "zh": "民族大会战纪念碑"
+    },
+    "officialPoliceUrl": "https://www.polizei.sachsen.de/de/pdl.htm",
+    "map_path": "/crimemaps-Leipzig/"
+  },
+  {
+    "city": "dortmund",
+    "month": "2026-09",
+    "names": {
+      "de": "Dortmund",
+      "zh": "多特蒙德",
+      "en": "Dortmund"
+    },
+    "landmark": {
+      "en": "Dortmunder U tower",
+      "de": "Dortmunder U",
+      "zh": "多特蒙德U塔"
+    },
+    "officialPoliceUrl": "https://dortmund.polizei.nrw/",
+    "map_path": "/crimemaps-Dortmund/"
+  },
+  {
+    "city": "bremen",
+    "month": "2026-09",
+    "names": {
+      "de": "Bremen",
+      "zh": "不来梅",
+      "en": "Bremen"
+    },
+    "landmark": {
+      "zh": "不来梅市政厅与集市广场",
+      "de": "Bremer Rathaus und Marktplatz",
+      "en": "Bremen Town Hall and Market Square"
+    },
+    "officialPoliceUrl": "https://www.polizei.bremen.de/",
+    "map_path": "/crimemaps-Bremen/"
+  },
+  {
+    "city": "essen",
+    "month": "2026-09",
+    "names": {
+      "de": "Essen",
+      "zh": "埃森",
+      "en": "Essen"
+    },
+    "landmark": {
+      "en": "Zollverein winding tower",
+      "de": "Fördergerüst auf Zollverein",
+      "zh": "关税同盟煤矿井架"
+    },
+    "officialPoliceUrl": "https://essen.polizei.nrw/",
+    "map_path": "/crimemaps-Essen/"
+  },
+  {
+    "city": "dresden",
+    "month": "2026-09",
+    "names": {
+      "de": "Dresden",
+      "zh": "德累斯顿",
+      "en": "Dresden"
+    },
+    "landmark": {
+      "en": "Dresden Frauenkirche",
+      "de": "Dresdner Frauenkirche",
+      "zh": "德累斯顿圣母教堂"
+    },
+    "officialPoliceUrl": "https://www.polizei.sachsen.de/de/pdd.htm",
+    "map_path": "/crimemaps-Dresden/"
+  },
+  {
+    "city": "hannover",
+    "month": "2026-09",
+    "names": {
+      "de": "Hannover",
+      "zh": "汉诺威",
+      "en": "Hanover"
+    },
+    "landmark": {
+      "en": "New Town Hall",
+      "de": "Neues Rathaus",
+      "zh": "汉诺威新市政厅"
+    },
+    "officialPoliceUrl": "https://www.pd-h.polizei-nds.de/startseite/",
+    "map_path": "/crimemaps-Hannover/"
+  },
+  {
+    "city": "nuremberg",
+    "month": "2026-09",
+    "names": {
+      "de": "Nürnberg",
+      "zh": "纽伦堡",
+      "en": "Nuremberg"
+    },
+    "landmark": {
+      "en": "Nuremberg Castle",
+      "de": "Nürnberger Burg",
+      "zh": "纽伦堡城堡"
+    },
+    "officialPoliceUrl": "https://www.polizei.bayern.de/wir-ueber-uns/organisation/dienststellen/000967/index.html",
+    "map_path": "/crimemaps-Nuremberg/"
+  }
+]
