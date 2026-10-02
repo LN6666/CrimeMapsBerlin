@@ -1,4 +1,9 @@
-<p><img src="docs/assets/city-icon.png" width="112" height="112" alt="Stadtsymbol für Berlin: Brandenburger Tor als vereinfachte elfenbeinfarbene Silhouette auf Dunkelblau"></p>
+<!-- crimemaps:visual-home:start -->
+<p><img src="assets/brand/police-eagle.png" width="72" height="72" alt="CrimeMaps-Projektsymbol: dunkelblauer Adler mit Polizeimütze"> <img src="docs/assets/city-icon.png" width="64" height="64" alt="Stadtsymbol für Berlin: Brandenburger Tor als vereinfachte elfenbeinfarbene Silhouette auf Dunkelblau"></p>
+<p><img src="assets/brand/crime-map-en.github.svg" width="320" alt="CrimeMaps Germany"> <img src="assets/brand/crime-map-de.github.svg" width="320" alt="CrimeMaps Deutschland"></p>
+<p><img src="docs/assets/cityscape.jpg" width="420" alt="Berlin: KI-Stadtansicht bei Tag"> <img src="docs/assets/cityscape-night.jpg" width="420" alt="Berlin: KI-Stadtansicht bei Nacht"></p>
+<p><sub>KI-generierte Stadtansichten bei Tag und Nacht. Sie zeigen keine gemeldeten Ereignisse.</sub></p>
+<!-- crimemaps:visual-home:end -->
 
 # CrimeMaps Berlin: Polizeimeldungen auf der Karte
 
@@ -45,6 +50,10 @@ Die Kennzeichnung „Hinweis auf ein mögliches Hassmotiv“ wird mit KI-Unterst
 <a id="sources"></a>
 
 ## Quellen und erfasster Umfang
+
+<!-- crimemaps:police-website:start -->
+[Polizei-Website](https://www.berlin.de/polizei/)
+<!-- crimemaps:police-website:end -->
 
 Meldungsquelle: [Polizei Berlin](https://www.berlin.de/polizei/polizeimeldungen/).
 
