@@ -17,7 +17,13 @@
     "policeLink": "Police website",
     "directoryCount": "14 cities",
     "externalMapLabel": "Open POLIZEIKARTE for {city} (new window)",
-    "externalPoliceLabel": "Open the police website for {city} (new window)"
+    "externalPoliceLabel": "Open the police website for {city} (new window)",
+    "githubDiscuss": "Discuss this map",
+    "githubIssues": "Report a problem",
+    "githubPrivacy": "To leave a message, sign in to GitHub. Your account and message are public. Do not include personal or sensitive information.",
+    "analyticsCollection": "GoatCounter counts page loads and reloads, excluding language changes and map operations. These are not unique visitors.",
+    "analyticsOff": "Visit collection is not enabled on this page.",
+    "analyticsPrivacy": "Country totals only. The connection IP is processed to estimate the country; individual pageviews, referrers and sessions are disabled."
   },
   "appearanceCopy": {
     "label": "Appearance",

@@ -4,9 +4,9 @@ import type {Locale} from './i18n';
 export interface AddressedText {city:string;source_id:string;source_sha256?:string;field:string;text_sha256:string;translated_text:string;method?:'official_excerpt'|'translated'|'unchanged_native'}
 export interface DynamicTextPack {schema_version:1;locale:Locale;city?:string;month?:string;source_generation:string;texts:Record<string,string>;fields?:AddressedText[];native_text_hashes?:string[]}
 interface TextField {event:PoliceEvent;field:string;original:string}
-const restoredRoots = ['map_review_note','source_supporting_materials','source_attachments',
+const restoredRoots = ['map_review_note','public_uncertainty','status_update','source_supporting_materials','source_attachments',
  'current_claim_overlays','historical_source_reviews','source_reference_comparisons'] as const;
-const restoredTextKeys = new Set(['map_review_note','title','label','note','review_note','display_note','details','display']);
+const restoredTextKeys = new Set(['map_review_note','public_uncertainty','status_update','title','label','note','review_note','display_note','details','display']);
 function restoredFields(event:PoliceEvent, add:(path:string,value:unknown)=>void) {
  const walk=(value:unknown,path:string,key:string):void=>{
   if(typeof value==='string'){if(restoredTextKeys.has(key))add(path,value);return;}
@@ -15,6 +15,9 @@ function restoredFields(event:PoliceEvent, add:(path:string,value:unknown)=>void
  };
  const publicFields=new Set(event.public_display_fields??[]);
  for(const root of restoredRoots)if(publicFields.has(root))walk(event[root],`/${root}`,root);
+ event.scene_locations?.forEach((scene,i)=>{
+  if(scene.public_display_fields?.includes('public_reference_note'))add(`/scene_locations/${i}/public_reference_note`,scene.public_reference_note);
+ });
  if(event.incidents===undefined)event.source_incidents?.forEach((stage,i)=>{
   add(`/source_incidents/${i}/details`,stage.details);add(`/source_incidents/${i}/event_time/display`,stage.event_time?.display);
  });
@@ -33,7 +36,7 @@ function translatedRestored(event:PoliceEvent, field:(path:string,value:string)=
  for(const root of restoredRoots)if(event[root]!==undefined)(result as any)[root]=copy(event[root],`/${root}`);
  if(event.incidents===undefined && event.source_incidents)result.source_incidents=copy(event.source_incidents,'/source_incidents') as PoliceEvent['source_incidents'];
  if(event.scene_locations)result.scene_locations=event.scene_locations.map((scene,i)=>{
-  const row={...scene};for(const key of ['poi_review','transit_review','geometry_review','source_relations'] as const)
+  const row={...scene};for(const key of ['public_reference_note','poi_review','transit_review','geometry_review','source_relations'] as const)
    if(scene[key]!==undefined)(row as any)[key]=copy(scene[key],`/scene_locations/${i}/${key}`);
   return row;
  });

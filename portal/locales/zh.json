@@ -17,7 +17,13 @@
     "policeLink": "警方官网",
     "directoryCount": "14座城市",
     "externalMapLabel": "打开{city}的 POLIZEIKARTE 地图（新窗口）",
-    "externalPoliceLabel": "打开{city}所属警方的网站（新窗口）"
+    "externalPoliceLabel": "打开{city}所属警方的网站（新窗口）",
+    "githubDiscuss": "留言讨论",
+    "githubIssues": "报告问题",
+    "githubPrivacy": "留言需要登录 GitHub，账号和内容都会公开。请勿发布个人信息或敏感资料。",
+    "analyticsCollection": "GoatCounter 统计页面加载及刷新，语言切换和地图操作不另计；这些次数不是独立访客。",
+    "analyticsOff": "此页面尚未启用访问采集。",
+    "analyticsPrivacy": "仅保留国家汇总。连接 IP 用于估计国家；已关闭单次访问记录、来路和会话。"
   },
   "appearanceCopy": {
     "label": "外观",

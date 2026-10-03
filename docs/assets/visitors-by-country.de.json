@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "city": "berlin",
+  "locale": "de",
+  "layout": "wide",
+  "presentation": "world_map_and_rank",
+  "path": "docs/assets/visitors-by-country.de.svg",
+  "sha256": "936f7c63be653c8a9da9399618cd9bc504af0fa0a2f02501dd4f6fd08d859055",
+  "source_kind": "not_connected",
+  "collection_status": "not_connected",
+  "metric": null,
+  "source": null,
+  "generated_at_utc": null
+}

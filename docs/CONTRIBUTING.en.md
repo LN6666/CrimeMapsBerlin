@@ -2,6 +2,8 @@
 
 [English](CONTRIBUTING.en.md) · [Deutsch](CONTRIBUTING.de.md) · [中文](CONTRIBUTING.zh-CN.md)
 
+[Discuss this map](https://github.com/LN6666/crimemaps-Berlin/discussions) to share your experience and suggestions. [Report a problem](https://github.com/LN6666/crimemaps-Berlin/issues/new/choose) for errors or corrections with a link to a public source. To leave a message, sign in to GitHub; your account and message are public. Do not include personal or sensitive information. This is not an emergency or police reporting service.
+
 Start with a small, reproducible change. Use the README commands to run the frontend. For code changes, run the checks affected by the change and describe the observed result in the pull request.
 
 Use synthetic examples in tests. Keep police article bodies, databases, generated map datasets, local review evidence and credentials out of Git. A source correction needs the public article URL and the reason for the correction; it must not invent a time, address or coordinate.

@@ -64,8 +64,36 @@
   .content-tag-availability, .content-tag-all-months, .content-tag-panel, .content-tag-behavior-details { font-size:.875rem; line-height:1.6; }
   .content-tag-drawer summary { min-height:44px; padding-block:8px; }
 }
-.content-tag-gemini-handoff{border-top:1px solid #cbd5e1;margin-top:16px;padding:12px 16px;}
-.content-tag-gemini-handoff h3{margin:0 0 8px;}
-.content-tag-gemini-handoff p{line-height:1.5;}
-.content-tag-gemini-handoff button,.content-tag-gemini-handoff a{display:block;margin:8px 0;padding:10px 12px;min-height:44px;max-width:100%;white-space:normal;overflow-wrap:anywhere;box-sizing:border-box;}
-.content-tag-gemini-handoff textarea{width:100%;box-sizing:border-box;margin-top:8px;resize:vertical;font:inherit;}
+.content-tag-gemini-handoff{margin:18px;padding:18px;border:1px solid #d8e4ed;border-radius:16px;background:#f7fafc;color:#183044;}
+.content-tag-gemini-handoff h3{margin:0;font-size:18px;line-height:1.35;letter-spacing:-.02em;}
+.content-tag-gemini-handoff .content-tag-gemini-intro{margin:6px 0 16px;color:#587084;font-size:13px;line-height:1.55;}
+.content-tag-gemini-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;}
+.content-tag-gemini-handoff .content-tag-gemini-copy,.content-tag-gemini-handoff .content-tag-gemini-open{display:flex;justify-content:center;align-items:center;gap:8px;min-width:0;min-height:46px;margin:0;padding:11px 12px;border-radius:11px;font-family:inherit;text-align:center;box-sizing:border-box;white-space:normal;text-decoration:none;overflow-wrap:anywhere;transition:background .15s,border-color .15s;}
+.content-tag-gemini-handoff .content-tag-gemini-copy{font-size:14px;line-height:1.4;font-weight:600;color:#20465f;background:#fff;border:1px solid #c4d4e0;cursor:pointer;}
+.content-tag-gemini-handoff .content-tag-gemini-open{font-family:inherit;font-size:14px;line-height:1.4;font-weight:600;color:#fff;background:#075da0;border:1px solid #075da0;}
+.content-tag-gemini-handoff .content-tag-gemini-open span[aria-hidden]{font-size:19px;line-height:1;flex:none;}
+.content-tag-gemini-handoff .content-tag-gemini-copy:hover{background:#edf4f9;border-color:#93b4cf;}
+.content-tag-gemini-handoff .content-tag-gemini-open:hover{background:#064f87;border-color:#064f87;}
+.content-tag-gemini-handoff .content-tag-gemini-copy[data-copied="true"]{color:#22634e;border-color:#86b5a3;background:#f1f8f4;}
+.content-tag-gemini-handoff .content-tag-gemini-copy:disabled{opacity:.5;cursor:default;}
+.content-tag-gemini-handoff a:focus-visible,.content-tag-gemini-handoff summary:focus-visible{outline:3px solid #48a9e6;outline-offset:3px;}
+.content-tag-gemini-handoff .content-tag-gemini-stays{margin:10px 0 0;color:#667c8e;font-size:12px;line-height:1.55;}
+.content-tag-gemini-handoff .content-tag-gemini-status{margin:10px 0 0;color:#22634e;font-size:13px;line-height:1.5;}
+.content-tag-gemini-status[hidden]{display:none;}
+.content-tag-gemini-tools{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 14px;margin-top:14px;padding-top:12px;border-top:1px solid #e0e8ee;font-size:12px;}
+.content-tag-gemini-tools details{min-width:0;}
+.content-tag-gemini-tools details[open]{grid-column:1/-1;}
+.content-tag-gemini-tools summary{display:flex;align-items:center;gap:6px;min-height:28px;padding:0;color:#526e82;cursor:pointer;list-style:none;line-height:1.5;}
+.content-tag-gemini-tools summary::-webkit-details-marker{display:none;}
+.content-tag-gemini-tools summary::before{content:'+';font-size:16px;line-height:1;}
+.content-tag-gemini-tools details[open] summary::before{content:'−';}
+.content-tag-gemini-tools p{margin:10px 0;color:#526e82;font-size:12px;line-height:1.65;}
+.content-tag-gemini-handoff textarea{width:100%;box-sizing:border-box;margin-top:10px;padding:10px;border:1px solid #c4d4e0;border-radius:9px;background:#fff;color:#34536b;resize:vertical;font:12px/1.65 ui-monospace,SFMono-Regular,monospace;}
+@media(max-width:620px){
+ .content-tag-gemini-handoff{margin:14px;padding:14px;border-radius:14px;}
+ .content-tag-gemini-handoff h3{font-size:17px;}
+ .content-tag-gemini-actions{gap:8px;}
+ .content-tag-gemini-handoff .content-tag-gemini-copy,.content-tag-gemini-handoff .content-tag-gemini-open{padding:10px 8px;}
+ .content-tag-gemini-tools summary{min-height:36px;padding:2px 0;}
+}
+@media(prefers-reduced-motion:reduce){.content-tag-gemini-handoff .content-tag-gemini-copy,.content-tag-gemini-handoff .content-tag-gemini-open{transition:none;}}

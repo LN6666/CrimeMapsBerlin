@@ -89,7 +89,9 @@ uv run pytest test_suite/safety
 
 ## 参与贡献
 
-[报告软件问题](https://github.com/LN6666/crimemaps-Berlin/issues) · [提出修改](https://github.com/LN6666/crimemaps-Berlin/pulls) · [贡献说明](docs/CONTRIBUTING.zh-CN.md)。公开仓库的Issue和PR会被其他人看到；私有仓库需要相应访问权限。这些链接不是私密反馈表单。
+欢迎在[留言讨论](https://github.com/LN6666/crimemaps-Berlin/discussions)分享使用感受和建议，或通过[报告问题](https://github.com/LN6666/crimemaps-Berlin/issues/new/choose)反馈错误；纠错时请附上公开来源。留言需要登录 GitHub，账号和内容都会公开。请勿发布个人信息或敏感资料。这里不接收报警或紧急求助。
+
+[提出修改](https://github.com/LN6666/crimemaps-Berlin/pulls) · [贡献说明](docs/CONTRIBUTING.zh-CN.md)
 
 代码或文案修改请提交范围清楚的PR，见[贡献说明](docs/CONTRIBUTING.zh-CN.md)。软件问题请说明浏览器、简短复现步骤，以及相关的公开来源链接。公开Issue中不要提交个人资料、警方全文、数据库、审核包或凭据。
 
@@ -105,7 +107,7 @@ uv run pytest test_suite/safety
 
 ## 隐私、纠错与安全
 
-访问统计和私密纠错反馈尚未接入实际服务，目前没有已上线的私密反馈表单。GitHub公开Issue会被其他人看到。私密纠错入口接入后，地图会说明接收方和隐私规则；未经审核的反馈不会直接公开。 详见[反馈与未知地点说明](docs/FEEDBACK.md)。
+[反馈与未知地点说明](docs/FEEDBACK.md)
 
 底图和外部链接使用第三方服务。加载这些服务时，对方可能收到IP地址等通常连接信息。使用前请查看地图中的来源标注和隐私说明。
 
@@ -117,14 +119,10 @@ uv run pytest test_suite/safety
 
 <picture>
   <source media="(max-width:640px)" srcset="docs/assets/visitors-by-country.zh.mobile.svg">
-  <img src="docs/assets/visitors-by-country.zh.svg" alt="访问统计尚未启用：灰色世界地图与空白的国家或地区排行榜" role="img" width="840">
+  <img src="docs/assets/visitors-by-country.zh.svg" alt="尚无已公布的国家页面浏览次数：灰色世界地图和空排行" role="img" width="840">
 </picture>
 
-访问统计尚未启用。灰色世界地图和空白排行榜表示目前没有可显示的访问数据。打开这份 README 或其中的图片，不会增加地图页面浏览次数。
-
-启用后，图中只汇总用户同意记录的地图页面浏览次数，按国家或地区分组，不统计独立访客人数。少于20次的分组会隐藏或合并，公布的次数向下取整为10的整数倍。浅蓝表示公布的浏览次数较少，深蓝表示较多；灰色表示没有可公开的数字。
-
-启用统计后，请看图中的更新时间。GitHub可能显示较早的缓存图片。浏览次数为截至该更新时间的累计数，并已取整；图表不会实时更新。
+地图和排行显示此城市网站的 GoatCounter 国家／地区页面浏览，包括普通刷新；语言切换和地图操作不另计。这不是独立人数或 README 读者统计。小样本合并或隐藏，数值按10向下取整；灰色表示没有公布的次数，不表示零。图中标注快照日期，GitHub 图片可能有缓存。
 
 <a id="cities"></a>
 

@@ -288,6 +288,7 @@ def _map_events(page: str) -> list[dict[str, object]]:
     arrays: list[list[object]] = []
     decoder = json.JSONDecoder()
     prefix = "self.__next_f.push("
+    chunks: list[str] = []
     for script in parser.scripts:
         script = script.strip()
         if not script.startswith(prefix) or not script.endswith(")"):
@@ -298,20 +299,22 @@ def _map_events(page: str) -> list[dict[str, object]]:
             continue
         if len(payload) < 2 or not isinstance(payload[1], str):
             continue
-        flight = payload[1]
-        cursor = 0
-        while True:
-            start = flight.find('"events":', cursor)
-            if start < 0:
-                break
-            try:
-                candidate, end = decoder.raw_decode(flight, start + len('"events":'))
-            except json.JSONDecodeError:
-                cursor = start + len('"events":')
-                continue
-            if isinstance(candidate, list):
-                arrays.append(candidate)
-            cursor = end
+        if payload[0] == 1:
+            chunks.append(payload[1])
+    flight = "".join(chunks)
+    cursor = 0
+    while True:
+        start = flight.find('"events":', cursor)
+        if start < 0:
+            break
+        try:
+            candidate, end = decoder.raw_decode(flight, start + len('"events":'))
+        except json.JSONDecodeError:
+            cursor = start + len('"events":')
+            continue
+        if isinstance(candidate, list):
+            arrays.append(candidate)
+        cursor = end
     candidates = [
         array
         for array in arrays
@@ -325,7 +328,7 @@ def _map_events(page: str) -> list[dict[str, object]]:
 
 def _declared_counts(page: str) -> tuple[int, int]:
     category = re.search(
-        r'<p class="stats-line"><strong>([\d.]+).*?veröffentlichte Vorfälle</strong>', page,
+        r'<p class="stats-line"><strong>([\d.]+).*?veröffentlicht(?:e Vorfälle|er Vorfall)</strong>', page,
         re.DOTALL,
     )
     total = re.search(r'>Alle\s*<span class="chip-count">([\d.]+)</span>', page)

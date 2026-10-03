@@ -1,3 +1,4 @@
+import {mountGoatCounter} from './goatcounter-client.mjs';
 import {cityPhotoScene} from './portal-time.mjs';
 import {appearanceStorageKey,appearanceValue,readAppearance,saveAppearance} from './portal-appearance.mjs';
 import {portalCopy as copy,portalAppearanceCopy as appearanceCopy} from './portal-locales.js';
@@ -23,6 +24,10 @@ function render(){
  appearanceSelect.setAttribute('aria-label',appearanceCopy[locale].label);
  for(const option of appearanceSelect.options)option.textContent=appearanceCopy[locale][option.value];
  for(const el of document.querySelectorAll("[data-copy]"))el.textContent=text(el.dataset.copy);
+ const collectionEnabled=document.documentElement.dataset.goatcounterEnabled==='true';
+ document.querySelector('[data-analytics-collection]').textContent=text(collectionEnabled?'analyticsCollection':'analyticsOff');
+ document.querySelector('[data-analytics-privacy]').hidden=!collectionEnabled;
+ const github=document.querySelector(".github-repository-link");github.setAttribute("aria-label",text("repo"));github.title=text("repo");
  const mark=document.querySelector(".home-mark"),brand=document.querySelector(".home-mark .brand-art");
  mark.href="./?lang="+locale;mark.setAttribute("aria-label",text("home"));
  brand.src="portal-assets/brand/crime-map-"+(locale==="de"?"de":"en")+".png";brand.alt=text("title");
@@ -46,6 +51,8 @@ function render(){
 for(const button of document.querySelectorAll("[data-language]"))button.addEventListener("click",()=>{locale=button.dataset.language;const url=new URL(location.href);url.searchParams.set("lang",locale);history.replaceState(null,"",url);render();});
 window.addEventListener("popstate",()=>{const value=new URL(location.href).searchParams.get("lang");locale=canonicalLocale(value);render();});
 render();
+const goatcounter=mountGoatCounter({city:'portal',enabled:document.documentElement.dataset.goatcounterEnabled==='true'});
+window.addEventListener('pagehide',()=>goatcounter.destroy(),{once:true});
 const directory=document.querySelector(".official-directory");
 directory.addEventListener("keydown",event=>{
  if(event.key==="Escape"&&directory.open){

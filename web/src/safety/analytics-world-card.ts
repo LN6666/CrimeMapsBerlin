@@ -1,5 +1,5 @@
 import type { WorldLanguage, WorldStats, WorldStatus } from '../../../services/analytics/src/world-card.mjs';
-export async function renderAnalyticsWorldCard(host:HTMLElement, options:{city:string;language:WorldLanguage;stats?:WorldStats;status:Exclude<WorldStatus,'live'>;isCurrent:()=>boolean}) {
+export async function renderAnalyticsWorldCard(host:HTMLElement, options:{city:string;language:WorldLanguage;stats?:WorldStats;status?:Exclude<WorldStatus,'live'>;isCurrent:()=>boolean}) {
   const {buildWorldCardModel,buildPlaceholderModel,BLUE_SCALE,NO_DATA_COLOR}=await import('../../../services/analytics/src/world-card.mjs');
   if (!options.isCurrent()) return;
   const model=options.stats?buildWorldCardModel(options.stats,options.language,options.city):buildPlaceholderModel(options.city,options.language,options.status);
@@ -20,13 +20,16 @@ export async function renderAnalyticsWorldCard(host:HTMLElement, options:{city:s
   const rank=el('div','analytics-world-ranking'),heading=el('h3');heading.textContent=model.copy.ranking;rank.append(heading);
   const list=el('ol');list.setAttribute('aria-label',model.copy.heading);
   for(const row of model.regions){
-    const li=el('li'),line=el('div','analytics-world-row'),name=el('span'),value=el('strong'),bar=el('span','analytics-world-bar');
-    li.dataset.region=row.code;li.dataset.pv=String(row.pv);name.textContent=row.name;value.textContent=row.formatted;line.append(name,value);
-    bar.style.width=`${row.width}%`;bar.style.background=row.code==='OTHER'?NO_DATA_COLOR:'#328fc9';bar.setAttribute('aria-hidden','true');li.append(line,bar);list.append(li);
+    const li=el('li'),line=el('div','analytics-world-row'),position=el('span','analytics-world-position'),name=el('span'),value=el('strong'),track=el('span','analytics-world-track'),bar=el('span','analytics-world-bar');
+    position.textContent=String(list.children.length+1).padStart(2,'0');position.setAttribute('aria-hidden','true');
+    li.dataset.region=row.code;li.dataset.pv=String(row.pv);name.textContent=row.name;value.textContent=row.formatted;line.append(position,name,value);
+    bar.style.width=`${row.width}%`;bar.style.background=row.color;bar.setAttribute('aria-hidden','true');track.append(bar);li.append(line,track);list.append(li);
   }
-  if(model.regions.length)rank.append(list);else{const empty=el('p');empty.textContent=model.status==='live'?model.copy.empty:model.message;rank.append(empty);}
+  if(model.regions.length)rank.append(list);else{const empty=el('p','analytics-world-empty');empty.textContent=model.status==='live'?model.copy.empty:model.message;rank.append(empty);}
   if(model.unmapped.length){const note=el('p');note.textContent=`${model.copy.missing}: ${model.unmapped.join(', ')}`;rank.append(note);}
-  const note=el('p','analytics-world-context');note.textContent=model.copy.approximate+' '+model.copy.limits;
-  const source=el('p','analytics-world-source');source.textContent=model.copy.boundary;
-  card.append(figure,rank,note,source);if(options.isCurrent())host.replaceChildren(card);
+  const note=el('p','analytics-world-context');note.textContent=model.copy.approximate;
+  const explanation=el('p','analytics-world-explanation');explanation.textContent=model.copy.limits+' '+model.copy.privacy;
+  const notes=el('details','analytics-world-footnotes'),caption=el('summary');caption.textContent=({en:'How to read the map',de:'Die Karte verstehen',zh:'如何阅读地图'})[model.lang];
+  const source=el('p','analytics-world-explanation');source.textContent=model.copy.boundary;notes.append(caption,explanation,source);
+  card.append(figure,rank,note,notes);if(options.isCurrent())host.replaceChildren(card);
 }

@@ -1,0 +1,19 @@
+{
+  "observed_at_jst": "2026-10-03T19:30:26.216080+09:00",
+  "account": "https://ryoushunnei.goatcounter.com/",
+  "count_endpoint": "https://ryoushunnei.goatcounter.com/count",
+  "save_confirmation": "Saved!",
+  "website_domain": "ln6666.github.io",
+  "dashboard_visibility": "Only logged in users",
+  "public_visitor_counts_enabled": true,
+  "individual_pageviews": false,
+  "sessions": false,
+  "referrer": false,
+  "user_agent": false,
+  "screen_size": false,
+  "country": true,
+  "region": false,
+  "language": false,
+  "metric": "pageviews; refreshes count again; not unique people",
+  "evidence_sha256": "89fd3142c434a7229099e21d1497b0f50b0e8b95a9292d947dd261eaa197a10e"
+}

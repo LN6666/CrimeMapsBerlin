@@ -223,5 +223,15 @@
     "path": "portal-assets/icons/stuttgart.png",
     "sha256": "f0cbd6bfedff3d4cefe3f16c860b3e566efad49037292bfae9ca7ffd09767214",
     "bytes": 2063
+  },
+  {
+    "path": "portal-assets/brand/github-mark-black.svg",
+    "bytes": 1559,
+    "sha256": "693d7abe6f899646cc2e96856723b45e95f71885a54910b2749f6decdf7e1ee1"
+  },
+  {
+    "path": "portal-assets/brand/github-mark-white.svg",
+    "bytes": 1559,
+    "sha256": "ccd84c89b1056345608fc3489357f8acc7397e49a3cdc2d418b6c8016911d47b"
   }
 ]

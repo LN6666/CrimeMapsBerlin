@@ -46,6 +46,8 @@ export interface PoiContext {
   evidence_quote: string;
 }
 export interface SceneLocation {
+  public_display_fields?:string[];
+  public_reference_note?:string;
   location_object_ids?:string[];
   poi_review?: {status:string;note:string};
   transit_review?: {status:string;note:string};
@@ -96,6 +98,8 @@ export interface SourceStage {
 }
 export interface PoliceEvent {
   public_display_fields?:string[];
+  public_uncertainty?:string[];
+  status_update?:string;
   historical_source_reviews?: {
     source_id: string;
     title: string;

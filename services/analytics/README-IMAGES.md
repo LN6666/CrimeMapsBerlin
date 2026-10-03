@@ -1,47 +1,20 @@
-# GitHub country chart integration
+# 14-city, three-language README integration
 
-The real dynamic image URL is `https://<connected-worker>/v1/chart/berlin.svg?lang=en`, with the fixed city slug substituted for each repository. This is the wide world-map and ranking card. Add `&layout=stacked` for the narrow image; layout is an allowlisted enum and a separate cache key. The map and ranking consume the same published/suppressed/rounded country rows. GET never creates a page-view event. The image contains localized country labels, accessible SVG title/description, cumulative rounded counts and its UTC generation time. A frontend script is not needed in the README. Gray means no published group, not zero visits. These are approximate connection origins, not nationality or residence.
-
-GitHub uses Camo to proxy external images. The Worker sets five-minute caching, but GitHub may show an older cached copy; that is not a promise that README images update every five minutes. Check the generation time in the image. Country figures are map page views, not visits to the repository or its README. [GitHub's Camo and cache explanation](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-anonymized-urls), [Camo supported MIME types](https://raw.githubusercontent.com/atmos/camo/master/mime-types.json).
-
-Until a real Worker is connected, show the localized “statistics not connected” text with the local gray-map placeholder and empty ranking. Generate it with `node services/analytics/src/placeholders.mjs CITY` from the repository root. Its sidecar has `source_kind=not_connected`, null source/metric/time and no counts. The generator refuses to replace an existing live image or an unverified image. Do not embed `.invalid` examples or local test fixtures in a public README.
-
-A saved snapshot is also supported:
-
-```sh
-node services/analytics/src/snapshot.mjs https://CONNECTED-WORKER berlin de docs/assets/visitors-by-country.de.svg
-node services/analytics/src/snapshot.mjs https://CONNECTED-WORKER berlin en docs/assets/visitors-by-country.en.svg
-node services/analytics/src/snapshot.mjs https://CONNECTED-WORKER berlin zh docs/assets/visitors-by-country.zh.svg
-```
-
-Run those commands from the city repository root. The CLI writes a JSON sidecar with `city`, `locale`, repository-relative `path`, SHA-256, `generated_at_utc`, `source_kind=live_aggregate`, public source URL, metric and privacy parameters. README integration must verify that digest and reject a partial image/sidecar update.
-
-The CLI requires a current live HTTPS response for the selected city and refuses to write on errors, mismatched city, invalid schema or stale data. It writes only the safe SVG and logs its public aggregate source/time. Keep the previous good snapshot when a later update fails. A scheduled GitHub job may update only these reviewed public snapshots after the real backend is connected; no schedule or automation was created by this window. Do not export raw storage or logs to a repository.
-
-Use this text beside either image, with a descriptive image alt and a link to the live stats endpoint as an accessible alternative:
-
-| Language | Caption |
-|---|---|
-| Deutsch | Freiwillig erfasste Kartenaufrufe nach Ländern. Einzelne Besucher werden nicht gezählt. Gruppen unter 20 Aufrufen werden verborgen oder zusammengefasst, Zahlen auf Zehner abgerundet. GitHub kann eine ältere Bildfassung anzeigen; beachten Sie die Zeit im Bild. |
-| English | Optional map page views by country. Individual visitors are not counted. Groups below 20 are hidden or combined, and values are rounded down to 10. GitHub may show an older image; check the time in the image. |
-| 中文 | 按国家累计的自愿地图页面浏览，不统计独立访客。少于20次的分组合并或隐藏，数字按10次向下取整。GitHub可能显示较早的缓存图片，请看图中时间。 |
-
-The SVG's description includes text for every displayed group, including labels that are shortened visually. The adjacent caption states what the chart counts. A README screenshot or SVG fetched by GitHub reveals the proxy request's network details to the image host, not the reader's map country. This is why image requests never enter the collector.
-
-
-Use responsive local images on all three README languages (substitute the language code):
+Keep the current world-map/blue-ranking layout and responsive picture structure. Each city repository must use the SVGs generated with its own fixed city ID; never copy a Berlin live aggregate into the other thirteen repositories. There are 42 localized READMEs and 84 image layouts. The existing image paths remain unchanged:
 
 ```html
 <picture>
-  <source media="(max-width: 640px)" srcset="docs/assets/visitors-by-country.en.mobile.svg">
-  <img src="docs/assets/visitors-by-country.en.svg" alt="Countries and regions of optional map page views; statistics not connected">
+  <source media="(max-width: 520px)" srcset="docs/assets/visitors-by-country.en.mobile.svg">
+  <img src="docs/assets/visitors-by-country.en.svg" alt="Country distribution of this city website’s published page views">
 </picture>
 ```
 
-For a current connected aggregate, the original snapshot command writes the wide image. The matching narrow snapshot is:
+Replace `en` with `de` or `zh` in the corresponding README. Use a real local aggregate only after a valid GoatCounter JSON export; otherwise retain the reviewed gray no-data SVGs. The snapshot CLI makes the site data and six pictures from one identical city aggregate and preserves newer/previous-good outputs on invalid inputs. Source, time, metric and aggregate digest are recorded in sidecars. Reuse the existing manual/release process; do not add trackers to the SVG or schedule independent city exports.
 
-```sh
-node services/analytics/src/snapshot.mjs https://CONNECTED-WORKER berlin en docs/assets/visitors-by-country.en.mobile.svg stacked
-```
+EN: This map and ranking show this city website’s country/region page views from GoatCounter, including ordinary reloads; language changes and map operations do not add a count. These are not unique people or README readers. Small groups are hidden/combined and values round down to ten. Gray means no published count, not zero. The snapshot date is shown; GitHub may cache images.
 
-Both layouts use the same model and preserve city/locale/source/time/SHA metadata. Replace placeholder assets only with reviewed live-aggregate snapshots whose digest matches their sidecar. A later failed fetch preserves the last good image. `WORLD-MAP-SOURCES.md` records the public-domain vector source, deterministic simplification and exact country/region code mapping; no map library, tiles or tracking script is fetched to draw this card.
+DE: Karte und Rangliste zeigen die Länder-/Regionen-Seitenaufrufe dieser Stadt-Website aus GoatCounter, einschließlich Neuladen; Sprachwechsel und Kartenaktionen zählen nicht zusätzlich. Das sind weder eindeutige Personen noch README-Leser. Kleine Gruppen werden verborgen/zusammengefasst und Werte auf Zehner abgerundet. Grau bedeutet keine veröffentlichte Zahl, nicht null. Das Snapshot-Datum wird angezeigt; GitHub kann Bilder zwischenspeichern.
+
+ZH: 地图和排行显示此城市网站的 GoatCounter 国家／地区页面浏览，包括普通刷新；语言切换和地图操作不另计。这不是独立人数或 README 读者统计。小样本合并或隐藏，数值按10向下取整；灰色表示没有公布的次数，不表示零。图中标注快照日期，GitHub 图片可能有缓存。
+
+The shared README writer integrates these paragraphs into each city's three language files. Analytics does not overwrite their repository homes, GitHub feedback links, footer icons or city map content.

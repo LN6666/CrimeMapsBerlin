@@ -59,16 +59,34 @@ class ArtifactTests(unittest.TestCase):
             with self.assertRaises(ValueError):gate.scan(self.root,'berlin',COMMIT)
         self.root.joinpath('index.html').write_text('<meta http-equiv="Content-Security-Policy" content="'+policy+'"><p onclick="alert(1)">Saved report</p>')
         with self.assertRaises(ValueError):gate.scan(self.root,'berlin',COMMIT)
-    def test_csp_only_exact_origins_and_optional_challenge(self):
+    def test_csp_only_reviewed_maps_and_selected_goatcounter(self):
         for origin in ['https://*.workers.dev','http://worker.example','https://user@worker.example','https://worker.example/path','https://worker.example:8443','https://worker.example/']:
             with self.assertRaises(ValueError):csp.policy([origin])
-        out=csp.policy(['https://feedback.example'],True)
-        self.assertIn("script-src 'self' https://challenges.cloudflare.com",out)
-        self.assertIn('https://feedback.example',out)
+        out=csp.policy(goatcounter=True)
+        self.assertIn("script-src 'self' https://gc.zgo.at",out)
+        self.assertIn('https://ryoushunnei.goatcounter.com/count',out)
+        self.assertNotIn('cloudflare',out)
+        self.assertIn("frame-src 'none'",out)
         self.assertNotIn('unsafe-eval',out)
-        self.assertIn('https://vector.openstreetmap.org',csp.policy([],False,['https://vector.openstreetmap.org']))
-        with self.assertRaises(ValueError):csp.policy([],False,['https://unreviewed.example'])
-        csp.apply(self.root/'index.html',['https://feedback.example'],True)
+        self.assertIn('https://vector.openstreetmap.org',csp.policy(['https://vector.openstreetmap.org']))
+        with self.assertRaises(ValueError):csp.policy(['https://unreviewed.example'])
+        csp.apply(self.root/'index.html',goatcounter=True)
         gate.scan(self.root,'berlin',COMMIT)
+    def test_cancelled_challenge_and_unapproved_counter_are_rejected(self):
+        for src in ['https://challenges.cloudflare.com/turnstile/v0/api.js','https://gc.zgo.at/count.js','https://gc.zgo.at/count.v5.js?query=1','https://evil.example/count.js']:
+            self.root.joinpath('index.html').write_text('<meta http-equiv="Content-Security-Policy" content="'+csp.policy(goatcounter=True)+'"><script src="'+src+'"></script>')
+            with self.assertRaises(ValueError):gate.scan(self.root,'berlin',COMMIT)
+        script='<script src="https://gc.zgo.at/count.v5.js" integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ" crossorigin="anonymous" data-goatcounter="https://ryoushunnei.goatcounter.com/count"></script>'
+        self.root.joinpath('index.html').write_text('<meta http-equiv="Content-Security-Policy" content="'+csp.policy()+'">'+script)
+        with self.assertRaises(ValueError):gate.scan(self.root,'berlin',COMMIT)
+        self.root.joinpath('index.html').write_text('<meta http-equiv="Content-Security-Policy" content="'+csp.policy(goatcounter=True)+'">'+script.replace('https://ryoushunnei.goatcounter.com/count','https://other.goatcounter.com/count'))
+        with self.assertRaises(ValueError):gate.scan(self.root,'berlin',COMMIT)
+        self.root.joinpath('index.html').write_text('<meta http-equiv="Content-Security-Policy" content="'+csp.policy(goatcounter=True)+'">'+script)
+        gate.scan(self.root,'berlin',COMMIT)
+        for policy in [csp.policy(goatcounter=True).replace('/count',''),csp.policy(goatcounter=True).replace('connect-src', 'connect-src https://unreviewed.goatcounter.com'),csp.policy(goatcounter=True).replace('img-src', 'img-src https://ryoushunnei.goatcounter.com/count')]:
+            self.root.joinpath('index.html').write_text('<meta http-equiv="Content-Security-Policy" content="'+policy+'">'+script)
+            with self.assertRaises(ValueError):gate.scan(self.root,'berlin',COMMIT)
+        self.root.joinpath('index.html').write_text('<meta http-equiv="Content-Security-Policy" content="'+csp.policy(goatcounter=True)+'">'+script.replace('sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ','sha384-invalid'))
+        with self.assertRaises(ValueError):gate.scan(self.root,'berlin',COMMIT)
 
 if __name__=='__main__': unittest.main()

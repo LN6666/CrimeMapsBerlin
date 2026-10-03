@@ -1,6 +1,6 @@
 export type WorldLanguage = 'en' | 'de' | 'zh';
 export type WorldStatus = 'live' | 'not_connected' | 'unavailable' | 'loading';
-export interface WorldStats {schema_version:number;city:string;status:string;metric:string;total_pv:number|null;countries:{code:string;pv:number}[];generated_at:string;unique_visitors_measured:boolean;privacy:{minimum_sample:number;rounding:number};collection_start_date?:string|null}
+export interface WorldStats {schema_version:number;city:string;status:string;metric:string;total_pv:number|null;countries:{code:string;pv:number}[];generated_at:string;unique_visitors_measured:boolean;privacy:{minimum_sample:number;rounding:number};source?:string;source_site?:string;source_path?:string;counting?:{sessions:boolean;individual_pageviews:boolean};range_start?:string;range_end?:string;collection_start_date?:string|null}
 export interface WorldCardModel {city:string;lang:WorldLanguage;status:WorldStatus;copy:Record<string,string>;message:string;regions:{code:string;pv:number;name:string;formatted:string;color:string;width:number;mapped:boolean}[];paths:{code:string;d:string;pv:number|null;color:string;label:string}[];max:number;generatedAt:string|null;unmapped:string[];total:number|null}
 export const WORLD_COPY: Record<WorldLanguage,Record<string,string>>;
 export const NO_DATA_COLOR:string;

@@ -1,162 +1,64 @@
-import { analyticsCopy, type AnalyticsKey, type AnalyticsLanguage } from "./analytics-copy";
-export type { AnalyticsLanguage } from "./analytics-copy";
+import en from './locales/en.json' with {type:'json'};
+import de from './locales/de.json' with {type:'json'};
+import zh from './locales/zh.json' with {type:'json'};
+import {analyticsCopy,type AnalyticsKey,type AnalyticsLanguage} from './analytics-copy';
+import {mountGoatCounter} from '../../../services/analytics/src/goatcounter-client.mjs';
+export {markAnalyticsLanguageNavigation} from '../../../services/analytics/src/goatcounter-client.mjs';
+import type {WorldStats,WorldStatus} from '../../../services/analytics/src/world-card.mjs';
+export type {AnalyticsLanguage} from './analytics-copy';
 export interface AnalyticsOptions {
-  city: string;
-  language: AnalyticsLanguage;
-  endpoint?: string;
-  siteKey?: string; // Public Turnstile sitekey; server secrets never belong here.
-  translate?: (key: AnalyticsKey, values?: Record<string, string>) => string;
+ city:string; language:AnalyticsLanguage; collectionEnabled?:boolean; snapshotUrl?:string;
+ translate?:(key:AnalyticsKey,values?:Record<string,string>)=>string;
 }
-interface PublicStats {
-  schema_version: number; city: string; status: string; metric: string;
-  total_pv: number | null; countries: { code: string; pv: number }[];
-  generated_at: string; unique_visitors_measured: boolean;
-  privacy: { minimum_sample: number; rounding: number };
-}
-interface Turnstile {
-  render: (container: HTMLElement, options: Record<string, unknown>) => string;
-  remove: (id: string) => void;
-}
-type AnalyticsWindow = Window & { turnstile?: Turnstile };
-const cities = new Set(["berlin", "hamburg", "munich", "cologne", "frankfurt", "dusseldorf", "stuttgart", "leipzig", "dortmund", "bremen", "essen", "dresden", "hannover", "nuremberg"]);
-const attempted = new Set<string>(); // In-memory lifecycle guard, never a visitor counter.
-let turnstileLoad: Promise<Turnstile> | undefined;
-function loadTurnstile(): Promise<Turnstile> {
-  const w = window as AnalyticsWindow;
-  if (w.turnstile) return Promise.resolve(w.turnstile);
-  if (turnstileLoad) return turnstileLoad;
-  turnstileLoad = new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-    script.async = true; script.referrerPolicy = "no-referrer";
-    const timer = window.setTimeout(() => { script.remove(); reject(new Error("challenge_timeout")); }, 10000);
-    script.onload = () => { window.clearTimeout(timer); w.turnstile ? resolve(w.turnstile) : reject(new Error("challenge_missing")); };
-    script.onerror = () => { window.clearTimeout(timer); script.remove(); reject(new Error("challenge_unavailable")); };
-    document.head.append(script);
-  });
-  turnstileLoad.catch(() => { turnstileLoad = undefined; });
-  return turnstileLoad;
-}
-function validStats(s: unknown, city: string): s is PublicStats {
-  if (!s || typeof s !== "object") return false;
-  const v = s as PublicStats;
-  return v.schema_version === 1 && v.status === "live" && v.city === city && v.metric === "accepted_opt_in_pageviews"
-    && v.unique_visitors_measured === false && v.privacy?.minimum_sample === 20 && v.privacy?.rounding === 10
-    && (v.total_pv === null || (Number.isSafeInteger(v.total_pv) && v.total_pv >= 20 && v.total_pv % 10 === 0))
-    && Array.isArray(v.countries) && v.countries.length <= 9
-    && v.countries.every(r => /^(?:[A-Z]{2}|OTHER)$/.test(r.code) && Number.isSafeInteger(r.pv) && r.pv >= 20 && r.pv % 10 === 0)
-    && new Set(v.countries.map(r => r.code)).size === v.countries.length && Number.isFinite(Date.parse(v.generated_at))
-    && (v.total_pv === null ? v.countries.length === 0 : v.countries.reduce((sum, row) => sum + row.pv, 0) <= v.total_pv);
-}
-export function mountAnalytics(container: HTMLElement, options: AnalyticsOptions) {
-  let language = options.language, alive = true, stats: PublicStats | undefined;
-  let dataState: AnalyticsKey = "analytics.loading", countState: AnalyticsKey | undefined;
-  let widgetId: string | undefined, api: Turnstile | undefined;
-  let started = false;
-  let visualVersion = 0;
-  const controllers = new Set<AbortController>();
-  const city = options.city, lifecycleKey = `${city}:${window.location.pathname}`;
-  let endpoint: string | undefined;
+const cityNames:Record<AnalyticsLanguage,Record<string,string>>={en,de,zh};
+const cities=new Set(['berlin','hamburg','munich','cologne','frankfurt','dusseldorf','stuttgart','leipzig','dortmund','bremen','essen','dresden','hannover','nuremberg']);
+export function mountAnalytics(container:HTMLElement,options:AnalyticsOptions) {
+ let language=options.language,alive=true,visualVersion=0,retrieved=false,stats:WorldStats|undefined;
+ let status:Exclude<WorldStatus,'live'>='not_connected';
+ const city=options.city,controller=new AbortController();
+ const collector=mountGoatCounter({city,enabled:options.collectionEnabled===true});
+ const text=(key:AnalyticsKey)=>analyticsCopy[language][key];
+ const el=<T extends keyof HTMLElementTagNameMap>(tag:T,cls='')=>{const e=document.createElement(tag);e.className=cls;return e;};
+ const section=el('section','analytics-summary'),header=el('div','analytics-header'),identity=el('span','analytics-city'),title=el('h2'),summary=el('p','analytics-status'),details=el('details','analytics-distribution'),caption=el('summary'),world=el('div','analytics-world-host');
+ const notes=el('details','analytics-notes'),notesCaption=el('summary');
+ const collection=el('p'),privacy=el('p'),source=el('p'),period=el('p');
+ summary.setAttribute('role','status');section.dataset.city=city;
+ header.append(title,identity);
+ notes.append(notesCaption,collection,privacy,period,source);details.append(caption,world,notes);section.append(header,summary,details);container.replaceChildren(section);
+ const renderWorld=()=>{
+  const version=++visualVersion;
+  if(!alive||!details.open||!cities.has(city))return;
+  const isCurrent=()=>alive&&details.open&&version===visualVersion;
+  void import('./analytics-world-card').then(m=>m.renderAnalyticsWorldCard(world,{city,language,stats,status,isCurrent})).catch(()=>{if(isCurrent())world.textContent=text('analytics.unavailable');});
+ };
+ const render=()=>{
+  if(!alive)return;
+  identity.textContent=cityNames[language][`city.${city}`]??city;
+  title.textContent=text('analytics.title');section.setAttribute('aria-label',text('analytics.title'));section.dataset.status=stats?'live':status;
+  summary.textContent=stats?(stats.total_pv===null?text('analytics.small'):`${text('analytics.total')}: ${new Intl.NumberFormat(language).format(stats.total_pv)}`):text(status==='loading'?'analytics.loading':status==='unavailable'?'analytics.unavailable':'analytics.notConnected');
+  details.hidden=!cities.has(city);caption.textContent=text('analytics.countries');notesCaption.textContent=text('analytics.notes');
+  collection.textContent=text(options.collectionEnabled?'analytics.collection':'analytics.off');privacy.textContent=text('analytics.privacy');source.textContent=text('analytics.source');
+  period.textContent=stats?`${text('analytics.range')}: ${stats.range_start} — ${stats.range_end} · ${text('analytics.updated')}: ${stats.generated_at}`:'';
+  renderWorld();
+ };
+ const load=async()=>{
+  if(retrieved||!options.snapshotUrl||!cities.has(city))return;
+  retrieved=true;
   try {
-    const u = new URL(options.endpoint ?? "");
-    if (u.protocol === "https:" && !u.username && !u.password && !u.search && !u.hash && u.pathname === "/" && cities.has(city)) endpoint = u.origin;
-  } catch { /* Explicit disconnected state below. */ }
-  const privacyBlocked = (navigator as Navigator & {globalPrivacyControl?: boolean}).globalPrivacyControl === true || navigator.doNotTrack === "1";
-  const text = (key: AnalyticsKey, values: Record<string, string> = {}) => {
-    if (options.translate) return options.translate(key, values);
-    let value: string = analyticsCopy[language][key];
-    for (const [k, v] of Object.entries(values)) value = value.replace(`{${k}}`, v);
-    return value;
-  };
-  const element = <T extends keyof HTMLElementTagNameMap>(tag: T, className = "") => {
-    const e = document.createElement(tag); e.className = className; return e;
-  };
-  const section = element("section", "analytics-summary");
-  const title = element("h2"), summary = element("p"), details = element("details"), caption = element("summary");
-  const world = element("div", "analytics-world-host"), updated = element("p"), note = element("p"), privacy = element("p");
-  const provider = element("p"), retention = element("p"), providerLink = element("a");
-  providerLink.href = "https://www.cloudflare.com/turnstile-privacy-policy/"; providerLink.target = "_blank"; providerLink.rel = "noopener noreferrer";
-  const button = element("button"), count = element("p"), challenge = element("div", "analytics-challenge");
-  summary.setAttribute("role", "status"); count.setAttribute("role", "status");
-  button.type = "button";
-  details.append(caption, world, updated, note, privacy, provider, retention, providerLink, button, count, challenge); section.append(title, summary, details); container.replaceChildren(section);
-  const renderWorld = () => {
-    const version = ++visualVersion;
-    if (!alive || !details.open) return;
-    const isCurrent = () => alive && details.open && version === visualVersion;
-    const status = dataState === "analytics.unavailable" ? "unavailable" : dataState === "analytics.loading" ? "loading" : "not_connected";
-    void import("./analytics-world-card").then(module => module.renderAnalyticsWorldCard(world, {city, language, stats, status, isCurrent}))
-      .catch(() => {if(isCurrent()) world.textContent = text("analytics.unavailable");});
-  };
-  details.addEventListener("toggle", renderWorld);
-  const render = () => {
-    if (!alive) return;
-    title.textContent = text("analytics.title"); section.setAttribute("aria-label", text("analytics.title"));
-    summary.textContent = stats ? stats.total_pv === null ? text("analytics.small") : text("analytics.pv", {count: new Intl.NumberFormat(language).format(stats.total_pv)}) : text(dataState);
-    details.hidden = !cities.has(city); caption.textContent = analyticsCopy[language]["analytics.countries"];
-    renderWorld();
-    updated.textContent = stats ? text("analytics.generated", {time: new Date(stats.generated_at).toLocaleString(language, {timeZoneName: "short"})}) : "";
-    note.textContent = text("analytics.note"); privacy.textContent = text("analytics.privacy");
-    privacy.hidden = !endpoint || !options.siteKey;
-    provider.textContent = text("analytics.providerProcessing"); retention.textContent = text("analytics.retention"); providerLink.textContent = text("analytics.providerPolicy");
-    provider.hidden = privacy.hidden; retention.hidden = privacy.hidden; providerLink.hidden = privacy.hidden;
-    button.textContent = text("analytics.enable"); button.hidden = !endpoint || !options.siteKey || privacyBlocked || attempted.has(lifecycleKey);
-    button.disabled = started || !stats; count.textContent = countState ? text(countState) : privacyBlocked && endpoint ? text("analytics.preference") : "";
-  };
-  async function request(path: string, init: RequestInit = {}) {
-    const controller = new AbortController(); controllers.add(controller);
-    const timer = window.setTimeout(() => controller.abort(), 4500);
-    try {
-      const response = await fetch(`${endpoint}${path}`, {...init, mode: "cors", credentials: "omit", referrerPolicy: "no-referrer", cache: "no-store", signal: controller.signal});
-      const data: unknown = response.ok ? await response.json() : null;
-      return {ok: response.ok, status: response.status, data};
-    } finally { window.clearTimeout(timer); controllers.delete(controller); }
-  }
-  async function refresh() {
-    try {
-      const response = await request(`/v1/stats/${city}`);
-      if (!response.ok) throw new Error("unavailable");
-      const result: unknown = response.data;
-      if (!validStats(result, city)) throw new Error("invalid_stats");
-      if (alive) {stats = result; render();}
-    } catch {
-      if (alive) {stats = undefined; dataState = "analytics.unavailable"; render();}
-    }
-  }
-  const removeChallenge = () => {
-    if (api && widgetId) { api.remove(widgetId); widgetId = undefined; }
-    challenge.replaceChildren();
-  };
-  async function submit(token: string) {
-    if (!alive || attempted.has(lifecycleKey)) return;
-    attempted.add(lifecycleKey); render();
-    try {
-      const response = await request(`/v1/events/${city}`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({event: "pageview", path: `/crimemaps-${city[0].toUpperCase()}${city.slice(1)}/`, token})});
-      const result: unknown = response.data;
-      countState = response.status === 202 && (result as {accepted?: boolean} | null)?.accepted === true ? "analytics.accepted" : "analytics.notCounted";
-      if (alive && countState === "analytics.accepted") void refresh();
-    } catch {countState = "analytics.notCounted";}
-    finally {if (alive) { removeChallenge(); render(); }}
-  }
-  button.addEventListener("click", async () => {
-    if (started || !alive || privacyBlocked || !stats || attempted.has(lifecycleKey)) return;
-    started = true; countState = "analytics.verifying"; render();
-    try {
-      api = await loadTurnstile(); if (!alive) return;
-      widgetId = api.render(challenge, {
-        sitekey: options.siteKey, action: `pv_${city}`, cData: city, language: language === "zh" ? "zh-cn" : language,
-        size: "compact", appearance: "interaction-only", "response-field": false,
-        callback: (token: string) => { void submit(token); },
-        "error-callback": () => {countState = "analytics.notCounted"; removeChallenge(); render();},
-        "expired-callback": () => {countState = "analytics.notCounted"; removeChallenge(); render();},
-        "timeout-callback": () => {countState = "analytics.notCounted"; removeChallenge(); render();},
-      });
-    } catch { if (alive) {countState = "analytics.notCounted"; render();} }
-  });
-  if (!endpoint) dataState = "analytics.notConnected";
-  render(); if (endpoint) void refresh();
-  return {
-    setLanguage(next: AnalyticsLanguage) { language = next; render(); },
-    destroy() { alive = false; visualVersion++; for (const c of controllers) c.abort(); controllers.clear(); removeChallenge(); section.remove(); },
-  };
+   const url=new URL(options.snapshotUrl,location.href);
+   if(url.origin!==location.origin||url.search||url.hash||!url.pathname.endsWith('/safety/analytics/visitors-by-country.json'))throw new Error('invalid_snapshot_url');
+   status='loading';render();
+   const response=await fetch(url.href,{signal:controller.signal,credentials:'omit',referrerPolicy:'no-referrer'});
+   if(response.status===404){status='not_connected';render();return;}
+   if(!response.ok)throw new Error('snapshot_unavailable');
+   const raw=await response.text();if(raw.length>20000)throw new Error('oversized_snapshot');
+   const parsed:unknown=JSON.parse(raw);
+   const {isPublicStats}=await import('../../../services/analytics/src/world-card.mjs');
+   if(!isPublicStats(parsed,city)||parsed.metric!=='goatcounter_pageviews')throw new Error('invalid_city_snapshot');
+   if(alive){stats=parsed;render();}
+  }catch(error){if(alive&&!controller.signal.aborted){status='unavailable';render();}}
+ };
+ details.addEventListener('toggle',()=>{if(details.open)void load();renderWorld();});
+ render();
+ return {setLanguage(next:AnalyticsLanguage){language=next;render();},destroy(){alive=false;visualVersion++;controller.abort();collector.destroy();section.remove();}};
 }

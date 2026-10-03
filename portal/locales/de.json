@@ -17,7 +17,13 @@
     "policeLink": "Polizei-Website",
     "directoryCount": "14 Städte",
     "externalMapLabel": "POLIZEIKARTE für {city} öffnen (neues Fenster)",
-    "externalPoliceLabel": "Zuständige Polizei für {city} öffnen (neues Fenster)"
+    "externalPoliceLabel": "Zuständige Polizei für {city} öffnen (neues Fenster)",
+    "githubDiscuss": "Über die Karte sprechen",
+    "githubIssues": "Problem melden",
+    "githubPrivacy": "Für einen Beitrag musst du dich bei GitHub anmelden. Dein Konto und dein Text sind öffentlich. Bitte keine persönlichen oder sensiblen Angaben veröffentlichen.",
+    "analyticsCollection": "GoatCounter zählt Seitenaufrufe und Neuladen; Sprachwechsel und Kartenaktionen zählen nicht zusätzlich. Das sind keine eindeutigen Besucher.",
+    "analyticsOff": "Auf dieser Seite ist die Besuchserfassung nicht aktiviert.",
+    "analyticsPrivacy": "Nur Länderaggregate. Die Verbindungs-IP wird zur Schätzung des Landes verarbeitet; Einzelaufrufe, Verweise und Sitzungen sind deaktiviert."
   },
   "appearanceCopy": {
     "label": "Darstellung",

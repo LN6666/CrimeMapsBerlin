@@ -63,6 +63,7 @@ class StaticHTML(HTMLParser):
         super().__init__()
         self.csp = False
         self.script = False
+        self.goatcounter = False
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
         if any(k.lower().startswith("on") for k in attrs):
@@ -70,13 +71,30 @@ class StaticHTML(HTMLParser):
         if tag == "meta" and attrs.get("http-equiv", "").lower() == "content-security-policy":
             policy = attrs.get("content", "")
             directives = dict((p.strip().split(None, 1) + [""])[:2] for p in policy.split(";") if p.strip())
-            if directives.get("script-src") not in {"'none'", "'self'", "'self' https://challenges.cloudflare.com"} or directives.get("object-src") != "'none'" or directives.get("base-uri") != "'none'":
+            if directives.get("script-src") not in {"'none'", "'self'", "'self' https://gc.zgo.at"} or directives.get("object-src") != "'none'" or directives.get("base-uri") != "'none'":
                 raise ValueError("Missing restrictive executable-content CSP")
+            if "cloudflare" in policy.lower() or directives.get("frame-src") not in {None, "'none'"}:
+                raise ValueError("Cancelled challenge or external frame permission")
+            self.goatcounter = directives.get("script-src") == "'self' https://gc.zgo.at"
+            maps = {"https://tile.openstreetmap.org", "https://gdi.berlin.de", "https://vector.openstreetmap.org", "https://demotiles.maplibre.org", "https://tiles.openfreemap.org"}
+            connect = set(directives.get("connect-src", "").split())
+            images = set(directives.get("img-src", "").split())
+            approved_count = "https://ryoushunnei.goatcounter.com/count"
+            if not connect <= {"'none'", "'self'", *maps, *({approved_count} if self.goatcounter else set())}:
+                raise ValueError("Unapproved connect permission")
+            if not images <= {"'none'", "'self'", "data:", "blob:", *maps}:
+                raise ValueError("Unapproved image permission")
+            if self.goatcounter and approved_count not in connect:
+                raise ValueError("GoatCounter needs the exact approved count path")
             self.csp = True
         if tag == "script":
             src = attrs.get("src", "")
-            challenge = src in {"https://challenges.cloudflare.com/turnstile/v0/api.js", "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"}
-            if not challenge and (not src or src.startswith("//") or re.search(r"[\\:%\s]", src) or ".." in src.split("/")):
+            goatcounter = src == "https://gc.zgo.at/count.v5.js" and self.goatcounter
+            if goatcounter and (attrs.get("integrity") != "sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ" or attrs.get("crossorigin") != "anonymous"):
+                raise ValueError("GoatCounter needs the reviewed script integrity")
+            if goatcounter and attrs.get("data-goatcounter") not in {None, "https://ryoushunnei.goatcounter.com/count"}:
+                raise ValueError("Unapproved GoatCounter account")
+            if not goatcounter and (not src or src.startswith("//") or re.search(r"[\\:%\s]", src) or ".." in src.split("/")):
                 raise ValueError("Inline/external script forbidden")
             self.script = True
     def handle_endtag(self, tag):
