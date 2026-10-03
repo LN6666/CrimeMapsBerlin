@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "test": "playwright test",
     "test:navigation": "node --test tests/deployment-navigation.test.mjs tests/appearance.test.mjs",
-    "test:statistics": "node --test tests/statistics-binding.test.mjs"
+    "test:statistics": "node --test tests/statistics-binding.test.mjs tests/content-tag-statistics.test.mjs"
   },
   "dependencies": {
     "maplibre-gl": "^6.11.1"

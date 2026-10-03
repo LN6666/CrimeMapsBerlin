@@ -5,7 +5,7 @@ import type {ContentTag} from "./content-tags";
 export interface ContentTagCopy {
   title: string; caption: string; scope: string; total: string;
   label: string; supported: string; share: string; coverage: string;
-  uncertain: string; pending: string; index: string; unknown: string;
+  uncertain: string; pending: string; noSupport: string; index: string; unknown: string;
   formula: string; incomplete: string; overlap: string; basis: string;
   hate: string; summaryScope: string; unavailable: string;
   composite: string; compositeFormula: string;

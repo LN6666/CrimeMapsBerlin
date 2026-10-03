@@ -23,10 +23,10 @@
   "coverage": "Geprüft",
   "uncertain": "Unklar",
   "pending": "Nicht geprüft",
-  "index": "Abschließender Inhaltsindex",
+  "index": "Inhaltsindex",
   "unknown": "Nicht verfügbar",
   "formula": "Inhaltsindex = 100 × Meldungen mit Beleg für das Merkmal ÷ alle ausgewählten Meldungen.",
-  "incomplete": "Die Anteile berücksichtigen die bisher belegten Merkmale. Ein abschließender Index bleibt aus, solange Einträge für dieses Merkmal unklar oder ungeprüft sind.",
+  "incomplete": "Unklare und nicht geprüfte Einträge bleiben im Nenner und werden getrennt ausgewiesen; sie zählen nicht als belegt. Solange neue Meldungen noch geprüft werden, behält die veröffentlichte Statistik ihren bisherigen Stichtag und weist offene Einträge separat aus.",
   "overlap": "Eine Meldung kann mehrere Merkmale enthalten. Die Anteile müssen sich nicht zu 100 % summieren. Folgemeldungen bleiben eigene Meldungen und können denselben Vorfall betreffen.",
   "basis": "Die Zahlen beschreiben die ausgewählten Meldungen. Sie messen weder alle Straftaten noch das Kriminalitätsrisiko einer Stadt.",
   "hate": "„Mögliche Hasskriminalität“ bezeichnet einen quellenbelegten KI-Hinweis, keine Feststellung der Polizei. Die Tabelle zum gesellschaftlichen Kontext trennt ausdrückliche Polizeiangaben von Hinweisen aus dem Meldungstext.",
@@ -55,5 +55,6 @@
     "coercion_or_unlawful_detention": "Nötigung oder Freiheitsberaubung",
     "public_order_offence": "Berichtetes Verhalten gegen die öffentliche Ordnung",
     "animal_welfare_offence": "Tierschutzverstoß"
-  }
+  },
+  "noSupport": "Kein inhaltlicher Beleg"
 }

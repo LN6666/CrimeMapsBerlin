@@ -17,7 +17,7 @@
   "basis": "Die Spalte „Polizeiangabe“ enthält ausdrücklich genannte Kategorien, auch Verdachtsfälle und laufende Ermittlungen. Hinweise aus dem Meldungstext beruhen auf dort beschriebenen Umständen. Für jede Kategorie wird eine belegte Meldung genau einer dieser beiden Spalten zugeordnet.",
   "formula": "Anteil = Meldungen mit Beleg für die Kategorie ÷ alle ausgewählten Meldungen. Inhaltsindex = Anteil × 100. Meldungen ohne genauen Ort sind enthalten.",
   "overlap": "Kategorien können sich überschneiden. Die Untergruppen von Hass und Diskriminierung sind Teilmengen und erhöhen die Zahl der Meldungen nicht. Die Zahlen beschreiben ausgewählte Meldungen; sie erfassen weder alle Straftaten noch das Risiko einer Stadt.",
-  "incomplete": "Die Zahlen beziehen sich auf das bisher geprüfte Material. Ein abschließender Index steht erst zur Verfügung, wenn für diese Kategorie keine Meldungen mehr unklar oder ungeprüft sind.",
+  "incomplete": "Unklare und nicht geprüfte Einträge bleiben im Nenner und werden getrennt ausgewiesen; sie zählen nicht als belegt. Solange neue Meldungen noch geprüft werden, behält die veröffentlichte Statistik ihren bisherigen Stichtag und weist offene Einträge separat aus.",
   "tags": {
     "community_safety": "Sicherheit im Alltag und im öffentlichen Raum",
     "hate_discrimination": "Hass und Diskriminierung",
@@ -31,5 +31,6 @@
     "racism": "Rassismus",
     "xenophobia": "Fremdenfeindlichkeit",
     "religious_bias": "Religionsbezogene Vorurteile / Antisemitismus"
-  }
+  },
+  "noSupport": "Kein inhaltlicher Beleg"
 }

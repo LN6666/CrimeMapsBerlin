@@ -23,10 +23,10 @@
   "coverage": "Evaluated",
   "uncertain": "Uncertain",
   "pending": "Not evaluated",
-  "index": "Final content index",
+  "index": "Content index",
   "unknown": "Unavailable",
   "formula": "Content index = 100 × records supporting the label ÷ all selected records.",
-  "incomplete": "Shares count the labels supported so far. A final index remains unavailable while any record for that label is uncertain or has not been evaluated.",
+  "incomplete": "Uncertain and not evaluated records remain in the denominator and are shown separately; they are not counted as supported. If a new batch is still being checked, the published snapshot keeps its previous date and lists those reports as pending.",
   "overlap": "One record can support several labels. Percentages need not add to 100%. Follow-up reports remain separate records and can describe the same incident.",
   "basis": "These figures describe the selected reports. They do not measure all crimes or a city's crime risk.",
   "hate": "Possible hate crime is a source-backed AI lead, not a police finding. The social-category table separates explicit police wording from leads based on report narratives.",
@@ -55,5 +55,6 @@
     "coercion_or_unlawful_detention": "coercion or unlawful detention",
     "public_order_offence": "public-order offence",
     "animal_welfare_offence": "animal-welfare offence"
-  }
+  },
+  "noSupport": "No supporting content"
 }
