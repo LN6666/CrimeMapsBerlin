@@ -1,3 +1,4 @@
+import {cities} from './portal-cities.js';
 import {mountGoatCounter} from './goatcounter-client.mjs';
 import {cityPhotoScene} from './portal-time.mjs';
 import {appearanceStorageKey,appearanceValue,readAppearance,saveAppearance} from './portal-appearance.mjs';
