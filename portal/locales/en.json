@@ -10,7 +10,14 @@
     "details": "This is an early open-source version. Coverage, locations and translations may have gaps or errors. Please read the linked police announcements for context. Contributions are welcome.",
     "images": "The city images were generated with AI using local landmarks. They introduce the cities and do not depict specific incidents.",
     "repo": "Project and source code",
-    "alt": "AI-generated view of {landmark} in {city}"
+    "alt": "AI-generated view of {landmark} in {city}",
+    "sourcesTitle": "Crime maps & police websites",
+    "sourcesNote": "POLIZEIKARTE is an independent project. The police links lead to the authorities responsible for each city.",
+    "mapLink": "POLIZEIKARTE",
+    "policeLink": "Police website",
+    "directoryCount": "14 cities",
+    "externalMapLabel": "Open POLIZEIKARTE for {city} (new window)",
+    "externalPoliceLabel": "Open the police website for {city} (new window)"
   },
   "appearanceCopy": {
     "label": "Appearance",

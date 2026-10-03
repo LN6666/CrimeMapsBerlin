@@ -11,7 +11,9 @@ import shutil
 
 CITY_IDS = ('berlin', 'hamburg', 'munich', 'cologne', 'frankfurt', 'dusseldorf',
             'stuttgart', 'leipzig', 'dortmund', 'bremen', 'essen', 'dresden', 'hannover', 'nuremberg')
-COPY_KEYS = {'title', 'home', 'caption', 'grid', 'open', 'about', 'note', 'details', 'images', 'repo', 'alt'}
+COPY_KEYS = {'title', 'home', 'caption', 'grid', 'open', 'about', 'note', 'details', 'images', 'repo', 'alt',
+             'sourcesTitle', 'sourcesNote', 'mapLink', 'policeLink', 'directoryCount',
+             'externalMapLabel', 'externalPoliceLabel'}
 PUBLIC_CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'"
 PUBLIC_CODE = ('portal.js', 'portal.css', 'portal-time.mjs', 'portal-appearance.mjs')
 
@@ -33,12 +35,18 @@ def build(output: Path, root: Path | None = None) -> dict:
     for c in cities:
         repository = 'crimemaps-' + c['city'].capitalize()
         expected_path = '/' + repository + ('/map/' if c['city'] == 'berlin' else '/')
-        if (set(c) != {'city', 'names', 'landmark', 'map_path', 'month', 'officialPoliceUrl'}
+        if (set(c) != {'city', 'names', 'landmark', 'map_path', 'month', 'officialPoliceUrl', 'externalMapUrl'}
                 or c['map_path'] != expected_path
                 or any(set(c[key]) != {'de', 'en', 'zh'} for key in ('names', 'landmark'))
                 or any(not isinstance(v, str) or not v.strip() or len(v) > 200 for key in ('names', 'landmark') for v in c[key].values())
                 or c['month'] is not None and not re.fullmatch(r'\d{4}-(0[1-9]|1[0-2])', c['month'])):
             raise ValueError('Invalid public city metadata')
+        upstream = {'munich': 'muenchen', 'cologne': 'koeln', 'dusseldorf': 'duesseldorf',
+                    'nuremberg': 'nuernberg'}.get(c['city'], c['city'])
+        if c['externalMapUrl'] != 'https://polizeikarte.de/' + upstream:
+            raise ValueError('Unexpected external city map')
+        if not c['officialPoliceUrl'].startswith('https://'):
+            raise ValueError('Police links must use HTTPS')
     locales = {lang: json.loads(checked_source(root, 'locales/' + lang + '.json').read_bytes()) for lang in ('de', 'en', 'zh')}
     for resource in locales.values():
         if set(resource) != {'copy', 'appearanceCopy'} or set(resource['copy']) != COPY_KEYS or set(resource['appearanceCopy']) != {'label', 'blue', 'light'}:
@@ -69,6 +77,29 @@ def build(output: Path, root: Path | None = None) -> dict:
         alt = copy['alt'].replace('{city}', name).replace('{landmark}', c['landmark']['de'])
         cards.append(f'''<a class="city-tile" data-city="{city}" href="{e(c['map_path'] + query)}" aria-label="{e(label)}"><div class="city-photo"><img data-day-src="portal-assets/cityscapes/{city}.jpg" data-night-src="portal-assets/cityscapes/{city}-night.jpg" width="960" height="600" loading="{'eager' if index < 4 else 'lazy'}" decoding="async" {'fetchpriority="high"' if index == 0 else ''} alt="{e(alt)}"><span class="city-icon" aria-hidden="true"><img src="portal-assets/icons/{city}.png" width="64" height="64" alt=""></span></div><span class="city-label"><span class="city-name">{e(name)}</span><span class="city-arrow" aria-hidden="true">↗</span></span></a>''')
     page = f'''<!doctype html><html lang="de"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="{e(PUBLIC_CSP)}"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111b29"><title>{e(copy['title'])}</title><link rel="icon" type="image/png" href="portal-assets/brand/police-eagle.png"><link rel="stylesheet" href="portal.css"></head><body><header class="masthead"><a class="home-mark" href="./?lang=de" aria-label="{e(copy['home'])}"><img class="police-symbol" src="portal-assets/brand/police-eagle.png" width="78" height="78" alt="" aria-hidden="true"><span class="wordmark-crop"><img class="brand-art" src="portal-assets/brand/crime-map-de.png" width="1120" height="160" alt="{e(copy['title'])}"></span></a><div class="header-tools"><nav class="language-switch" aria-label="Sprache"><button data-language="de" lang="de" aria-pressed="true">Deutsch</button><button data-language="en" lang="en" aria-pressed="false">English</button><button data-language="zh" lang="zh-CN" aria-pressed="false">中文</button></nav><label class="appearance-switch"><span data-appearance-label>{e(appearance['label'])}</span><select id="appearance" aria-label="{e(appearance['label'])}"><option value="blue">{e(appearance['blue'])}</option><option value="light">{e(appearance['light'])}</option></select></label><p class="header-caption" data-copy="caption">{e(copy['caption'])}</p></div></header><main><h1 class="sr-only" data-copy="title">{e(copy['title'])}</h1><div class="city-grid" aria-label="{e(copy['grid'])}">{''.join(cards)}</div></main><footer class="portal-footer"><details><summary data-copy="about">{e(copy['about'])}</summary><div class="footer-body"><p data-copy="note">{e(copy['note'])}</p><p data-copy="details">{e(copy['details'])}</p><p data-copy="images">{e(copy['images'])}</p></div></details><a class="repo-link" href="https://github.com/LN6666/crimemaps-Berlin" target="_blank" rel="noopener noreferrer" data-copy="repo">{e(copy['repo'])}</a></footer><script src="portal-cities.js"></script><script src="portal.js" type="module"></script></body></html>'''
+    directory_rows = []
+    for c in cities:
+        name = c['names']['de']
+        links = []
+        for kind, field, label, aria in (
+                ('map', 'externalMapUrl', 'mapLink', 'externalMapLabel'),
+                ('police', 'officialPoliceUrl', 'policeLink', 'externalPoliceLabel')):
+            links.append(f'<a class="directory-link" data-link-kind="{kind}" href="{e(c[field])}" '
+                         f'target="_blank" rel="noopener noreferrer" '
+                         f'aria-label="{e(copy[aria].replace("{city}", name))}">'
+                         f'<span data-copy="{label}">{e(copy[label])}</span>'
+                         '<span class="external-arrow" aria-hidden="true">↗</span></a>')
+        directory_rows.append(f'<li class="directory-city" data-external-city="{c["city"]}">'
+                              f'<span class="directory-city-name">{e(name)}</span>'
+                              f'<div class="directory-links">{"".join(links)}</div></li>')
+    directory = ('<details class="official-directory"><summary class="directory-summary">'
+                 '<span class="directory-heading"><span class="directory-symbol" aria-hidden="true">↗</span>'
+                 f'<span data-copy="sourcesTitle">{e(copy["sourcesTitle"])}</span></span>'
+                 f'<span class="directory-meta"><span data-copy="directoryCount">{e(copy["directoryCount"])}</span>'
+                 '<span class="directory-chevron" aria-hidden="true"></span></span></summary>'
+                 f'<div class="directory-panel"><p class="directory-note" data-copy="sourcesNote">{e(copy["sourcesNote"])}</p>'
+                 f'<ul class="directory-grid">{"".join(directory_rows)}</ul></div></details>')
+    page = page.replace('</header><main>', '</header>' + directory + '<main>')
     output.mkdir(parents=True)
     (output / 'index.html').write_text(page, encoding='utf-8')
     (output / 'portal-cities.js').write_text('const cities=' + json.dumps(cities, ensure_ascii=False, separators=(',', ':')) + ';\n', encoding='utf-8')

@@ -64,3 +64,8 @@
   .content-tag-availability, .content-tag-all-months, .content-tag-panel, .content-tag-behavior-details { font-size:.875rem; line-height:1.6; }
   .content-tag-drawer summary { min-height:44px; padding-block:8px; }
 }
+.content-tag-gemini-handoff{border-top:1px solid #cbd5e1;margin-top:16px;padding:12px 16px;}
+.content-tag-gemini-handoff h3{margin:0 0 8px;}
+.content-tag-gemini-handoff p{line-height:1.5;}
+.content-tag-gemini-handoff button,.content-tag-gemini-handoff a{display:block;margin:8px 0;padding:10px 12px;min-height:44px;max-width:100%;white-space:normal;overflow-wrap:anywhere;box-sizing:border-box;}
+.content-tag-gemini-handoff textarea{width:100%;box-sizing:border-box;margin-top:8px;resize:vertical;font:inherit;}

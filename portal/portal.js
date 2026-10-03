@@ -34,10 +34,26 @@ function render(){
   tile.querySelector(".city-photo>img").alt=text("alt",{city:name,landmark:city.landmark[locale]});
  }
  for(const b of document.querySelectorAll("[data-language]"))b.setAttribute("aria-pressed",String(b.dataset.language===locale));
+ for(const row of document.querySelectorAll("[data-external-city]")){
+  const city=cities.find(c=>c.city===row.dataset.externalCity),name=city.names[locale];
+  row.querySelector(".directory-city-name").textContent=name;
+  for(const link of row.querySelectorAll("[data-link-kind]")){
+   const key=link.dataset.linkKind==="map"?"externalMapLabel":"externalPoliceLabel";
+   link.setAttribute("aria-label",text(key,{city:name}));
+  }
+ }
 }
 for(const button of document.querySelectorAll("[data-language]"))button.addEventListener("click",()=>{locale=button.dataset.language;const url=new URL(location.href);url.searchParams.set("lang",locale);history.replaceState(null,"",url);render();});
 window.addEventListener("popstate",()=>{const value=new URL(location.href).searchParams.get("lang");locale=canonicalLocale(value);render();});
 render();
+const directory=document.querySelector(".official-directory");
+directory.addEventListener("keydown",event=>{
+ if(event.key==="Escape"&&directory.open){
+  directory.open=false;
+  directory.querySelector("summary").focus();
+  event.preventDefault();
+ }
+});
 function renderScene(){
  const scene=cityPhotoScene();
  if(document.documentElement.dataset.scene===scene)return;
