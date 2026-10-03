@@ -97,5 +97,13 @@ export function mountCachedBriefs(parent:HTMLElement,locale:'zh'|'en'|'de'){
  };
  select.addEventListener('change',update);
  return {setCatalogues(w:WindowCatalogue,b:BriefCatalogue){windows=null;briefs=null;root.hidden=true;validateBriefCatalogues(w,b);windows=w;briefs=b;update();},
-  setScope(value:string){key=value;update();},invalidate(){windows=null;briefs=null;root.hidden=true;},destroy(){root.remove();}};
+  setScope(value:string){key=value;update();},
+  /** Only already-validated public aggregates, for a visitor-controlled external handoff. */
+  getPublicSelection(){
+   const scope=windows?.scopes.find(s=>s.key===key),w=scope?.windows.find(w=>w.period===select.value),b=briefs?.scopes.find(s=>s.key===key)?.briefs.find(b=>b.period===select.value);
+   if(!windows||!scope||!w||!b)return null;
+   return {key,as_of:windows.as_of,unknown_publication_dates:scope.unknown_publication_dates,
+    window:w,brief:{status:b.status,text:b[locale]}};
+  },
+  invalidate(){windows=null;briefs=null;root.hidden=true;},destroy(){root.remove();}};
 }

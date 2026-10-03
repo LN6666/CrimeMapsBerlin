@@ -10,7 +10,14 @@
     "details": "Dies ist eine frühe Open-Source-Version. Bei den erfassten Meldungen, der Ortszuordnung und den Übersetzungen sind Lücken oder Fehler möglich. Lesen Sie dazu die verlinkten Polizeimeldungen. Wer mithelfen möchte, ist willkommen.",
     "images": "Die Stadtansichten wurden mit KI anhand örtlicher Wahrzeichen erstellt. Sie stellen die Städte vor und zeigen keine konkreten Ereignisse aus Polizeimeldungen.",
     "repo": "Projekt und Quellcode",
-    "alt": "Mit KI erstellte Stadtansicht: {city} · {landmark}"
+    "alt": "Mit KI erstellte Stadtansicht: {city} · {landmark}",
+    "sourcesTitle": "Kriminalitätskarten & Polizei-Websites",
+    "sourcesNote": "POLIZEIKARTE ist ein unabhängiges Projekt. Die Polizei-Links führen zu den zuständigen Behörden.",
+    "mapLink": "POLIZEIKARTE",
+    "policeLink": "Polizei-Website",
+    "directoryCount": "14 Städte",
+    "externalMapLabel": "POLIZEIKARTE für {city} öffnen (neues Fenster)",
+    "externalPoliceLabel": "Zuständige Polizei für {city} öffnen (neues Fenster)"
   },
   "appearanceCopy": {
     "label": "Darstellung",

@@ -5,6 +5,7 @@ import {macroStatisticsForSummary,validateMacroCatalogue,type MacroSummary} from
 import {MACRO_COPY} from "./macro-tag-copy";
 import {mountMacroTagPanel} from "./macro-tag-panel";
 import {mountCachedBriefs,type WindowCatalogue,type BriefCatalogue} from "./cached-city-briefs";
+import {mountOfficialGeminiHandoff} from "./official-gemini-handoff";
 
 /** Local UI only. The caller supplies data and the existing police-eagle asset. */
 export function mountContentTagLauncher(parent: HTMLElement, options: {
@@ -44,6 +45,8 @@ export function mountContentTagLauncher(parent: HTMLElement, options: {
   drawer.append(header,scopeLabel,availability,reportLink,allMonths,preview,highlights,content); root.append(anchor,drawer); parent.append(root);
   const briefHost=document.createElement('div');drawer.insertBefore(briefHost,availability);
   const briefPanel=mountCachedBriefs(briefHost,options.locale);
+  const officialHandoff=mountOfficialGeminiHandoff(drawer,options.locale,()=>briefPanel.getPublicSelection());
+  drawer.insertBefore(officialHandoff.element,allMonths);
   const macroCopy=MACRO_COPY[options.locale],macroContent=document.createElement("div");
   const behaviorDetails=document.createElement("details"),behaviorTitle=document.createElement("summary");
   behaviorDetails.className="content-tag-behavior-details";behaviorTitle.textContent=c.title;
@@ -61,7 +64,7 @@ export function mountContentTagLauncher(parent: HTMLElement, options: {
   let catalogueLabels:Readonly<Record<string,string>>={};
   const selectScope=()=>{
     const source=catalogue.find(item=>item.key===scopeSelect.value);
-    briefPanel.setScope(scopeSelect.value);
+    briefPanel.setScope(scopeSelect.value);officialHandoff.refresh();
     const reportUrl=source&&options.staticReportUrls?.[source.key];
     reportLink.hidden=!reportUrl;if(reportUrl)reportLink.href=reportUrl;
     highlights.replaceChildren();
@@ -97,6 +100,7 @@ export function mountContentTagLauncher(parent: HTMLElement, options: {
   const setOpen=(open:boolean)=>{
     drawer.hidden=!open; trigger.setAttribute("aria-expanded",String(open));
     if(open) close.focus(); else trigger.focus({preventScroll:true});
+    if(open)officialHandoff.refresh();
   };
   close.addEventListener("click",()=>setOpen(false));
   let drag: {pointer:number;startX:number;startY:number;x:number;y:number;moved:boolean}|null=null;
@@ -143,7 +147,7 @@ export function mountContentTagLauncher(parent: HTMLElement, options: {
       scopeLabel:string;textScope:"full_official_text"|"accepted_upstream_summary";
       weights?:Readonly<Partial<Record<ContentTag,number>>>;
     }) {
-      scopeLabel.hidden=true; catalogue=[];macroCatalogue=[];macroPanel.invalidate();briefPanel.invalidate();reportLink.hidden=true;
+      scopeLabel.hidden=true; catalogue=[];macroCatalogue=[];macroPanel.invalidate();briefPanel.invalidate();officialHandoff.refresh();reportLink.hidden=true;
       panel.update(records,assessments,context); highlights.replaceChildren();
       try {
         const stats=contentTagStatistics(records,assessments,context.weights);
@@ -152,7 +156,7 @@ export function mountContentTagLauncher(parent: HTMLElement, options: {
     },
     /** Small precomputed artifact: 14 city scopes plus their validated sum, supplied by the existing loader. */
     setSummaries(sources:readonly ContentTagSummary[],labels:Readonly<Record<string,string>>,selectedCity:string){
-      catalogue=[];macroCatalogue=[];macroPanel.invalidate();briefPanel.invalidate();reportLink.hidden=true;scopeLabel.hidden=true;highlights.replaceChildren();preview.textContent=c.unavailable;panel.invalidate();
+      catalogue=[];macroCatalogue=[];macroPanel.invalidate();briefPanel.invalidate();officialHandoff.refresh();reportLink.hidden=true;scopeLabel.hidden=true;highlights.replaceChildren();preview.textContent=c.unavailable;panel.invalidate();
       const cities=sources.filter(item=>item.key!=="all14"), aggregate=sources.find(item=>item.key==="all14");
       if(cities.length!==14 || sources.length!==15 || new Set(sources.map(item=>item.key)).size!==15 || !aggregate ||
           cities.some(item=>!CONTENT_TAG_CITIES.includes(item.key as typeof CONTENT_TAG_CITIES[number])))
@@ -175,7 +179,7 @@ export function mountContentTagLauncher(parent: HTMLElement, options: {
     },
     /** Primary social-context layer. Call after setSummaries; both layers use identical selected records. */
     setMacroSummaries(sources:readonly MacroSummary[]){
-      macroCatalogue=[];macroPanel.invalidate();briefPanel.invalidate();highlights.replaceChildren();preview.textContent=c.unavailable;reportLink.hidden=true;
+      macroCatalogue=[];macroPanel.invalidate();briefPanel.invalidate();officialHandoff.refresh();highlights.replaceChildren();preview.textContent=c.unavailable;reportLink.hidden=true;
       validateMacroCatalogue(sources);
       for(const source of sources){const behavior=catalogue.find(item=>item.key===source.key);
         if(!behavior||behavior.records!==source.records||behavior.mapping_sha256!==source.mapping_sha256)
@@ -184,15 +188,15 @@ export function mountContentTagLauncher(parent: HTMLElement, options: {
     },
     /** Four saved briefs per city/total. Neither hovering nor selecting a period invokes a model. */
     setCachedBriefs(windows:WindowCatalogue,briefs:BriefCatalogue){
-      briefPanel.invalidate();
+      briefPanel.invalidate();officialHandoff.refresh();
       for(const scope of windows.scopes){const source=macroCatalogue.find(s=>s.key===scope.key);
         if(!source||source.records!==scope.total_selected_records||source.mapping_sha256!==windows.mapping_sha256||
           source.overlay_sha256!==windows.overlay_sha256)throw Error('Briefs require the current macro catalogue');}
-      briefPanel.setCatalogues(windows,briefs);briefPanel.setScope(scopeSelect.value);
+      briefPanel.setCatalogues(windows,briefs);briefPanel.setScope(scopeSelect.value);officialHandoff.refresh();
     },
     open:()=>setOpen(true), close:()=>setOpen(false),
     /** Invoke when Q&A is disabled, region-restricted, exhausted or fails. Saved data is preserved. */
     showStatisticsFallback(){availability.textContent=c.answerUnavailable;setOpen(true);},
-    destroy(){window.removeEventListener("keydown",escape);window.removeEventListener("resize",resize);briefPanel.destroy();macroPanel.destroy();panel.destroy();root.remove();},
+    destroy(){window.removeEventListener("keydown",escape);window.removeEventListener("resize",resize);officialHandoff.destroy();briefPanel.destroy();macroPanel.destroy();panel.destroy();root.remove();},
   };
 }

@@ -13,7 +13,8 @@
       "zh": "勃兰登堡门"
     },
     "officialPoliceUrl": "https://www.berlin.de/polizei/",
-    "map_path": "/crimemaps-Berlin/map/"
+    "map_path": "/crimemaps-Berlin/map/",
+    "externalMapUrl": "https://polizeikarte.de/berlin"
   },
   {
     "city": "hamburg",
@@ -29,7 +30,8 @@
       "zh": "易北爱乐厅"
     },
     "officialPoliceUrl": "https://www.polizei.hamburg/",
-    "map_path": "/crimemaps-Hamburg/"
+    "map_path": "/crimemaps-Hamburg/",
+    "externalMapUrl": "https://polizeikarte.de/hamburg"
   },
   {
     "city": "munich",
@@ -45,7 +47,8 @@
       "zh": "圣母教堂双塔"
     },
     "officialPoliceUrl": "https://www.polizei.bayern.de/muenchen",
-    "map_path": "/crimemaps-Munich/"
+    "map_path": "/crimemaps-Munich/",
+    "externalMapUrl": "https://polizeikarte.de/muenchen"
   },
   {
     "city": "cologne",
@@ -61,7 +64,8 @@
       "zh": "科隆大教堂"
     },
     "officialPoliceUrl": "https://koeln.polizei.nrw/",
-    "map_path": "/crimemaps-Cologne/"
+    "map_path": "/crimemaps-Cologne/",
+    "externalMapUrl": "https://polizeikarte.de/koeln"
   },
   {
     "city": "frankfurt",
@@ -77,7 +81,8 @@
       "zh": "法兰克福金融天际线"
     },
     "officialPoliceUrl": "https://www.polizei.hessen.de/polizeipraesidien/polizeipraesidium-frankfurt-am-main/",
-    "map_path": "/crimemaps-Frankfurt/"
+    "map_path": "/crimemaps-Frankfurt/",
+    "externalMapUrl": "https://polizeikarte.de/frankfurt"
   },
   {
     "city": "dusseldorf",
@@ -93,7 +98,8 @@
       "zh": "莱茵电视塔"
     },
     "officialPoliceUrl": "https://duesseldorf.polizei.nrw/",
-    "map_path": "/crimemaps-Dusseldorf/"
+    "map_path": "/crimemaps-Dusseldorf/",
+    "externalMapUrl": "https://polizeikarte.de/duesseldorf"
   },
   {
     "city": "stuttgart",
@@ -109,7 +115,8 @@
       "zh": "斯图加特电视塔"
     },
     "officialPoliceUrl": "https://ppstuttgart.polizei-bw.de/",
-    "map_path": "/crimemaps-Stuttgart/"
+    "map_path": "/crimemaps-Stuttgart/",
+    "externalMapUrl": "https://polizeikarte.de/stuttgart"
   },
   {
     "city": "leipzig",
@@ -125,7 +132,8 @@
       "zh": "民族大会战纪念碑"
     },
     "officialPoliceUrl": "https://www.polizei.sachsen.de/de/pdl.htm",
-    "map_path": "/crimemaps-Leipzig/"
+    "map_path": "/crimemaps-Leipzig/",
+    "externalMapUrl": "https://polizeikarte.de/leipzig"
   },
   {
     "city": "dortmund",
@@ -141,7 +149,8 @@
       "zh": "多特蒙德U塔"
     },
     "officialPoliceUrl": "https://dortmund.polizei.nrw/",
-    "map_path": "/crimemaps-Dortmund/"
+    "map_path": "/crimemaps-Dortmund/",
+    "externalMapUrl": "https://polizeikarte.de/dortmund"
   },
   {
     "city": "bremen",
@@ -157,7 +166,8 @@
       "en": "Bremen Town Hall and Market Square"
     },
     "officialPoliceUrl": "https://www.polizei.bremen.de/",
-    "map_path": "/crimemaps-Bremen/"
+    "map_path": "/crimemaps-Bremen/",
+    "externalMapUrl": "https://polizeikarte.de/bremen"
   },
   {
     "city": "essen",
@@ -173,7 +183,8 @@
       "zh": "关税同盟煤矿井架"
     },
     "officialPoliceUrl": "https://essen.polizei.nrw/",
-    "map_path": "/crimemaps-Essen/"
+    "map_path": "/crimemaps-Essen/",
+    "externalMapUrl": "https://polizeikarte.de/essen"
   },
   {
     "city": "dresden",
@@ -189,7 +200,8 @@
       "zh": "德累斯顿圣母教堂"
     },
     "officialPoliceUrl": "https://www.polizei.sachsen.de/de/pdd.htm",
-    "map_path": "/crimemaps-Dresden/"
+    "map_path": "/crimemaps-Dresden/",
+    "externalMapUrl": "https://polizeikarte.de/dresden"
   },
   {
     "city": "hannover",
@@ -205,7 +217,8 @@
       "zh": "汉诺威新市政厅"
     },
     "officialPoliceUrl": "https://www.pd-h.polizei-nds.de/startseite/",
-    "map_path": "/crimemaps-Hannover/"
+    "map_path": "/crimemaps-Hannover/",
+    "externalMapUrl": "https://polizeikarte.de/hannover"
   },
   {
     "city": "nuremberg",
@@ -221,6 +234,7 @@
       "zh": "纽伦堡城堡"
     },
     "officialPoliceUrl": "https://www.polizei.bayern.de/wir-ueber-uns/organisation/dienststellen/000967/index.html",
-    "map_path": "/crimemaps-Nuremberg/"
+    "map_path": "/crimemaps-Nuremberg/",
+    "externalMapUrl": "https://polizeikarte.de/nuernberg"
   }
 ]

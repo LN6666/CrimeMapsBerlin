@@ -10,7 +10,14 @@
     "details": "这是仍在完善的开源初版。收录范围、地点识别和翻译可能有遗漏或错误，请结合警方原文阅读。欢迎参与改进。",
     "images": "城市风光图由AI依据当地地标绘制，用于介绍城市，不描绘具体案件。",
     "repo": "项目与源代码",
-    "alt": "AI绘制的{city}风光：{landmark}"
+    "alt": "AI绘制的{city}风光：{landmark}",
+    "sourcesTitle": "犯罪地图与警方网站",
+    "sourcesNote": "POLIZEIKARTE 是独立项目。警方官网链接指向各城所属警察机构。",
+    "mapLink": "犯罪地图",
+    "policeLink": "警方官网",
+    "directoryCount": "14座城市",
+    "externalMapLabel": "打开{city}的 POLIZEIKARTE 地图（新窗口）",
+    "externalPoliceLabel": "打开{city}所属警方的网站（新窗口）"
   },
   "appearanceCopy": {
     "label": "外观",

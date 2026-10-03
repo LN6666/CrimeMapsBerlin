@@ -38,3 +38,116 @@
   .portal-footer{font-size:16px;line-height:1.55}
   .portal-footer summary,.portal-footer .repo-link{display:flex;align-items:center;min-height:44px}
 }
+
+/* Keep the dense city gallery; refine the frame and the new source directory. */
+:root{
+  --ink:#0b1726;--panel:#14263b;--paper:#f5f1e9;--gold:#d7bd8a;
+  --line:#a8bfd329;--muted:#b2c3d3;
+  font-family:"Avenir Next","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--ink);font-synthesis:none;-webkit-font-smoothing:antialiased;
+}
+body{background:linear-gradient(160deg,#13253a 0,#0b1726 580px)}
+.masthead{
+  max-width:2160px;margin:auto;padding:16px 24px;min-height:126px;
+  background:linear-gradient(110deg,#17293d88,#0b172600);
+  border-bottom:1px solid var(--line);
+}
+.home-mark{gap:16px;width:min(535px,58vw)}
+.home-mark .police-symbol{width:70px;height:70px}
+.header-tools{display:grid;grid-template-columns:auto auto;align-items:center;gap:10px 14px}
+.language-switch{border-color:var(--line);border-radius:8px;background:#ffffff03;padding:3px}
+.language-switch button{border-radius:5px;min-height:38px;font-size:13px;padding:8px 13px}
+.language-switch button[aria-pressed=true]{background:var(--paper);box-shadow:0 2px 8px #0002}
+.language-switch button:not([aria-pressed=true]):hover{background:#ffffff09;color:var(--paper)}
+.appearance-switch{gap:8px;font-size:12px;color:var(--muted)}
+.appearance-switch select{min-height:44px;padding:7px 10px;border-color:var(--line);border-radius:7px;background:#ffffff04}
+.header-caption{grid-column:1/-1;justify-self:end;color:var(--muted);font-size:12px;letter-spacing:.05em}
+.official-directory{max-width:2160px;margin:0 auto;border-bottom:1px solid var(--line)}
+.directory-summary{
+  min-height:48px;padding:9px 24px;display:flex;align-items:center;justify-content:space-between;
+  gap:20px;cursor:pointer;list-style:none;color:#e3eaf0;font-size:13px;
+  background:#08132035;transition:background .2s;
+}
+.directory-summary::-webkit-details-marker{display:none}
+.directory-summary:hover{background:#20374b55}
+.directory-heading,.directory-meta{display:flex;align-items:center;gap:11px;min-width:0}
+.directory-symbol{display:grid;place-items:center;width:25px;height:25px;flex:none;font-size:18px;color:var(--gold);border:1px solid #d7bd8a3b;border-radius:6px}
+.directory-meta{flex:none;gap:18px;color:var(--muted);font-size:12px}
+.directory-chevron{width:7px;height:7px;border-right:1.5px solid var(--gold);border-bottom:1.5px solid var(--gold);transform:rotate(45deg);margin:0 3px 4px 0;transition:transform .2s}
+.official-directory[open] .directory-chevron{transform:rotate(225deg);margin-top:5px}
+.directory-panel{padding:6px 24px 20px;background:#0d1c2dee}
+.directory-note{margin:7px 0 14px;color:var(--muted);font-size:12px;line-height:1.65}
+.directory-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 20px;padding:0;margin:0;list-style:none;max-height:min(55vh,520px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#47637c transparent}
+.directory-city{min-width:0;padding:13px 0;border-top:1px solid var(--line)}
+.directory-city-name{display:block;font-size:15px;font-weight:600;line-height:1.4;margin-bottom:8px;color:var(--paper)}
+.directory-links{display:flex;gap:6px;flex-wrap:wrap}
+.directory-link{display:inline-flex;align-items:center;gap:9px;min-height:36px;padding:7px 10px;border:1px solid var(--line);border-radius:5px;font-size:12px;color:#d5e1eb;text-decoration:none;transition:background .2s,border-color .2s}
+.directory-link:hover{background:#203c55;border-color:#d7bd8a66}
+.external-arrow{color:var(--gold);font-size:15px}
+.city-grid{gap:7px;padding:10px}
+.city-tile{border-radius:7px;border-color:#a5b9cc22;box-shadow:0 1px 2px #0002;transition:border-color .3s,box-shadow .3s}
+.city-photo>img{filter:saturate(.94);transition:transform .7s cubic-bezier(.2,.65,.25,1),filter .5s}
+.city-photo:after{background:linear-gradient(180deg,#05112000 42%,#0614242e 78%,#06142465)}
+.city-icon{border-radius:9px;border-color:#dfd3b86b;box-shadow:0 4px 16px #0004}
+.city-label{min-height:54px;padding:11px 15px;background:linear-gradient(115deg,#192d42,#122338);border-color:#d7bd8a25}
+.city-name{font-size:20px;font-weight:500;letter-spacing:0;line-height:1.3;font-family:"Iowan Old Style","Palatino Linotype","Songti SC",serif}
+.city-arrow{font-size:19px;display:grid;place-items:center;width:28px;height:28px;border:1px solid #d7bd8a25;border-radius:50%;color:var(--gold)}
+.portal-footer{max-width:2160px;margin:auto;padding:16px 24px 22px;color:var(--muted)}
+.city-tile:focus-visible{outline-offset:-3px;border-color:var(--gold)}
+@media(hover:hover) and (pointer:fine){
+  .city-tile:hover{border-color:#d7bd8a88;box-shadow:0 8px 22px #0003}
+  .city-tile:hover .city-photo>img{transform:scale(1.04);filter:saturate(1.03)}
+  .city-tile:hover .city-icon{transform:translateY(-2px)}
+  .city-tile:hover .city-label{background:linear-gradient(115deg,#243e55,#1a3046)}
+  .city-tile:hover .city-arrow{transform:translateX(2px);background:#d7bd8a15}
+}
+:root[data-theme=light]{--line:#39556b26;--muted:#536a79;background:#edf0ef}
+:root[data-theme=light] body{background:linear-gradient(160deg,#f7f5f0,#e8eeef)}
+:root[data-theme=light] .masthead{background:linear-gradient(110deg,#182c43,#0e1c2d);border-color:#b7c6d329}
+:root[data-theme=light] .masthead .header-caption,:root[data-theme=light] .appearance-switch{color:#b2c3d3}
+:root[data-theme=light] .masthead .language-switch,:root[data-theme=light] .appearance-switch select{border-color:#a8bfd329}
+:root[data-theme=light] .appearance-switch select{color:#f5f1e9}
+:root[data-theme=light] .official-directory{border-color:#39556b26}
+:root[data-theme=light] .directory-summary{background:#ffffff77;color:#213c50}
+:root[data-theme=light] .directory-summary:hover{background:#ffffff}
+:root[data-theme=light] .directory-symbol,:root[data-theme=light] .directory-chevron{color:#6a5840;border-color:#89704466}
+:root[data-theme=light] .directory-panel{background:#f7f8f5}
+:root[data-theme=light] .directory-city-name{color:#213c50}
+:root[data-theme=light] .directory-link{color:#2c4a60;background:#ffffff66}
+:root[data-theme=light] .directory-link:hover{background:#e4ebee;border-color:#748c9e}
+:root[data-theme=light] .external-arrow{color:#75613d}
+:root[data-theme=light] .city-tile{border-color:#9aafba66;box-shadow:0 1px 4px #243c5010}
+:root[data-theme=light] .city-label{background:#fdfcf8;border-color:#b7c3c34d;color:#213b4b}
+:root[data-theme=light] .city-arrow{border-color:#5a7b8b30}
+@media(hover:hover) and (pointer:fine){:root[data-theme=light] .city-tile:hover .city-label{background:#eaf0f1}}
+@media(min-width:1640px){
+  .city-grid{gap:8px;padding:10px}
+  .city-name{font-size:20px}
+  .directory-grid{grid-template-columns:repeat(7,minmax(0,1fr));gap:0 18px}
+}
+@media(max-width:1080px){.header-tools{grid-template-columns:auto;gap:8px}.header-caption{grid-column:auto}.appearance-switch{justify-self:end}.home-mark{width:min(535px,62vw)}}
+@media(max-width:920px){
+  .masthead{padding:14px 16px}.home-mark{gap:12px}.home-mark .police-symbol{width:62px;height:62px}
+  .directory-summary{padding:9px 16px}.directory-panel{padding:6px 16px 16px}
+  .directory-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:0 14px}
+  .city-grid{gap:6px;padding:7px}.city-label{min-height:48px;padding:9px 11px}.city-name{font-size:18px}
+  .city-arrow{width:25px;height:25px}.city-icon{border-radius:7px}.portal-footer{padding:14px 16px 20px}
+}
+@media(max-width:600px){
+  .masthead{padding:12px;gap:8px;min-height:0}.home-mark{width:100%;gap:12px}.home-mark .police-symbol{width:50px;height:50px}
+  .header-tools{display:grid;grid-template-columns:minmax(0,1fr) auto;width:100%;gap:7px}
+  .language-switch{width:max-content;max-width:100%;gap:0;padding:2px}
+  .language-switch button{font-size:16px;min-height:44px;padding:7px 9px}
+  .appearance-switch{margin:0}.appearance-switch>span{display:none}.appearance-switch select{font-size:16px;min-height:44px;padding:7px 8px}
+  .header-caption{grid-column:1/-1;font-size:12px;line-height:1.5}
+  .directory-summary{padding:8px 12px;gap:10px;min-height:48px;font-size:13px;line-height:1.5}
+  .directory-meta>span:first-child{display:none}.directory-heading{gap:8px}.directory-symbol{width:23px;height:23px}
+  .directory-panel{padding:5px 12px 12px}.directory-note{font-size:13px;margin:6px 0 10px}
+  .directory-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px;max-height:52vh}
+  .directory-city{padding:11px 0}.directory-city-name{font-size:16px}
+  .directory-link{font-size:14px;min-height:44px;padding:7px 9px}
+  .city-grid{gap:5px;padding:5px}.city-tile{border-radius:5px}.city-label{min-height:46px;padding:8px 9px}.city-name{font-size:16px;line-height:1.35}
+  .city-arrow{border:0;width:18px;flex:none;height:24px;font-size:18px}.city-icon{border-radius:6px}
+  .portal-footer{padding:12px;gap:5px;font-size:14px}
+}
+@media(max-width:380px){.directory-grid{grid-template-columns:1fr}.language-switch button{padding:7px 8px}}
