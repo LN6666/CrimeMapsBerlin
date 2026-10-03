@@ -30,7 +30,7 @@ export function mountContentTagPanel(parent: HTMLElement, options: {
         scroll.tabIndex = 0; scroll.setAttribute("role", "region"); scroll.setAttribute("aria-label", c.caption);
         const table = document.createElement("table"), caption = document.createElement("caption"), head = document.createElement("thead"), header = document.createElement("tr"), rows = document.createElement("tbody");
         caption.textContent = c.caption; table.append(caption,head,rows); head.append(header);
-        for (const text of [c.label,c.supported,c.share,c.coverage,c.uncertain,c.pending,c.index]) {
+        for (const text of [c.label,c.supported,c.share,c.coverage,c.uncertain,c.pending,c.noSupport,c.index]) {
           const th=document.createElement("th"); th.scope="col"; th.textContent=text; header.append(th);
         }
         for (const tag of stats.tags) {
@@ -39,7 +39,7 @@ export function mountContentTagPanel(parent: HTMLElement, options: {
           const values=[String(tag.counts.supported),
             tag.documented_share.value===null ? c.unknown : percent.format(tag.documented_share.value),
             tag.evaluation_coverage.value===null ? c.unknown : percent.format(tag.evaluation_coverage.value),
-            String(tag.counts.uncertain),String(tag.counts.not_evaluated),
+            String(tag.counts.uncertain),String(tag.counts.not_evaluated),String(tag.counts.no_support),
             tag.content_index===null ? c.unknown : number.format(tag.content_index)];
           for (const text of values) {const td=document.createElement("td"); td.textContent=text; row.append(td);}
           rows.append(row);

@@ -16,12 +16,12 @@ export function mountMacroTagPanel(parent:HTMLElement,options:{locale:"en"|"de"|
    scroll.setAttribute("role","region");scroll.setAttribute("aria-label",captionText);
    const table=document.createElement("table"),caption=document.createElement("caption"),head=document.createElement("thead"),header=document.createElement("tr"),body=document.createElement("tbody");
    caption.textContent=captionText;table.append(caption,head,body);head.append(header);
-   for(const text of [c.label,c.count,c.share,c.police,c.lead,c.coverage,c.uncertain,c.pending,c.index]){
+   for(const text of [c.label,c.count,c.share,c.police,c.lead,c.coverage,c.uncertain,c.pending,c.noSupport,c.index]){
     const th=document.createElement("th");th.scope="col";th.textContent=text;header.append(th);}
    for(const tag of tags){const item=stats.tags.find(item=>item.tag===tag)!;
     const row=document.createElement("tr"),label=document.createElement("th");label.scope="row";label.textContent=c.tags[tag];row.append(label);
     const values=[String(item.counts.supported),item.share===null?c.unknown:percent.format(item.share),String(item.police_category_stated),String(item.narrative_lead),
-     item.evaluated===null?c.unknown:percent.format(item.evaluated),String(item.counts.uncertain),String(item.counts.not_evaluated),item.content_index===null?c.unknown:number.format(item.content_index)];
+     item.evaluated===null?c.unknown:percent.format(item.evaluated),String(item.counts.uncertain),String(item.counts.not_evaluated),String(item.counts.no_support),item.content_index===null?c.unknown:number.format(item.content_index)];
     for(const text of values){const cell=document.createElement("td");cell.textContent=text;row.append(cell);}body.append(row);}
    scroll.append(table);parent.append(scroll);
   };

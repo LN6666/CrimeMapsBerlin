@@ -91,8 +91,10 @@ function fromCounts(total:number,counts:readonly MacroCount[]){
     const item=counts.find(item=>item.tag===tag)!,c=item.counts;
     return {...item,share:total?c.supported/total:null,
       evaluated:total?1-c.not_evaluated/total:null,
-      content_index:total&&c.uncertain+c.not_evaluated===0?100*c.supported/total:null};
-  }),crime_rate:null,city_risk_score:null};
+      /** All selected announcements stay in the denominator; unresolved states remain visible in counts. */
+      content_index:total?100*c.supported/total:null};
+  }),formula:"100 * supported_records / all_selected_records; uncertain and not_evaluated counts remain separately visible",
+    crime_rate:null,city_risk_score:null};
 }
 /** The caller supplies one checked, count-only catalogue; no country lookup or API calls. */
 export function validateMacroCatalogue(sources:readonly MacroSummary[]){
