@@ -2,7 +2,7 @@ import { test } from "@playwright/test";
 import assert from "node:assert/strict";
 import { uncertaintyRows, uncertaintyStats, uncertaintyPage } from "../src/safety/uncertainty";
 import { UF_COPY, ufText } from "../src/safety/uncertainty-copy";
-import { validatedFeedbackConfig } from "../src/safety/feedback";
+import { githubFeedbackLinks, GITHUB_FEEDBACK_COPY } from "../src/safety/github-feedback";
 const event=(id,scenes)=>({id,title:id,category:'Gewalt',month:'2026-09',published_at:'2026-09-30T12:00:00+02:00',event_date:'2026-09-30',coordinates:null,location_precision:'unknown',location_label:'',source_url:'https://polizei.example/'+id,scene_locations:scenes});
 const scene=(p,overrides={})=>({label:p,role:'incident',location_precision:p,geocode_method:'unresolved',primary_for_count:false,geometry_review:{verdict:'unresolved'},...overrides});
 test('all five location groups preserve reviewed unknowns, exact points excluded, no coordinates are returned or fabricated',()=>{
@@ -37,13 +37,15 @@ test('all three languages have identical keys and parameters with plain-reader u
  for(const language of ['en','de','zh']) {
   assert.deepEqual(Object.keys(UF_COPY[language]).sort(),keys);
   for(const key of keys)assert.deepEqual(UF_COPY[language][key].match(/\{\w+\}/g)??[],UF_COPY.en[key].match(/\{\w+\}/g)??[]);
-  assert.ok(ufText(language,'unknown.stats',{announcements:2,scenes:5}).includes('2'));assert.ok(UF_COPY[language]['feedback.disabled']);
+  assert.ok(ufText(language,'unknown.stats',{announcements:2,scenes:5}).includes('2'));assert.ok(GITHUB_FEEDBACK_COPY[language]['project.contributionPrivacy'].includes('GitHub'));
  }
 });
-test('private intake stays disabled without real HTTPS service/operator/privacy/key configuration; test site keys rejected',()=>{
- const c={endpoint:'https://feedback.example',siteKey:'0xRealSiteKeyFixture12345',operatorName:'Test operator',privacyURL:'https://site.example/privacy'};
- assert.ok(validatedFeedbackConfig(c));assert.equal(validatedFeedbackConfig(undefined),null);
- for(const change of [{endpoint:'http://feedback.example'},{endpoint:'https://name:password@feedback.example'},{siteKey:'1x00000000000000000000AA'},{operatorName:''},{privacyURL:'javascript:alert(1)'}])assert.equal(validatedFeedbackConfig({...c,...change}),null);
+test('public feedback uses only the correct repository links; unknown or query-like city values have no destination',()=>{
+ for(const city of ['berlin','hamburg','munich','cologne','frankfurt','dusseldorf','stuttgart','leipzig','dortmund','bremen','essen','dresden','hannover','nuremberg']){
+  const repo='https://github.com/LN6666/crimemaps-'+city[0].toUpperCase()+city.slice(1);
+  assert.deepEqual(githubFeedbackLinks(city),{repository:repo,discussions:repo+'/discussions',issues:repo+'/issues/new/choose'});
+ }
+ for(const city of ['Berlin','berlin?city=essen','../essen','https://attacker.example',''])assert.equal(githubFeedbackLinks(city),null);
 });
 test('publication month is source-native, independent of selected occurrence month, with no inferred fallback',()=>{
  const old={...event('old',[scene('unknown')]),month:'2000-11',published_at:'2026-05-25T10:15:00+02:00'};

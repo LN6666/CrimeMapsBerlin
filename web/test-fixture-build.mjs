@@ -19,8 +19,11 @@ try {
   // same relative module paths in this isolated synthetic-city build.
   const analyticsSource = join(temporary, "services", "analytics", "src");
   await mkdir(analyticsSource, {recursive:true});
-  for (const path of ["contract.mjs", "world-card.mjs", "world-card.d.mts", "world-boundaries.mjs"])
+  for (const path of ["contract.mjs", "world-card.mjs", "world-card.d.mts", "world-boundaries.mjs", "goatcounter-client.mjs", "goatcounter-client.d.mts"])
     await cp(resolve(web, "../services/analytics/src", path), join(analyticsSource, path));
+  await mkdir(join(temporary, "assets", "brand"), {recursive:true});
+  for (const asset of ["github-mark-black.svg", "github-mark-white.svg", "police-eagle.png", "crime-map-en.png", "crime-map-de.png"])
+    await cp(resolve(web, "../assets/brand", asset), join(temporary, "assets", "brand", asset));
   const config = JSON.parse(await readFile(join(web, "../city-config.json"), "utf8"));
   Object.assign(config, {city:"berlin", repository:"crimemaps-Berlin", base_path:"/crimemaps-Berlin/"});
   await writeFile(join(temporary, "city-config.json"), JSON.stringify(config));

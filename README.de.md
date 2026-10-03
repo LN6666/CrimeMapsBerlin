@@ -89,7 +89,9 @@ Der Frontend-Build lautet `VITE_CRIMEMAPS_CITY=berlin npm --prefix web run build
 
 ## Mitwirken
 
-[Ein Problem öffentlich melden](https://github.com/LN6666/crimemaps-Berlin/issues) · [Vorgeschlagene Änderungen ansehen](https://github.com/LN6666/crimemaps-Berlin/pulls) · [Hinweise zum Mitwirken](docs/CONTRIBUTING.de.md). Issues und Pull Requests sind in öffentlichen Projekten für andere sichtbar. Private Projekte erfordern Zugang. Diese Links führen zu GitHub und bieten kein privates Rückmeldeformular.
+Unter [Über die Karte sprechen](https://github.com/LN6666/crimemaps-Berlin/discussions) kannst du Erfahrungen und Vorschläge teilen. Unter [Problem melden](https://github.com/LN6666/crimemaps-Berlin/issues/new/choose) kannst du Fehler oder Korrekturen mit einer öffentlich zugänglichen Quelle melden. Für einen Beitrag musst du dich bei GitHub anmelden. Dein Konto und dein Text sind öffentlich. Bitte keine persönlichen oder sensiblen Angaben veröffentlichen. Dies ist kein Notruf und keine polizeiliche Meldestelle.
+
+[Vorgeschlagene Änderungen ansehen](https://github.com/LN6666/crimemaps-Berlin/pulls) · [Hinweise zum Mitwirken](docs/CONTRIBUTING.de.md)
 
 Reiche Code- oder Textänderungen als überschaubaren Pull Request ein. Siehe [die Hinweise zum Mitwirken](docs/CONTRIBUTING.de.md). Nenne bei einem Softwarefehler den Browser, kurze Schritte zur Reproduktion und gegebenenfalls einen öffentlichen Quellenlink. Personenbezogene Angaben, vollständige Polizeitexte, Datenbanken, Prüfarchive und Zugangsdaten gehören nicht in öffentliche Issues.
 
@@ -105,7 +107,7 @@ Verfolge [Veröffentlichungen](https://github.com/LN6666/crimemaps-Berlin/releas
 
 ## Datenschutz, Korrekturen und Sicherheit
 
-Besuchsstatistik und private Korrekturhinweise sind noch nicht mit einem laufenden Dienst verbunden. Ein verfügbares privates Formular wird daher nicht zugesagt. Öffentliche GitHub-Issues sind für andere sichtbar. Sobald ein privater Weg für Korrekturen eingerichtet ist, nennt die Karte dessen Ziel und Datenschutzhinweise. Ungeprüfte Hinweise werden nicht automatisch veröffentlicht. Siehe [Hinweise und unbekannte Orte](docs/FEEDBACK.md).
+[Hinweise und unbekannte Orte](docs/FEEDBACK.md)
 
 Die Hintergrundkarte und externe Links verwenden Dienste anderer Anbieter. Beim Laden können Verbindungsdaten wie die IP-Adresse an sie übermittelt werden. Die Karte nennt ihre Quellen und Datenschutzhinweise.
 
@@ -117,14 +119,10 @@ Für Sicherheitsprobleme gilt [SECURITY.md](SECURITY.md). Wenn das Repository �
 
 <picture>
   <source media="(max-width:640px)" srcset="docs/assets/visitors-by-country.de.mobile.svg">
-  <img src="docs/assets/visitors-by-country.de.svg" alt="Statistik zu Kartenaufrufen noch nicht aktiviert: graue Weltkarte und leere Rangliste nach Ländern oder Regionen" role="img" width="840">
+  <img src="docs/assets/visitors-by-country.de.svg" alt="Keine veröffentlichten Länder-Seitenaufrufe: graue Weltkarte und leere Rangliste" role="img" width="840">
 </picture>
 
-Die Statistik zu Kartenaufrufen ist noch nicht aktiviert. Die graue Weltkarte und die leere Rangliste zeigen, dass noch keine Aufrufzahlen verfügbar sind. Das Öffnen dieser README oder ihres Bildes zählt nicht als Kartenaufruf.
-
-Nach der Aktivierung zeigt die Grafik nur Kartenaufrufe, deren Erfassung die Nutzer erlaubt haben, gruppiert nach Land oder Region. Gezählt werden Seitenaufrufe, keine eindeutigen Personen. Gruppen mit weniger als 20 Aufrufen werden verborgen oder zusammengefasst; die Zahlen werden auf Zehner abgerundet. Hellblau steht für weniger, Dunkelblau für mehr veröffentlichte Aufrufe. Grau bedeutet, dass kein öffentlicher Wert vorliegt.
-
-Die Grafik wird in Abständen aktualisiert. Nach der Aktivierung zeigt die Zeit im Bild den jeweiligen Datenstand. GitHub kann eine ältere Bildfassung anzeigen; die Zahlen sind gerundete Summen.
+Karte und Rangliste zeigen die Länder-/Regionen-Seitenaufrufe dieser Stadt-Website aus GoatCounter, einschließlich Neuladen; Sprachwechsel und Kartenaktionen zählen nicht zusätzlich. Das sind weder eindeutige Personen noch README-Leser. Kleine Gruppen werden verborgen/zusammengefasst und Werte auf Zehner abgerundet. Grau bedeutet keine veröffentlichte Zahl, nicht null. Das Snapshot-Datum wird angezeigt; GitHub kann Bilder zwischenspeichern.
 
 <a id="cities"></a>
 

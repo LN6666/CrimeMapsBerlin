@@ -1,35 +1,31 @@
 import {mountAnalytics} from '../../../../web/src/safety/analytics';
 import '../../../../web/src/safety/analytics.css';
-const query=new URLSearchParams(location.search);
-const lang=(query.get('lang')??'en') as 'en'|'de'|'zh';
-const fixture=query.get('fixture');
-const city=query.get('namespace')??'berlin';
-const banner=document.querySelector('#fixture-label');if(banner)banner.textContent=({en:'LOCAL DEMO — synthetic counts, not real traffic; no live collection.',de:'LOKALE DEMO — Beispielzahlen, kein echter Verkehr; keine Live-Erfassung.',zh:'本地演示：数字为测试样例，不是真实流量；未接通统计服务。'} as const)[lang];
-if(fixture) {
-  const stats={schema_version:1,city,status:'live',metric:'accepted_opt_in_pageviews',total_pv:40 as number|null,countries:[{code:'DE',pv:20},{code:'OTHER',pv:20}],generated_at:'2026-10-03T00:00:00.000Z',unique_visitors_measured:false,privacy:{minimum_sample:20,rounding:10}};
-  if(fixture==='demo'){stats.total_pv=4730;stats.countries=[{code:'JP',pv:2300},{code:'CN',pv:1200},{code:'US',pv:720},{code:'SG',pv:190},{code:'HK',pv:100},{code:'KR',pv:100},{code:'TW',pv:80},{code:'OTHER',pv:40}];}
-  if(fixture==='low'){stats.total_pv=null;stats.countries=[];}
-  const counter=document.createElement('p');counter.id='requests';document.body.append(counter);
-  const event=document.createElement('p');event.id='last-event';document.body.append(event);
-  let reads=0,writes=0,challenges=0,cancelled=0;
-  const render=()=>{counter.textContent=`Local fixture requests: GET=${reads}; POST=${writes}; challenge=${challenges}; cancelled=${cancelled}`;};render();
-  (window as unknown as {turnstile:unknown}).turnstile={render:(_el:HTMLElement,opts:{callback:(token:string)=>void;size:string})=>{if(opts.size!=='compact')throw new Error('Wrong challenge size');event.dataset.challengeSize=opts.size;event.textContent='Local challenge parameters: size=compact (150×140 minimum)';challenges++;render();setTimeout(()=>opts.callback('local-fixture-token'),40);return 'local-test-widget';},remove:()=>{}};
-  window.fetch=async(input,init)=>{
-    const url=String(input);
-    if(!url.startsWith('https://analytics.invalid/'))throw new Error('Fixture prohibits external fetch');
-    if(init?.method==='POST') {
-      writes++;event.textContent=`Local fixture payload: ${init.body}; credentials=${init.credentials}; referrerPolicy=${init.referrerPolicy}`;render();return new Response('{"accepted":true}',{status:202,headers:{'Content-Type':'application/json'}});
-    }
-    reads++;render();
-    if(fixture==='delay')await new Promise((resolve,reject)=>{const timer=setTimeout(resolve,1500);init?.signal?.addEventListener('abort',()=>{clearTimeout(timer);cancelled++;render();reject(new DOMException('Aborted','AbortError'));},{once:true});});
-    if(fixture==='failure')return new Response('{"error":"unavailable"}',{status:503});
-    const result=fixture==='malicious'?{...stats,countries:[{code:'<script>evil</script>',pv:20}]}:stats;
-    return new Response(JSON.stringify(result),{headers:{'Content-Type':'application/json'}});
-  };
-  if(fixture==='privacy')Object.defineProperty(navigator,'globalPrivacyControl',{value:true});
-}
-const configured=query.get('configured')==='1'||(!!fixture&&fixture!=='unconnected');
-const component=mountAnalytics(document.querySelector<HTMLElement>('#analytics')!,{city,language:lang,endpoint:configured?'https://analytics.invalid':undefined,siteKey:configured&&(query.get('consent')==='1'||!fixture)?'local-fixture-public-key':undefined});
-let language=lang;
-document.querySelector('#language')?.addEventListener('click',()=>{language=language==='en'?'de':language==='de'?'zh':'en';component.setLanguage(language);});
+import './presentation.css';
+import {statsFromExport} from '../../src/goatcounter-export.mjs';
+const query=new URLSearchParams(location.search),langs=['en','de','zh'] as const;
+document.documentElement.dataset.theme=query.get('theme')==='dark'?'dark':'light';
+
+const lang=langs.find(v=>v===query.get('lang'))??'en',city=query.get('namespace')??'berlin',fixture=query.get('fixture')??'absent';
+document.documentElement.lang=lang;
+const banner=document.querySelector('#fixture-label');if(banner)banner.textContent=fixture==='demo'?({en:'LOCAL PREVIEW — synthetic country totals; no live collection.',de:'LOKALE VORSCHAU — synthetische Länderzahlen; keine echte Erfassung.',zh:'本地设计预览：国别数字均为测试样例，不采集真实访问。'} as const)[lang]:({en:'Local design preview · no city statistics published yet',de:'Lokale Designvorschau · noch keine Stadtstatistik veröffentlicht',zh:'本地设计预览 · 本城真实统计尚未公布'} as const)[lang];
+const countries=[['JP',2303],['CN',1217],['US',727],['SG',196],['HK',108],['KR',104],['TW',84],['DE',19],['',41]] as const;
+const rows=(fixture==='low'?[['JP',19]]:countries) as readonly (readonly [string,number])[];
+const e={info:{export_version:'1.0',created_for:'ryoushunnei.goatcounter.com',created_at:'2026-10-03T12:00:00Z'},paths:[{id:1,path:`/cities/${fixture==='wrongcity'?'essen':city}`}],locations:rows.map(([country])=>({country,region:''})),locationStats:rows.map(([location,count])=>({day:'2026-10-02',path_id:1,location,count})),hitStats:[{hour:'2026-10-02T12:00:00Z',path_id:1,ref_id:0,count:rows.reduce((n,r)=>n+r[1],0)}]};
+const data=['demo','low','wrongcity','slow'].includes(fixture)?statsFromExport(e,fixture==='wrongcity'?'essen':city):null;
+let reads=0,external=0;const counter=document.createElement('p');counter.id='requests';counter.hidden=query.get('debug')!=='1';document.body.append(counter);
+const render=()=>{counter.textContent=`Local preview: snapshot reads=${reads}; external requests=${external}`;};render();
+window.fetch=async(input,options)=>{
+ const url=new URL(String(input),location.href);
+ if(url.origin!==location.origin||!url.pathname.endsWith('/safety/analytics/visitors-by-country.json')){external++;render();throw new Error('External requests forbidden in preview');}
+ reads++;render();
+ if(fixture==='slow')await new Promise<void>((resolve,reject)=>{const timer=setTimeout(resolve,600);options?.signal?.addEventListener('abort',()=>{clearTimeout(timer);reject(new DOMException('Aborted','AbortError'));},{once:true});});
+ if(fixture==='unavailable')return new Response('{}',{status:503});
+ if(!data)return new Response('{}',{status:404});
+ return new Response(JSON.stringify(data),{status:200,headers:{'Content-Type':'application/json'}});
+};
+const component=mountAnalytics(document.querySelector<HTMLElement>('#analytics')!,{city,language:lang,snapshotUrl:new URL('/safety/analytics/visitors-by-country.json',location.href).href,collectionEnabled:query.get('collect')==='1'});
+let language=lang;const languageSelect=document.querySelector<HTMLSelectElement>('#language')!;languageSelect.value=lang;languageSelect.addEventListener('change',()=>{language=languageSelect.value as typeof lang;component.setLanguage(language);document.documentElement.lang=language;});
+const citySelect=document.querySelector<HTMLSelectElement>('#city')!;citySelect.value=city;citySelect.addEventListener('change',()=>{query.set('namespace',citySelect.value);location.search=query.toString();});
+const theme=document.querySelector<HTMLSelectElement>('#theme')!;theme.value=query.get('theme')==='dark'?'dark':'light';theme.addEventListener('change',()=>{document.documentElement.dataset.theme=theme.value;});
 document.querySelector('#destroy')?.addEventListener('click',()=>component.destroy());
+if(query.get('narrow')==='1')document.querySelector<HTMLElement>('.preview-content')!.style.maxWidth='304px';

@@ -4,16 +4,8 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "test": "node --test test/*.test.mjs",
-    "dev": "wrangler dev --local",
-    "check:deploy": "wrangler deploy --dry-run --outdir .build",
-    "snapshot": "node src/snapshot.mjs",
-    "test:browser": "playwright test"
-  },
-  "devDependencies": {
-    "@playwright/test": "1.57.0",
-    "miniflare": "5.20261001.0-alpha",
-    "vite": "7.3.0",
-    "wrangler": "4.147.0"
+    "test": "node --test test/world-card.test.mjs test/goatcounter.test.mjs",
+    "placeholders": "node src/placeholders.mjs",
+    "snapshot": "node src/goatcounter-snapshot.mjs"
   }
 }

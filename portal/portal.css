@@ -151,3 +151,6 @@ body{background:linear-gradient(160deg,#13253a 0,#0b1726 580px)}
   .portal-footer{padding:12px;gap:5px;font-size:14px}
 }
 @media(max-width:380px){.directory-grid{grid-template-columns:1fr}.language-switch button{padding:7px 8px}}
+
+/* Compact GitHub navigation; the official marks keep their intrinsic proportions. */
+.portal-github{min-width:0;max-width:520px}.portal-github-links{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}.portal-github-links>a{display:inline-flex;align-items:center;min-height:44px;max-width:100%;overflow-wrap:anywhere;text-underline-offset:3px}.portal-github p{font-size:12px;line-height:1.55}.portal-github .github-repository-link{min-width:44px;padding:10px;border:0;border-radius:6px}.github-repository-link img{display:block;height:24px;width:auto;max-width:none}.github-repository-link .github-mark-black{display:none}:root[data-theme=light] .github-repository-link .github-mark-black{display:block}:root[data-theme=light] .github-repository-link .github-mark-white{display:none}.portal-github-links>a:focus-visible{outline:3px solid #e4bd65;outline-offset:3px}:root[data-theme=light] .portal-github-links>a:focus-visible{outline-color:#207a5c}

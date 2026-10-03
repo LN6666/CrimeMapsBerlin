@@ -1,3 +1,4 @@
+import {mountGitHubFeedback} from "./github-feedback";
 import {
   announcementStatistics, type MetricAnnouncement, type MetricContext, type Fraction,
 } from "./indices";
@@ -5,6 +6,7 @@ import {
 export type Translate = (key: string, params?: Record<string, string | number>, fallback?: string) => string;
 export interface MethodOptions {
   t: Translate;
+  city?: string;
   locale: "de" | "en" | "zh";
   categoryLabel?: (category: string) => string;
 }
@@ -30,8 +32,11 @@ export function mountAnnouncementMethods(parent: HTMLElement, options: MethodOpt
   container.className = "announcement-methods";
   const root = document.createElement("details");
   const summary = document.createElement("summary"), body = document.createElement("div");
+  summary.textContent = options.t("methods.title");
   root.append(summary, body);
-  container.append(introduction, root);
+  container.append(introduction);
+  mountGitHubFeedback(container,{city:options.city??"berlin",locale:options.locale,translate:options.t});
+  container.append(root);
   parent.append(container);
   const {t} = options;
   const line = (key: string, params?: Record<string, string | number>) => {
@@ -60,7 +65,7 @@ export function mountAnnouncementMethods(parent: HTMLElement, options: MethodOpt
     element: container,
     update(rows: readonly MetricAnnouncement[], current: MethodUpdate) {
       introduction.replaceChildren();
-      for (const key of ["project.initial", "project.contribute"]) {
+      for (const key of ["project.initial"]) {
         const paragraph = document.createElement("p");
         paragraph.textContent = t(key);
         introduction.append(paragraph);
@@ -78,14 +83,6 @@ export function mountAnnouncementMethods(parent: HTMLElement, options: MethodOpt
           }
         } catch { /* Missing/invalid contribution links are not advertised as available. */ }
       }
-      const privacy = document.createElement("p");
-      const privacyFallback = {
-        en: "Issues and pull requests are public. Leave personal or sensitive information out; use the private feedback option when it is available.",
-        de: "Issues und Pull Requests sind öffentlich. Bitte keine persönlichen oder vertraulichen Angaben veröffentlichen. Nutze für solche Anliegen die private Rückmeldung, falls sie angeboten wird.",
-        zh: "项目讨论和代码贡献是公开的，请勿提交个人信息或敏感资料。如页面提供私密反馈入口，请在那里反映敏感问题。",
-      }[options.locale];
-      privacy.textContent = t("project.contributionPrivacy", {}, privacyFallback);
-      introduction.append(privacy);
       body.replaceChildren();
       summary.textContent = t("methods.title");
       line("methods.independent");

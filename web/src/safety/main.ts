@@ -1,10 +1,12 @@
+import {mountAnalytics,markAnalyticsLanguageNavigation} from "./analytics";
+import "./analytics.css";
 import {catalogSummary,loadCatalogTranslations} from "./catalog-translations";
 import {DynamicTranslations} from "./dynamic-translations";
+import {appendPublicEventNotes,appendPublicSceneReferenceNote} from "./public-report-notes";
 import {mountAnnouncementMethods} from "./methods";
 import {mountUncertaintyPanel} from "./uncertainty-panel";
-import {mountFeedbackPanel} from "./feedback";
-import {mountAnalytics} from "./analytics";
-import "./analytics.css";
+import {mountGitHubFooter} from "./github-feedback";
+import "./github-feedback.css";
 import {mountContentTagLauncher} from "./content-tag-launcher";
 import {CONTENT_TAG_COPY} from "./content-tag-copy";
 import {loadSavedStatistics} from "./statistics-loader";
@@ -123,14 +125,14 @@ initializeAppearance();
 app.innerHTML = `<header><div><span class="brand">${currentCity === "berlin" ? "CRIMEMAPSBERLIN" : "CRIMEMAPS.DE"}</span><span id="review-badge" class="review-badge" hidden>${html(t("app.preview"))}</span><h1>${html(t("app.heading",{city:localizedCity}))}</h1></div><div class="toolbar"><label>${html(t("nav.language"))}<select id="language" aria-label="${html(t("nav.language"))}"><option value="de">Deutsch</option><option value="en">English</option><option value="zh">中文</option></select></label><label class="city-switch">${html(t("nav.city"))}<select id="city-switch" aria-label="${html(t("nav.city"))}"></select></label><label>${html(t("nav.year"))}<select id="year" aria-label="${html(t("nav.year"))}"></select></label><label>${html(t("nav.month"))}<select id="month" aria-label="${html(t("nav.month"))}"></select></label><button id="overview">${html(t("nav.overview"))}</button><button id="sources">${html(t("nav.sources"))}</button></div></header>
 <main><aside class="controls"><p class="eyebrow">${html(localizedCity)} / ${html(t("app.publicReports"))}</p><h2>${html(t("app.tagline"))}</h2><p id="coverage">${html(t("map.loadingData"))}</p><nav id="external-maps" class="external-maps" aria-label="${html(t("external.aria"))}"></nav><label class="search-label">${html(t("search.label",{city:localizedCity}))}<input id="search" placeholder="${html(t("search.placeholder",{},cityView.latin))}" autocomplete="off"></label><div id="search-results"></div><label>${html(t("filter.category"))}<select id="category"><option value="all">${html(t("filter.allReports"))}</option></select></label><div class="rule"></div><h3>${html(t("legend.hex"))}</h3><div class="ramp"></div><div class="ends"><span>${html(t("legend.low"))}</span><span>${html(t("legend.high"))}</span></div><p id="resolution"></p><label class="toggle"><input id="hex-toggle" type="checkbox" checked> ${html(t("legend.showHex"))}</label><label class="toggle"><input id="candidate-roads-toggle" type="checkbox" checked> ${html(t("legend.showRoads"))}</label><p class="hint"><span class="road-swatch" aria-hidden="true"></span>${html(t("legend.roadNote"))}</p><div class="scene-legend" aria-label="${html(t("legend.scenesAria"))}"><span><i class="scene-swatch incident"></i>${html(t("legend.incident"))}</span><span><i class="scene-swatch discovery"></i>${html(t("legend.discovery"))}</span><span><i class="scene-swatch operation"></i>${html(t("legend.operation"))}</span><span><i class="scene-swatch context"></i>${html(t("legend.context"))}</span><span><i class="route-swatch"></i>${html(t("legend.transit"))}</span></div><h3>${html(t("legend.pois"))}</h3><div id="poi-filters"></div><label class="toggle"><input id="highlight" type="checkbox" checked> ${html(t("legend.highlight"))}</label><p class="hint">${html(t("legend.highlightNote"))}</p><div class="rule"></div><button id="kbo">${html(t("kbo.button"))}</button><p class="hint">${html(t("kbo.separate"))}</p><p id="freshness" class="hint"></p></aside>
 <section class="map-wrap"><div id="map" aria-label="${html(t("map.aria",{city:localizedCity}))}"></div><div class="map-label"><span class="dot"></span><span id="map-status" role="status" aria-live="polite">${html(t("map.preparing"))}</span></div><div class="basemap-picker"><label>${html(t("map.basemap"))}<select id="basemap" aria-label="${html(t("map.basemap"))}" disabled><option value="vector">${html(t("basemap.vector"))}</option><option value="street">${html(t("basemap.street"))}</option><option value="aerial">${html(t("basemap.aerial"))}</option><option value="local">${html(t("basemap.local"))}</option></select></label><div id="basemap-error" role="status" hidden><span></span><button id="basemap-fallback">${html(t("basemap.fallback"))}</button></div></div><div class="map-note">${html(t("map.poiNote"))}</div><p class="hint basemap-language-note">${html(t("basemap.languageNote"))}</p></section>
-<aside class="details"><div id="stats"></div><div id="methods-panel"></div><div id="selection"><h2>${html(t("selection.prompt"))}</h2><p>${html(t("selection.intro"))}</p></div><div id="uncertainty-panel"></div><div id="feedback-panel"></div><div id="analytics-panel"></div></aside></main>
+<aside class="details"><div id="stats"></div><div id="methods-panel"></div><div id="selection"><h2>${html(t("selection.prompt"))}</h2><p>${html(t("selection.intro"))}</p></div><div id="uncertainty-panel"></div><div id="analytics-panel"></div></aside></main>
 <dialog id="drawer"><button id="close-dialog" class="close">${html(t("action.close"))}</button><div id="drawer-content"></div></dialog>`;
 const el = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 mountBrand(app.querySelector<HTMLElement>(".brand")!);
 mountAppearance(app.querySelector<HTMLElement>(".toolbar")!, {label:t("theme.label"),blue:t("theme.blue"),light:t("theme.light")});
 el<HTMLSelectElement>("language").value=locale;
-el("language").onchange=()=>{const url=new URL(location.href);url.searchParams.set("lang",el<HTMLSelectElement>("language").value);url.searchParams.set("month",monthKey());location.assign(url.href);};
+el("language").onchange=()=>{markAnalyticsLanguageNavigation(currentCity);const url=new URL(location.href);url.searchParams.set("lang",el<HTMLSelectElement>("language").value);url.searchParams.set("month",monthKey());location.assign(url.href);};
 const citySelect = el<HTMLSelectElement>("city-switch");
 for (const group of cityGroups) {
   const section = document.createElement("optgroup");
@@ -181,10 +183,10 @@ if (!cityView.aerial)
 text("button", t("nav.otherCities"), el("external-maps")).onclick =
   externalMapsDialog;
 const dynamicText=new DynamicTranslations();
-const methodsPanel=mountAnnouncementMethods(el("methods-panel"),{t,locale,categoryLabel});
+const methodsPanel=mountAnnouncementMethods(el("methods-panel"),{t,locale,categoryLabel,city:currentCity});
 const uncertaintyPanel=mountUncertaintyPanel(el("uncertainty-panel"),{locale,city:currentCity,translate:t,sourceUncertaintyNotice:t("report.sourceUncertain"),onSelect:(id)=>{const p=openDialog(t("report.scenes"));listReports(p,[id]);}});
-const feedbackPanel=mountFeedbackPanel(el("feedback-panel"),{locale,city:currentCity,translate:t});
-const analyticsPanel=mountAnalytics(el("analytics-panel"),{language:locale,city:currentCity,translate:(key,params)=>t(key,params)});
+const githubFooter=mountGitHubFooter(app,{locale,city:currentCity,translate:t});
+const analyticsPanel=mountAnalytics(el("analytics-panel"),{language:locale,city:currentCity,collectionEnabled:import.meta.env.VITE_GOATCOUNTER_ENABLED === "true",snapshotUrl:import.meta.env.BASE_URL+"safety/analytics/visitors-by-country.json"});
 // Establish the collapsed mobile layout before measuring the statistics anchor.
 let data: Bundle;
 let map: maplibregl.Map;
@@ -330,6 +332,7 @@ function listReports(parent: HTMLElement, ids: string[]) {
     if(dynamicText.missingFor(e))text("small",t("report.translationMissing"),card);
     const publicFields=new Set(e.public_display_fields??[]);
     if (publicFields.has("map_review_note") && e.map_review_note) text("p", t("source.mapReview",{note:e.map_review_note}), card);
+    appendPublicEventNotes(card,e);
     if (e.published_at_source_literal) text("small", t("time.publicationLiteral",{date:e.published_at_source_literal}), card);
     if (e.published_at_timezone_basis === "Europe/Berlin") text("small",t("time.publicationZoneNote"),card);
     for (const attachment of publicFields.has("source_attachments") ? e.source_attachments ?? [] : []) {
@@ -426,6 +429,7 @@ function listReports(parent: HTMLElement, ids: string[]) {
           ...(scene.incidents ?? []).map((incident) => incident.details),
         ].filter((value): value is string => Boolean(value));
         for (const detail of [...new Set(details)]) text("small", detail, item);
+        appendPublicSceneReferenceNote(item,scene);
 
         if (scene.poi_contexts?.length) {
           const kinds = [...new Set(scene.poi_contexts.map((context) =>
@@ -1405,7 +1409,7 @@ window.addEventListener("pagehide", (event) => {
   clearInterval(freshnessTimer);
   methodsPanel.destroy();
   uncertaintyPanel.destroy();
-  feedbackPanel.destroy();
+  githubFooter.destroy();
   analyticsPanel.destroy();
   statisticsPanel?.destroy();
   mobileLayout.destroy();

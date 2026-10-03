@@ -89,7 +89,9 @@ The production frontend build is `VITE_CRIMEMAPS_CITY=berlin npm --prefix web ru
 
 ## Contribute
 
-[Report a software issue](https://github.com/LN6666/crimemaps-Berlin/issues) · [Propose a change](https://github.com/LN6666/crimemaps-Berlin/pulls) · [Contribution guide](docs/CONTRIBUTING.en.md). GitHub issues and pull requests are public when the repository is public. A private repository requires access; these links do not open a private feedback form.
+[Discuss this map](https://github.com/LN6666/crimemaps-Berlin/discussions) to share your experience and suggestions. [Report a problem](https://github.com/LN6666/crimemaps-Berlin/issues/new/choose) for errors or corrections with a link to a public source. To leave a message, sign in to GitHub; your account and message are public. Do not include personal or sensitive information. This is not an emergency or police reporting service.
+
+[Propose a change](https://github.com/LN6666/crimemaps-Berlin/pulls) · [Contribution guide](docs/CONTRIBUTING.en.md)
 
 Use a focused pull request for code or wording changes. See [the contribution guide](docs/CONTRIBUTING.en.md). A software issue should include the browser, a short reproduction and a public source link where relevant. Leave personal information, full police texts, databases, review packages and credentials out of public issues.
 
@@ -105,7 +107,7 @@ Follow [repository releases](https://github.com/LN6666/crimemaps-Berlin/releases
 
 ## Privacy, corrections and security
 
-Visit statistics and private correction feedback are not connected to a live service yet. No private feedback form is claimed to be available. Public GitHub issues are visible to others. Once a private correction route is enabled, the map will state its destination and privacy terms; unreviewed feedback will not be published automatically. See [feedback and unknown locations](docs/FEEDBACK.md).
+[feedback and unknown locations](docs/FEEDBACK.md)
 
 Map tiles and external links use third-party providers. When you load those services, they may receive ordinary connection information such as an IP address. See the map's provider attribution and privacy notice before using an external service.
 
@@ -117,14 +119,10 @@ For security issues, see [SECURITY.md](SECURITY.md). If the repository shows ‘
 
 <picture>
   <source media="(max-width:640px)" srcset="docs/assets/visitors-by-country.en.mobile.svg">
-  <img src="docs/assets/visitors-by-country.en.svg" alt="Visit statistics not enabled: grey world map and empty country or region ranking" role="img" width="840">
+  <img src="docs/assets/visitors-by-country.en.svg" alt="No published country page views: gray world map and empty ranking" role="img" width="840">
 </picture>
 
-Visit statistics are not enabled yet. The grey world map and empty ranking show that no visit figures are available. Opening this README or its image does not add a map page view.
-
-Once enabled, the card will show only map page views that users agree to record, grouped by country or region. These totals cannot tell you how many different people visited. Groups with fewer than 20 views are hidden or combined, and figures are rounded down to the nearest ten. Light blue means fewer published views, dark blue means more, and grey means no public figure is available. Opening this README or its image does not add a map page view.
-
-Once statistics are enabled, check the update time in the image. GitHub may show an older saved copy. The figures are cumulative, rounded totals as of that update time.
+This map and ranking show this city website’s country/region page views from GoatCounter, including ordinary reloads; language changes and map operations do not add a count. These are not unique people or README readers. Small groups are hidden/combined and values round down to ten. Gray means no published count, not zero. The snapshot date is shown; GitHub may cache images.
 
 <a id="cities"></a>
 
